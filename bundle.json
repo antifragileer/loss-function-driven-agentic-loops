@@ -1,0 +1,135 @@
+{
+  "bundle": "loss-function-driven-agentic-loops",
+  "version": "2.0.0",
+  "description": "Ten cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with five agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode) so the same loop works across coding agents.",
+  "skills": [
+    {
+      "name": "loss-function-design",
+      "version": "2.0.0",
+      "role": "vocabulary",
+      "required": true,
+      "summary": "The 4-piece loss anatomy (target / constraints / instruments / forced entropy). The other 9 skills reference this vocabulary.",
+      "load_trigger": "user says 'loss function', 'reward hacking', 'verifier', 'gate sub-loss', or describes a stuck loop"
+    },
+    {
+      "name": "harness-engineering",
+      "version": "2.0.0",
+      "role": "theory",
+      "required": true,
+      "summary": "What the agent sees: context, tools, scaffolding, observability. The agent-facing half of the LFD pattern.",
+      "load_trigger": "user says 'harness', 'agent context', 'AGENTS.md layout', or designs a new project's repo structure"
+    },
+    {
+      "name": "cline-orchestration",
+      "version": "2.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (claude-code, codex, hermes-agent, opencode) if not using Cline",
+      "summary": "Cline v3 CLI surface, NDJSON parser, wrapper contract, per-iteration isolation.",
+      "load_trigger": "user says 'Cline', 'Cline version', 'wrapper script', 'Cline flags', or the wrapper errors out"
+    },
+    {
+      "name": "claude-code-orchestration",
+      "version": "1.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (cline, codex, hermes-agent, opencode) if not using Claude Code",
+      "summary": "Claude Code CLI (Anthropic) print-mode surface, --output-format json parser, wrapper contract, per-iteration isolation.",
+      "load_trigger": "user says 'Claude Code', 'claude -p', 'Claude Code wrapper', or the Claude Code wrapper errors out"
+    },
+    {
+      "name": "codex-orchestration",
+      "version": "1.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, hermes-agent, opencode) if not using Codex",
+      "summary": "OpenAI Codex CLI exec-mode surface, --json NDJSON parser, wrapper contract, git-init per-iteration isolation.",
+      "load_trigger": "user says 'Codex', 'codex exec', 'Codex wrapper', or the Codex wrapper errors out"
+    },
+    {
+      "name": "hermes-agent-orchestration",
+      "version": "1.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, opencode) if not using Hermes Agent",
+      "summary": "Hermes Agent CLI chat-mode surface, --output-format json parser, wrapper contract, profile-based per-iteration isolation.",
+      "load_trigger": "user says 'Hermes', 'hermes chat', 'Hermes wrapper', or wants a provider-agnostic inner agent"
+    },
+    {
+      "name": "opencode-orchestration",
+      "version": "1.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent) if not using OpenCode",
+      "summary": "OpenCode CLI run-mode surface, --format json parser, wrapper contract, --workdir per-iteration isolation.",
+      "load_trigger": "user says 'OpenCode', 'opencode run', 'OpenCode wrapper', or the OpenCode wrapper errors out"
+    },
+    {
+      "name": "meta-loss-function-development",
+      "version": "1.0.0",
+      "role": "meta-skill",
+      "required": true,
+      "summary": "Turns a high-level goal into a paste-able /goal prompt. Loads first, emits the spec that the other skills consume.",
+      "load_trigger": "user says 'loss function development', 'LFD', '/goal', 'use the loop pattern on X', or describes a project they want to drive with a loss-function loop"
+    },
+    {
+      "name": "harness-scaffold",
+      "version": "1.0.0",
+      "role": "build-tool",
+      "required": true,
+      "summary": "Scaffolds the project tree (verifiers/, instruments/, AGENTS.md, GOAL.md, design + held-out task stubs) from a /goal prompt.",
+      "load_trigger": "user pastes a /goal prompt and says 'scaffold', 'set up the harness', or describes a fresh project root"
+    },
+    {
+      "name": "loop-driver",
+      "version": "1.0.0",
+      "role": "runtime",
+      "required": true,
+      "summary": "Runs the outer loop. Reads the iteration log, forms a hypothesis, invokes the inner agent via the wrapper, runs the design set, scores, applies forced entropy, stops on plateau/budget.",
+      "load_trigger": "user has a scaffolded project and says 'run the loop', 'drive the cycle', 'iterate on the skill'"
+    }
+  ],
+  "install_order": [
+    "loss-function-design",
+    "harness-engineering",
+    "cline-orchestration",
+    "claude-code-orchestration",
+    "codex-orchestration",
+    "hermes-agent-orchestration",
+    "opencode-orchestration",
+    "meta-loss-function-development",
+    "harness-scaffold",
+    "loop-driver"
+  ],
+  "user_flow": [
+    "1. User describes a goal in plain language.",
+    "2. meta-loss-function-development emits a paste-able /goal prompt.",
+    "3. User opens a fresh session and pastes the /goal prompt.",
+    "4. Fresh session runs harness-scaffold to build the project tree (with --runtime {cline,claude-code,codex,hermes-agent,opencode}).",
+    "5. User (or fresh session) fills in the per-task grade.sh scripts.",
+    "6. Fresh session runs loop-driver/run-loop.sh to drive the cycles.",
+    "7. Loop stops on success / wall-clock / tokens / plateau.",
+    "8. User reviews logs/iteration-log.md and logs/best-cycle.json."
+  ],
+  "compatibility": {
+    "loop-driver": "compatible with harness-scaffold >= 1.0.0",
+    "harness-scaffold": "compatible with meta-loss-function-development >= 1.0.0",
+    "meta-loss-function-development": "compatible with loss-function-design >= 1.0.0 and harness-engineering >= 1.0.0",
+    "cline-orchestration": "targets Cline v3.0.34+; the wrapper is portable across Cline versions but the verify-gate reference is Cline-3 specific",
+    "claude-code-orchestration": "targets Claude Code v2.x; the wrapper is portable across v2.x patch versions",
+    "codex-orchestration": "targets Codex CLI v1.x; the wrapper requires git in the iteration dir",
+    "hermes-agent-orchestration": "targets Hermes Agent v2.x; the wrapper is provider-agnostic",
+    "opencode-orchestration": "targets OpenCode v1.x; the wrapper is provider-agnostic"
+  },
+  "agent_adapters": {
+    "cline": "cline-orchestration (v2.0.0, included) — Cline v3.0.34+",
+    "claude-code": "claude-code-orchestration (v1.0.0, included) — Claude Code v2.x (Anthropic-only)",
+    "codex": "codex-orchestration (v1.0.0, included) — Codex CLI v1.x (OpenAI-only, requires git)",
+    "hermes-agent": "hermes-agent-orchestration (v1.0.0, included) — Hermes Agent v2.x (provider-agnostic)",
+    "opencode": "opencode-orchestration (v1.0.0, included) — OpenCode v1.x (provider-agnostic)"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/antifragileer/loss-function-development-skills",
+  "install_command": "./install.sh <profile-dir>",
+  "uninstall_command": "./uninstall.sh <profile-dir>"
+}
