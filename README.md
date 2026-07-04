@@ -11,7 +11,7 @@ loop works against Cline, Claude Code, Codex, Hermes Agent,
 OpenCode, or the deterministic `fake-agent` stub used for
 dogfood testing (see `examples/lfd-system-verifier/`).
 
-- **Repository:** https://github.com/antifragileer/loss-function-development-skills
+- **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
 - **Bundle version:** 2.1.0
 
@@ -53,8 +53,8 @@ agents.
 
 ```bash
 # 1. Clone
-git clone https://github.com/antifragileer/loss-function-development-skills.git
-cd loss-function-development-skills
+git clone https://github.com/antifragileer/loss-function-driven-agentic-loops.git
+cd loss-function-driven-agentic-loops
 
 # 2. List the skills
 ./install.sh --list

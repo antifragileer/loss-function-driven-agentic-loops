@@ -1,4 +1,4 @@
-# Contributing to loss-function-development-skills
+# Contributing to loss-function-driven-agentic-loops
 
 Thanks for your interest in contributing! This bundle is a
 **distribution** — every file ships to every user. Quality
@@ -47,8 +47,8 @@ We **do not** accept:
 ### 1. Fork and branch
 
 ```bash
-git clone https://github.com/YOUR_FORK/loss-function-development-skills.git
-cd loss-function-development-skills
+git clone https://github.com/YOUR_FORK/loss-function-driven-agentic-loops.git
+cd loss-function-driven-agentic-loops
 git checkout -b feat/your-adapter-name   # or fix/issue-N
 ```
 
@@ -323,7 +323,7 @@ Step-by-step recipe:
 
 ## Reporting issues
 
-Use [GitHub Issues](https://github.com/antifragileer/loss-function-development-skills/issues).
+Use [GitHub Issues](https://github.com/antifragileer/loss-function-driven-agentic-loops/issues).
 Include:
 
 - Bundle version (`./install.sh --list`)

@@ -141,7 +141,7 @@
     "fake": "fake-agent-orchestration (v1.0.0, included) — deterministic stub for dogfood testing, no model, no network"
   },
   "license": "MIT",
-  "repository": "https://github.com/antifragileer/loss-function-development-skills",
+  "repository": "https://github.com/antifragileer/loss-function-driven-agentic-loops",
   "install_command": "./install.sh <profile-dir>",
   "uninstall_command": "./uninstall.sh <profile-dir>"
 }

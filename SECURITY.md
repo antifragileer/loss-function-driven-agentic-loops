@@ -92,4 +92,4 @@ Out of scope:
 We're tracking a `checksums.txt` and signed release
 process for v3.0.0. Until then, the bundle is shipped
 over HTTPS and the user verifies the repo URL matches
-`https://github.com/antifragileer/loss-function-development-skills`.
+`https://github.com/antifragileer/loss-function-driven-agentic-loops`.
