@@ -171,9 +171,9 @@ A goal prompt has six parts:
 5. **The harness layout.** File tree of `verifiers/`,
    `instruments/`, `AGENTS.md`, `GOAL.md`, `skills/`, `logs/`.
 6. **The runtime instructions.** Which agent (Cline, Codex,
-   Aider), which model (the user's choice, not hard-coded),
-   which budget (wall-clock, tokens), and which stop
-   conditions.
+   Aider), which model (**whatever the user has currently
+   authenticated — never ask, never pin**), which budget
+   (wall-clock, tokens), and which stop conditions.
 
 Each part is filled in from the user's goal statement plus a
 short round of clarifying questions (see "Discovering
@@ -194,9 +194,15 @@ priority order*, before emitting the block. Examples:
   behavior spec, an acceptance test?" — the **target**.
 - "What's the wall-clock budget? 1h? 6h? 24h?" — the
   **constraints**.
-- "What agent and model? Cline with its default provider? Codex
-  with GPT-5? Aider with Sonnet 4? A Hermes session?" — the
-  **runtime**.
+- "What agent and (implicitly) what model? Cline with its
+  default provider? Codex with whatever OpenAI model the
+  user has? Aider with whatever Anthropic key the user
+  has? A Hermes session? — Note: do NOT ask the user to
+  name a specific model. The model is whatever they have
+  currently authenticated for whichever agent they pick.
+  The /goal prompt should pin the agent but NOT the model
+  and NOT the provider. The agent's own config (e.g. `cline
+  auth`) is the source of truth." — the **runtime**.
 - "What reference artifacts exist publicly that I should
   generate the held-out set from?" — the **held-out set
   source**.
@@ -313,6 +319,19 @@ This becomes the artifact's default name and skills-dir slug.
 - **Don't hard-code the model.** The model is the user's
   choice. Pick a *capability tier* (e.g., "any current
   Cline-compatible model") and let `cline auth` decide.
+  **Do not even name a specific model in the prompt.**
+  The /goal prompt should reference "whatever provider
+  the user has authenticated" — not "kimi-for-coding"
+  or "GPT-5" or "Sonnet 4". The same prompt must work
+  if the user switches from Cline+openrouter to
+  Cline+anthropic without the meta-skill being re-run.
+  Hard-coding the model also voids the orchestrator's
+  ability to ship one prompt to multiple users with
+  different auth states. The verification rule: if the
+  string in the prompt's `INNER_MODEL:` line, the
+  wrapper script, or the constraints section names a
+  specific model or provider, the verifier should fail
+  the prompt.
 - **Don't make the held-out set larger than the design set.**
   5/5 or 5/10 is fine. 50/50 dilutes the loop's attention
   budget.
