@@ -1,10 +1,71 @@
-Run the loop driver's cycle.sh with the fake-agent wrapper
-and verify the cycle produces:
-- cycle-summary.json (from the wrapper)
-- design-set-score.json (from run-design-set.sh)
-- sub-losses.json (from compute_sub_losses.py)
-- best-cycle.json (updated by the cycle)
-- iteration-log.md (appended by the cycle)
+Run the loss-function-driven loop's `cycle.sh` with the
+fake-agent wrapper and verify the cycle produces the
+expected output files.
 
-Also verify the cycle's exit code is 0 (the wrapper cannot
-fail) and the wall-clock elapsed is < 30 seconds.
+# Where the project lives
+
+You are running in `${PROJECT_DIR}/.iterations/cycle-1-${TASK_NAME}/`
+(a per-cycle scratch dir created by the wrapper).
+
+The verifier-project root is `${PROJECT_DIR}` (one level up).
+The LFD bundle repo root is at:
+```
+$(cd "${PROJECT_DIR}/../.." && pwd)
+```
+(the loop driver's `cycle.sh` lives at
+`<repo>/skills/loop-driver/scripts/cycle.sh`).
+
+# The cycle invocation
+
+Before invoking cycle.sh, reset the loop's wall-clock
+budget tracker. The orchestrator and other tasks share
+`${PROJECT_DIR}/logs/.loop_start_ts`; if it's stale (left
+over from a previous task), cycle.sh will exit 3
+immediately on the wall-clock check.
+
+Run this sequence (and ONLY this sequence — do not edit
+other files, do not run other tests, do not browse):
+
+```bash
+REPO_ROOT="$(cd "${PROJECT_DIR}/../.." && pwd)"
+# 1. Reset the wall-clock budget
+date +%s > "${PROJECT_DIR}/logs/.loop_start_ts"
+# 2. Run the cycle
+"${REPO_ROOT}/skills/loop-driver/scripts/cycle.sh" \
+  --project-root "${PROJECT_DIR}" \
+  --cycle 1 \
+  --delta 0.0 \
+  --max-stall 100 \
+  --wrapper-timeout 30 \
+  --runtime fake \
+  --artifact-name lfd-system-driver
+```
+
+This runs ONE cycle of the loop. The fake-agent wrapper
+is instant; the whole cycle should take < 30 seconds.
+
+# What the cycle should produce
+
+After the cycle command exits 0, the following files
+should exist in the verifier-project:
+
+- `${PROJECT_DIR}/logs/iteration-log.md` — has a new
+  `cycle 1:` line at the end.
+- `${PROJECT_DIR}/logs/best-cycle.json` — has the cycle 1
+  weighted_sum and pass_rate.
+- `${PROJECT_DIR}/logs/cycle-1/design-set-score.json` —
+  the design set's aggregate score.
+- `${PROJECT_DIR}/logs/cycle-1/sub-losses.json` — the
+  per-cycle sub-loss scorer output.
+
+# What to return
+
+Print ONE JSON object to stdout with:
+- `cycle_exit_code`: 0 if cycle.sh exited 0
+- `cycle_elapsed_seconds`: the wall-clock from `date +%s` before/after the cycle
+- `files_present`: an object with keys `iteration_log`, `best_cycle`, `design_set_score`, `sub_losses`, each `true`/`false`
+- `summary`: a 1-line human-readable description
+
+Do NOT modify any files. Do NOT install the bundle. Do NOT
+run the design set yourself. Just invoke cycle.sh, then
+verify the four files exist.

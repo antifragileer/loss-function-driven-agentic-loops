@@ -33,6 +33,45 @@ if [[ ! -d "$TASKS_DIR" ]]; then
   exit 2
 fi
 
+# Reset the loop's wall-clock budget tracker so cycle.sh
+# doesn't bail with "wall-clock budget exhausted" between
+# design tasks. Without this, a real agent that runs the
+# cycle for d5 will see a stale `.loop_start_ts` (set by
+# the orchestrator's phase 3) and cycle.sh will exit 3
+# before doing anything. We reset once per design-set
+# run, not per task, so tasks that internally need the
+# wall-clock tracker can still use it.
+LOGS_DIR_BASE="${RUN_DESIGN_SET_LOGS_DIR:-$PROJECT_DIR/logs/cycle-1}"
+mkdir -p "$LOGS_DIR_BASE"
+LOOP_START="$PROJECT_DIR/logs/.loop_start_ts"
+if [[ -f "$LOOP_START" ]]; then
+  date +%s > "$LOOP_START"
+fi
+
+# ----- which wrapper to use for this design set? -----
+#
+# The default is the deterministic fake wrapper
+# (run-verification.sh's baseline run). For real-agent
+# dogfood (run-verification-real.sh), the orchestrator
+# sets LFD_WRAPPER=verifiers/cline-wrapper.sh (or any
+# other adapter wrapper) and the design set runs that
+# wrapper against each task.
+#
+# We resolve to an absolute path here so the orchestrator
+# can use a relative or absolute override.
+
+LFD_WRAPPER="${LFD_WRAPPER:-$PROJECT_DIR/verifiers/fake-wrapper.sh}"
+# If LFD_WRAPPER is a relative path, resolve against PROJECT_DIR
+case "$LFD_WRAPPER" in
+  /*) WRAPPER_PATH="$LFD_WRAPPER" ;;
+  *)  WRAPPER_PATH="$PROJECT_DIR/$LFD_WRAPPER" ;;
+esac
+if [[ ! -x "$WRAPPER_PATH" ]]; then
+  echo "error: wrapper not found or not executable: $WRAPPER_PATH" >&2
+  echo "  (set LFD_WRAPPER=verifiers/<runtime>-wrapper.sh to override the default)" >&2
+  exit 2
+fi
+
 # Discover tasks: subdirectories of TASKS_DIR sorted by name
 TASKS=()
 for d in "$TASKS_DIR"/*/; do
@@ -56,8 +95,7 @@ if [[ ${#TASKS[@]} -eq 0 ]]; then
 fi
 
 # Where to put per-task logs (NOT stdout)
-LOGS_DIR="${RUN_DESIGN_SET_LOGS_DIR:-$PROJECT_DIR/logs/cycle-1}"
-mkdir -p "$LOGS_DIR"
+LOGS_DIR="$LOGS_DIR_BASE"
 
 # ----- run each design task -----
 
@@ -76,8 +114,11 @@ for i in "${!TASKS[@]}"; do
 
   # Run the wrapper
   cycle_name="cycle-${CYCLE:-1}-${task}"
-  if ! "$PROJECT_DIR/verifiers/fake-wrapper.sh" "$prompt" \
-        --cwd "$task_run_dir" --timeout 30 --cycle "$cycle_name" \
+  # Timeout: 30s for fake (instant), 120s for real agents.
+  # Real agents are slower because they actually call a model.
+  WRAPPER_TIMEOUT="${LFD_WRAPPER_TIMEOUT:-30}"
+  if ! "$WRAPPER_PATH" "$prompt" \
+        --cwd "$task_run_dir" --timeout "$WRAPPER_TIMEOUT" --cycle "$cycle_name" \
         > "$task_run_dir/cycle-summary.json" 2>"$task_run_dir/wrapper.stderr"; then
     echo "[run-design-set] wrapper failed for $task (exit $?)" >&2
   fi
