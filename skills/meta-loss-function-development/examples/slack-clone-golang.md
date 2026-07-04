@@ -1,5 +1,17 @@
 # /goal: Build a Slack Desktop Clone in Go
 
+PROJECT_DIR: <ABSOLUTE-PATH-TO-PROJECT-ROOT>
+PROJECT_NAME: slack-clone
+
+> **Project root pinned.** The absolute path above is the
+> directory containing `GOAL.md`, `verifiers/`, `test-tasks/`,
+> etc. The fresh session starts in a cwd that is almost
+> certainly *not* this directory — do NOT rely on cwd. Use the
+> `PROJECT_DIR` value from this header as the authoritative
+> path. `cd` there on first action, then `export
+> PROJECT_DIR=<that-path>`. If the value is missing or the
+> directory does not exist, **stop** and report.
+
 You are running an outer optimization loop. The inner loop is the
 `cline` CLI. The artifact is a Cline skill (SKILL.md + references)
 that drives Cline on Slack-clone coding tasks. The held-out grader

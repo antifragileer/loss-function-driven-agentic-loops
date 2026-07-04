@@ -8,6 +8,18 @@ Python to Rust"; the meta-skill turns it into the block below.
 
 /goal — Refactor `pyforge` (Python CLI) to a Rust port
 
+PROJECT_DIR: <ABSOLUTE-PATH-TO-PROJECT-ROOT>
+PROJECT_NAME: pyforge-rust
+
+> **Project root pinned.** The absolute path above is the
+> directory containing `GOAL.md`, `verifiers/`, `test-tasks/`,
+> etc. The fresh session starts in a cwd that is almost
+> certainly *not* this directory — do NOT rely on cwd. Use the
+> `PROJECT_DIR` value from this header as the authoritative
+> path. `cd` there on first action, then `export
+> PROJECT_DIR=<that-path>`. If the value is missing or the
+> directory does not exist, **stop** and report.
+
 # Operating rules
 
 Read `AGENTS.md` first. Hard rules: do NOT read `verifiers/private/` or `test-tasks/held-out/`; do NOT modify `verifiers/`; the only Codex invocation is via `verifiers/codex-wrapper.sh`; after EACH design-set run, append a one-line entry to `logs/iteration-log.md` with cycle number, hypothesis, expected failure, and pass_rate; if pass_rate doesn't improve by ≥ 0.05 vs prior cycle, force entropy (pick the OPPOSITE of your last change, apply it, document it).

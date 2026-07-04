@@ -77,8 +77,13 @@ runs it.
 1. Describe the goal in one sentence. Include: the artifact
    ("build X"), the constraints ("in Y", "for Z"), and any
    quality bar ("looks like reference", "passes acceptance
-   tests").
-2. The skill will emit a paste-able block.
+   tests"). **Also tell the skill the absolute path of the
+   project root** (the directory where the harness should
+   live). If you don't, the skill will ask, because the
+   generated prompt must embed the path so the fresh session
+   can find the project without guessing.
+2. The skill will emit a paste-able block whose first line
+   after the title is `PROJECT_DIR: <absolute-path>`.
 3. Open a fresh session. Paste the block as the first message.
    The session will scaffold the project, build the harness,
    install the per-task graders, and run the outer loop.
@@ -95,30 +100,52 @@ The interactive flow above assumes the user cd'd to the project
 root before opening the fresh session. Non-interactive
 orchestrators (CI scripts, the LFD system verifier, etc.)
 often run from a different working directory. The
-`/goal` prompt's first-action step includes a project-root
-discovery protocol that handles both cases:
+`/goal` prompt has a project-root pinning protocol that
+handles both cases:
 
-- **Interactive (cwd = project root):** the discovery step
-  finds `GOAL.md` (or `verifiers/`) in cwd, uses it, done.
-- **Orchestrator (cwd ≠ project root):** the orchestrator
-  sets `LFD_PROJECT_DIR=/path/to/project` in the env when
-  launching the fresh session; the discovery step finds
-  it first and uses it. No cwd changes needed.
+- **Pinned (recommended — interactive or orchestrator).** The
+  generated prompt embeds `PROJECT_DIR: <absolute-path>` as a
+  header line. The fresh session's first action reads that
+  line and uses it as the authoritative project root. This
+  works regardless of the fresh session's cwd, regardless of
+  env vars, and is copy-pasteable across machines. **Always
+  prefer this.** Interactive meta-skill invocations should
+  pin the path the user gave. Orchestrators that know the
+  project path should pin it instead of (or in addition to)
+  setting `LFD_PROJECT_DIR`.
+- **Env-var (orchestrator fallback).** The orchestrator sets
+  `LFD_PROJECT_DIR=/path/to/project` in the env when launching
+  the fresh session; the discovery step's second preference
+  picks it up. Use this when the orchestrator does not want
+  the path baked into the prompt (e.g. the same prompt is
+  shipped to multiple environments).
+- **cwd / walk-up (last-resort fallback).** The discovery
+  step's third / fourth preference: if cwd contains
+  `GOAL.md` or `verifiers/`, use it; otherwise walk up
+  ancestor directories. This handles the case where the
+  user is running the fresh session from inside the
+  project by accident.
 
-If neither check finds the root, the agent stops and reports
-the failure. This is the right failure mode — silently
+If none of the checks find the root, the agent stops and
+reports the failure. This is the right failure mode — silently
 guessing the project root is the bug this design prevents.
 
-Concrete orchestrator pattern (bash):
+Concrete patterns:
 
 ```bash
+# Pinned (preferred) — orchestrator bakes the path into the
+# generated /goal prompt; no env needed at run time.
+
+# Env-var (fallback) — same prompt, runner sets the env:
 LFD_PROJECT_DIR=/path/to/verifier-project \
-npx skills add antifragileer/loss-function-development-skills -y -g \
+  npx skills add antifragileer/loss-function-development-skills -y -g
 # launch the fresh session with the env var set
 ```
 
-The fresh session inherits `LFD_PROJECT_DIR` and the goal
-prompt's discovery step picks it up automatically.
+When using the env-var pattern, the fresh session inherits
+`LFD_PROJECT_DIR` and the goal prompt's discovery step picks
+it up automatically. When using the pinned pattern, the path
+travels with the prompt itself.
 
 ## How to write the goal prompt (for the skill itself)
 
@@ -158,6 +185,11 @@ The user often doesn't say everything needed to fill the six
 parts. The skill should ask 1-3 clarifying questions, *in
 priority order*, before emitting the block. Examples:
 
+- "What absolute path should the harness live at? (The
+  generated prompt bakes the path in so the fresh session
+  finds the project without guessing.)" — the **project
+  root**. If the user does not specify, ask. Do NOT
+  default this — wrong-path prompts are unrecoverable.
 - "What does 'done' look like for X? A reference output, a
   behavior spec, an acceptance test?" — the **target**.
 - "What's the wall-clock budget? 1h? 6h? 24h?" — the
@@ -219,6 +251,17 @@ The writing phase is mechanical once the discovery and
 research are done. Fill the template. Do not improvise the
 format.
 
+**Mandatory template fill: the project-root header.** When
+filling `templates/goal-prompt.md`, replace
+`<ABSOLUTE-PATH-TO-PROJECT-ROOT>` with the absolute path the
+user specified (or the `LFD_PROJECT_DIR` value, if the
+orchestrator supplied one). The fresh session will read this
+line and use it as the authoritative project root — see the
+"Project-root pinning" subsection above. Replace
+`<SHORT-SLUG>` with a filesystem-safe short name for the
+project (e.g., `cline-go`, `slack-clone`, `pyforge-rust`).
+This becomes the artifact's default name and skills-dir slug.
+
 ## What this skill is NOT
 
 - **Not a loop driver.** It does not run the outer loop. It
@@ -248,7 +291,7 @@ format.
   reads the prompt; long prompts dilute the signal. Aim for
   the same density as the canonical example:
   `examples/slack-clone-golang.md`.
-- **Don't put machine-specific paths in the prompt.** The
+- **Don't put machine-specific paths in the prompt body.** The
   prompt must work on any machine. Use `$PROJECT_DIR` and
   add a "Locate your project root" first-action step so the
   agent knows how to resolve `$PROJECT_DIR` to an actual
@@ -257,6 +300,16 @@ format.
   directory. The canonical template at
   `templates/goal-prompt.md` and all three example prompts
   show the standard pattern.
+  **EXCEPTION — the `PROJECT_DIR:` header line.** The
+  absolute path in the header is the whole point: it is the
+  one piece of machine-specific information the prompt MUST
+  carry, because the fresh session's cwd is unknown and the
+  env var is not guaranteed. Without the header, the
+  discovery step has nothing to find and the prompt is
+  unrecoverable. Never leave the placeholder
+  `<ABSOLUTE-PATH-TO-PROJECT-ROOT>` unfilled. If the user
+  refuses to supply a path, refuse to emit the prompt —
+  ask again.
 - **Don't hard-code the model.** The model is the user's
   choice. Pick a *capability tier* (e.g., "any current
   Cline-compatible model") and let `cline auth` decide.

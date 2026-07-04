@@ -4,6 +4,11 @@ A worked example of the /goal prompt for an algorithm-from-paper
 goal. The user says "implement FlashAttention-2 from the paper";
 the meta-skill turns it into the block below.
 
+Note: the `PROJECT_DIR:` header in the block below is the
+required project-root pin. Replace `<ABSOLUTE-PATH-TO-PROJECT-ROOT>`
+with the absolute path the user supplied (or the
+`LFD_PROJECT_DIR` env value, if the orchestrator set one).
+
 The key difference from the Slack-clone example: the held-out
 set comes from the **paper's reference tests** + a public
 benchmark (HuggingFace `transformers` attention tests), not
@@ -13,6 +18,18 @@ not Slack's API docs.
 ---
 
 /goal — Implement FlashAttention-2 (Dao et al., 2023) via Cline + LFD
+
+PROJECT_DIR: <ABSOLUTE-PATH-TO-PROJECT-ROOT>
+PROJECT_NAME: flash-attn-2
+
+> **Project root pinned.** The absolute path above is the
+> directory containing `GOAL.md`, `verifiers/`, `test-tasks/`,
+> etc. The fresh session starts in a cwd that is almost
+> certainly *not* this directory — do NOT rely on cwd. Use the
+> `PROJECT_DIR` value from this header as the authoritative
+> path. `cd` there on first action, then `export
+> PROJECT_DIR=<that-path>`. If the value is missing or the
+> directory does not exist, **stop** and report.
 
 # Operating rules
 

@@ -1,5 +1,17 @@
 # /goal: <SHORT TITLE>
 
+PROJECT_DIR: <ABSOLUTE-PATH-TO-PROJECT-ROOT>
+PROJECT_NAME: <SHORT-SLUG>
+
+> **Project root pinned.** The absolute path above is the
+> directory containing `GOAL.md`, `verifiers/`, `test-tasks/`,
+> etc. The fresh session starts in a cwd that is almost
+> certainly *not* this directory — do NOT rely on cwd. Use the
+> `PROJECT_DIR` value from this header as the authoritative
+> path. `cd` there on first action, then `export
+> PROJECT_DIR=<that-path>`. If the value is missing or the
+> directory does not exist, **stop** and report.
+
 You are running an outer optimization loop. The inner loop is the
 `<AGENT>` CLI. The artifact is `<ARTIFACT DESCRIPTION>`. The
 held-out grader in `<HELD_OUT_GRADER_PATH>` (which you must NOT
@@ -114,11 +126,22 @@ Local maxima is the default state. Force entropy:
 
    In order of preference:
 
-   1. If the env var `LFD_PROJECT_DIR` is set and that
-      directory contains a `GOAL.md` or `verifiers/`, use it.
-   2. If your cwd contains a `GOAL.md` or `verifiers/`, use
+   1. **Read the `PROJECT_DIR:` line at the top of this
+      prompt.** If present, that absolute path is the
+      authoritative project root. Verify the directory
+      exists and contains `GOAL.md` (or `verifiers/`).
+      If valid: `cd "$PROJECT_DIR"` and `export
+      PROJECT_DIR="$PROJECT_DIR"`. This is the common
+      case for interactive /goal invocations where the
+      user supplied a project path when generating the
+      prompt. **Do not skip this check** — cwd is
+      almost certainly wrong on a fresh session.
+   2. If the `PROJECT_DIR:` line is missing OR the
+      directory does not exist, fall back to:
+      the env var `LFD_PROJECT_DIR` (orchestrator case).
+   3. If your cwd contains a `GOAL.md` or `verifiers/`, use
       your cwd.
-   3. Walk up from your cwd: for each ancestor directory,
+   4. Walk up from your cwd: for each ancestor directory,
       check if it contains a `GOAL.md` or `verifiers/`. The
       first match is your project root.
 
@@ -128,7 +151,7 @@ Local maxima is the default state. Force entropy:
    <command>` for one-off commands). All `$PROJECT_DIR`
    references below are relative to that path.
 
-   If none of the three checks finds the root, **stop** and
+   If none of the checks finds the root, **stop** and
    report the failure. Do not guess.
 
 **1.** Read `<GOAL-PATH>`, `<AGENTS-PATH>`, `<README-PATH>`,
