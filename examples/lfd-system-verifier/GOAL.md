@@ -72,6 +72,27 @@ lives in `test-tasks/design/d<n>-<name>/`:
   cycle-summary.json + sub-losses.json +
   best-cycle.json all exist with the correct schema.
 
+## Method task
+
+The method task exercises the loop's improvement +
+plateau-detection machinery end-to-end. It runs
+`cycle.sh` 3 times with the `fake-method` wrapper
+(which emits different candidates per cycle to
+simulate an agent improving and then plateauing)
+and asserts the loop's machinery for tracking
+improvement actually works (best-cycle.json updated,
+iteration log has 3 entries, FORCED_ENTROPY rule
+fired on the plateau). The method task lives in
+`test-tasks/method/method-drives-improvement/`.
+
+The method task is invoked as a separate phase in
+the orchestrator (`run-verification.sh` phase 3.5)
+because it can't run inside the design set — the
+design set runs one cycle per task, but the method
+task needs the loop to run 3 cycles, which would
+recursively invoke the design set. So it's a
+first-class task type alongside design and held-out.
+
 ## Held-out tasks (the agent never sees these)
 
 The 5 held-out tasks test harder properties the agent
@@ -112,6 +133,24 @@ reference. To regenerate the held-out tasks:
 - **Wall-clock:** 300 s elapsed.
 - **Failure:** any held-out task fails (the loop
   stops immediately and the report is marked `FAIL`).
+
+## Two gates
+
+The verifier has two entry points, both must pass for
+the LFD system to be considered verified:
+
+- `./run-verification.sh` — the **tools gate**, run
+  against the `fake-agent` adapter. Deterministic,
+  ~15s, no model, no network. Tests the LFD tools
+  (parsers, install, driver, scorer shape). This is
+  what `GOAL.md` describes — the loop runs once with
+  the fake agent.
+- `./run-verification-real.sh` — the **integration
+  gate**, run against a real coding agent (Cline by
+  default). Non-deterministic, ~3-5 min. Tests that
+  the wrappers actually wire a real agent to the
+  loop. Same verifier scaffold; only the inner
+  agent changes. Threshold: pass_rate ≥ 0.8.
 
 ## Notes
 

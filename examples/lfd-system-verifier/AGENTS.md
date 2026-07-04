@@ -2,9 +2,11 @@
 
 These are the loop driver rules for the LFD system
 verifier (dogfood). The inner agent (the `fake`
-adapter) does not actually read this — the cycle
-driver is the only thing that reads it, and only to
-follow the workflow.
+adapter, by default; a real coding agent when
+`run-verification-real.sh` is used) does not
+actually read this — the cycle driver is the only
+thing that reads it, and only to follow the
+workflow.
 
 ## Hard rules
 
@@ -17,7 +19,12 @@ follow the workflow.
      parsers, sub-loss scorer, and instruments
      are the system under test.
    - The only agent invocation is via
-     `verifiers/fake-wrapper.sh`.
+     `verifiers/fake-wrapper.sh` (in the
+     `run-verification.sh` tools gate) or
+     `verifiers/<runtime>-wrapper.sh` (in the
+     `run-verification-real.sh` integration gate;
+     the runtime is selected by the script's
+     third arg, default `cline`).
 3. After EACH design-set run, append a one-line
    entry to `logs/iteration-log.md` with cycle
    number, hypothesis, expected failure, and

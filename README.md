@@ -13,7 +13,7 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 
 - **Repository:** https://github.com/antifragileer/loss-function-development-skills
 - **License:** MIT
-- **Bundle version:** 2.0.0
+- **Bundle version:** 2.1.0
 
 ---
 
@@ -33,12 +33,15 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 | [`harness-scaffold`](./skills/harness-scaffold) | 1.0.0 | Build tool — scaffolds the project tree from a `/goal` prompt | yes |
 | [`loop-driver`](./skills/loop-driver) | 1.0.0 | Runtime — runs the outer loop until a stop condition fires | yes |
 
-The 5 required skills implement the LFD pattern. The 5
-agent-adapter skills are siblings — pick one when you
-scaffold a project, and the loop runs against it. The
-`harness-scaffold` and `loop-driver` skills are
-runtime-agnostic; they call whatever wrapper
-`verifiers/<runtime>-wrapper.sh` points to.
+The 6 required skills (3 core: `loss-function-design`,
+`harness-engineering`, `meta-loss-function-development`; 2
+runtime: `harness-scaffold`, `loop-driver`) implement
+the LFD pattern. The 6 agent-adapter skills are
+siblings — pick one when you scaffold a project, and the
+loop runs against it. The `harness-scaffold` and
+`loop-driver` skills are runtime-agnostic; they call
+whatever wrapper `verifiers/<runtime>-wrapper.sh`
+points to.
 
 See [`compatibility.md`](./compatibility.md) for the
 version matrix and the adapter contract for new coding
@@ -100,7 +103,9 @@ search over a candidate skill:
    agent via the wrapper, runs the design set, scores the
    cycle with a 7-sub-loss scorer, applies forced entropy
    on stall, and stops on success / wall-clock / tokens /
-   plateau.
+   plateau. The success threshold (2 consecutive
+   pass_rate=1.0 cycles by default) is configurable
+   via the `--success-after` flag.
 
 The driver layer is **runtime-agnostic**. The 6 agent
 adapters are siblings; pick one when you scaffold, and the
@@ -142,38 +147,37 @@ The LFD system verifies itself. The
 [`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
 project scaffolds a complete loss-function-driven loop
 that exercises every bundle skill end-to-end, runs in
-under 5 minutes, and produces a deterministic report
+under 5 minutes, and produces a verification report
 (`verification-report.md` + `verification-report.json`).
 
-It uses the `fake-agent` adapter
-(`fake-agent-orchestration`, v1.0.0) — a deterministic
-stub that has no model and no network, so the verifier
-is bit-exact reproducible. Every run produces the same
-output.
+It runs **two gates** — both must pass for the LFD
+system to be considered verified:
 
-To run the verifier:
+| Gate | Script | Adapter | Time | What it proves |
+|---|---|---|---|---|
+| Tools | `run-verification.sh` | `fake-agent` (deterministic stub) | ~15s | LFD *tools* work: parsers, install, driver, scorer shape, sub-loss shape, the method test, the held-out grader. Bit-exact reproducible. |
+| Integration | `run-verification-real.sh` | a real coding agent (Cline by default; `claude-code`, `codex`, `hermes-agent`, `opencode` also supported) | ~3-5 min | LFD *integration* works: the wrapper actually invokes the agent, the per-cycle outputs flow correctly, the per-task graders evaluate real agent output. Non-deterministic; pass_rate ≥ 0.8 is the threshold. |
+
+To run both gates:
 
 ```bash
 cd examples/lfd-system-verifier
-./run-verification.sh
+
+./run-verification.sh        # fast deterministic gate
+./run-verification-real.sh   # real-agent integration gate
 ```
 
-The script:
-1. Installs the LFD bundle into a fresh test profile
-2. Invokes the loss-function-driven loop against the
-   fake agent for 1 cycle
-3. Runs 5 deterministic design tasks that exercise the
-   bundle's parsers, the loop driver, the sub-loss
-   scorer, the install/uninstall scripts, and the
-   bundle manifest
-4. Produces a `verification-report.md` with pass/fail
-   per task, sub-loss scores, and a summary
-5. Cleans all per-cycle artifacts (`.iterations/`,
-   `logs/cycle-*/`) keeping only the report
+The fake-agent gate is the **CI gate**: fast, deterministic,
+catches contract drift. The real-agent gate is the
+**integration gate**: proves the system is actually usable
+with a real coding agent. See the
+[verifier's README](./examples/lfd-system-verifier/README.md)
+for full details on what each gate exercises, the per-task
+graders, and the report format. **Contributions must pass
+both gates** — see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
-The verifier is the source of truth that the LFD
-system is operational. If the verifier passes, the
-bundle is healthy. If it fails, the report tells you
+If this verifier passes (both gates), the LFD system is
+operational. If either gate fails, the report tells you
 which component regressed.
 
 ---
@@ -204,7 +208,9 @@ which component regressed.
 │   ├── meta-loss-function-development/
 │   ├── harness-scaffold/
 │   └── loop-driver/
-└── examples/                 # sample /goal prompts and run logs
+└── examples/                 # sample /goal prompts and the LFD system verifier
+    ├── lfd-system-verifier/  # dogfood verifier (run-verification.sh, run-verification-real.sh)
+    └── cli-tool-rust.md      # example /goal prompt
 ```
 
 ---

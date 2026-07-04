@@ -25,18 +25,19 @@ which works with which." When you upgrade, read this first.
 This is a *forward* matrix: row's version × column's version
 is "compatible."
 
-| | lfd 2.x | he 2.x | cline 2.x | cc 1.x | codex 1.x | hermes 1.x | opencode 1.x | meta 1.x | scaffold 1.x | loop 1.x |
-|---|---|---|---|---|---|---|---|---|---|---|
-| **loss-fn-design 2.x** | — | yes | yes | yes | yes | yes | yes | yes | yes | yes |
-| **harness-eng 2.x** | yes | — | yes | yes | yes | yes | yes | yes | yes | yes |
-| **cline-orch 2.x** | yes | yes | — | yes | yes | yes | yes | yes | yes | yes |
-| **claude-code 1.x** | yes | yes | yes | — | yes | yes | yes | yes | yes | yes |
-| **codex 1.x** | yes | yes | yes | yes | — | yes | yes | yes | yes | yes |
-| **hermes-agent 1.x** | yes | yes | yes | yes | yes | — | yes | yes | yes | yes |
-| **opencode 1.x** | yes | yes | yes | yes | yes | yes | — | yes | yes | yes |
-| **meta-lfd 1.x** | yes (≥1.x) | yes (≥1.x) | optional | optional | optional | optional | optional | — | yes | yes |
-| **harness-scaffold 1.x** | — | — | optional | optional | optional | optional | optional | n/a | — | yes (≥1.0) |
-| **loop-driver 1.x** | — | — | optional | optional | optional | optional | optional | n/a | yes (≥1.0) | — |
+| | lfd 2.x | he 2.x | cline 2.x | cc 1.x | codex 1.x | hermes 1.x | opencode 1.x | fake 1.x | meta 1.x | scaffold 1.x | loop 1.x |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| **loss-fn-design 2.x** | — | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| **harness-eng 2.x** | yes | — | yes | yes | yes | yes | yes | yes | yes | yes | yes |
+| **cline-orch 2.x** | yes | yes | — | yes | yes | yes | yes | yes | yes | yes | yes |
+| **claude-code 1.x** | yes | yes | yes | — | yes | yes | yes | yes | yes | yes | yes |
+| **codex 1.x** | yes | yes | yes | yes | — | yes | yes | yes | yes | yes | yes |
+| **hermes-agent 1.x** | yes | yes | yes | yes | yes | — | yes | yes | yes | yes | yes |
+| **opencode 1.x** | yes | yes | yes | yes | yes | yes | — | yes | yes | yes | yes |
+| **fake-agent 1.x** | yes | yes | yes | yes | yes | yes | yes | — | yes | yes | yes |
+| **meta-lfd 1.x** | yes (≥1.x) | yes (≥1.x) | optional | optional | optional | optional | optional | optional | — | yes | yes |
+| **harness-scaffold 1.x** | — | — | optional | optional | optional | optional | optional | optional | n/a | — | yes (≥1.0) |
+| **loop-driver 1.x** | — | — | optional | optional | optional | optional | optional | optional | n/a | yes (≥1.0) | — |
 
 Rules:
 
@@ -57,6 +58,12 @@ Rules:
   `hermes model` or the active profile.
 - **opencode-orchestration 1.x** targets **OpenCode v1.x**.
   Provider-agnostic — the model comes from `$OPENCODE_MODEL`.
+- **fake-agent-orchestration 1.x** is the deterministic stub
+  used by the LFD system verifier (`examples/lfd-system-verifier/`)
+  to dogfood the LFD system end-to-end. No model, no network.
+  The wrapper contract matches the 5 real adapters exactly, so
+  a `fake-agent` cycle.sh invocation exercises the same code
+  paths as a real agent run.
 - **meta-loss-function-development 1.x** is the meta-loop. It
   produces a /goal prompt that the next 3 skills (harness-scaffold,
   loop-driver) consume. The /goal prompt format is the contract;
@@ -65,6 +72,10 @@ Rules:
   coupled. They share the file layout (verifiers/, instruments/,
   test-tasks/, logs/), the iteration-log.md format, and the
   sub-losses.json schema. **Always upgrade both together.**
+- **loop-driver 1.x**'s success stop condition is configurable
+  via the `--success-after N` flag (default 2). The verifier's
+  method test uses `--success-after 99` to disable the
+  early-success stop so all 3 cycles run.
 
 ## What changes between major versions
 
@@ -80,19 +91,28 @@ Rules:
 - **claude-code-orchestration, codex-orchestration,
   hermes-agent-orchestration, opencode-orchestration 1.x**:
   first release in v2.0.0 of the bundle.
+- **fake-agent-orchestration 1.x**: first release in
+  v2.1.0 of the bundle. Used by the LFD system verifier
+  to dogfood the loop end-to-end.
 - **meta-loss-function-development 1.x**: first release.
 - **harness-scaffold 1.x**: first release.
-- **loop-driver 1.x**: first release.
+- **loop-driver 1.x**: first release. **1.x → 1.1.x
+  (planned)**: add `--success-after` documented in
+  `references/stop-conditions.md`; the flag is already
+  implemented in `cycle.sh` but the reference doc is
+  stale.
 
 ## When the inner agent changes (drop-in substitution)
 
-The five agent-adapter skills in the bundle — `cline-orchestration`,
-`claude-code-orchestration`, `codex-orchestration`,
-`hermes-agent-orchestration`, `opencode-orchestration` — all
-bind to a specific inner agent. They are siblings: pick one
-when you scaffold, and the loop runs against it.
+The six agent-adapter skills in the bundle —
+`cline-orchestration`, `claude-code-orchestration`,
+`codex-orchestration`, `hermes-agent-orchestration`,
+`opencode-orchestration`, `fake-agent-orchestration` —
+all bind to a specific inner agent. They are siblings:
+pick one when you scaffold, and the loop runs against it.
 
-The user passes `--runtime {cline,claude-code,codex,hermes-agent,opencode}`
+The user passes
+`--runtime {cline,claude-code,codex,hermes-agent,opencode,fake}`
 to `harness-scaffold` to generate the correct wrapper, and the
 loop-driver picks up the right `parse_<agent>_output.py` from
 the matching adapter skill.
@@ -105,7 +125,7 @@ The harness-scaffold and loop-driver skills are
 
 A new agent adapter skill (e.g., `aider-orchestration`) is
 compatible with the bundle if it ships in the same shape as
-the 5 included adapters:
+the 6 included adapters:
 
 1. `SKILL.md` describing the agent's CLI surface
 2. `scripts/parse_<agent>_output.py` — NDJSON / JSON parser

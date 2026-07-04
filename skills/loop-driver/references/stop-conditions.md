@@ -4,21 +4,27 @@ The driver stops when ANY of these conditions is true.
 
 ## Condition 1: success
 
-**Trigger:** `pass_rate == 1.0` for 2 consecutive cycles
-AND the last 2 overfit-reflections say "generalizing".
+**Trigger:** `pass_rate == 1.0` for **N** consecutive cycles
+AND the last **N** overfit-reflections say "generalizing".
+**N** defaults to **2** and is configurable via the
+`--success-after N` flag (passed to `cycle.sh`). Pass
+`--success-after 0` to disable the early-success stop
+entirely (used by the verifier's method test, which
+needs a fixed number of cycles to demonstrate the
+forced-entropy rule).
 
 **What the driver does:** emits a `STOP: success` event
 to `logs/iteration-log.md` and returns the best cycle's
 score.
 
-**Why "2 consecutive + generalizing":** the agent might
+**Why "N consecutive + generalizing":** the agent might
 hit pass_rate=1.0 once by overfitting the design set. The
-held-out grader will catch that. Requiring 2 consecutive
+held-out grader will catch that. Requiring N consecutive
 cycles with `generalizing_or_memorizing=g` filters out the
 lucky overfit. The held-out grader is the real test; this
 condition is just the design-set-side filter.
 
-**A worked example:**
+**A worked example** (N=2, the default):
 
 - Cycle 12: pass_rate=1.0, generalizing=g.
 - Cycle 13: pass_rate=1.0, generalizing=g. **STOP: success.**
@@ -31,6 +37,18 @@ vs.
 - The driver requires 2 consecutive with g. Cycle 12 was
   memorizing; cycle 13 was generalizing. The driver waits
   for cycle 14 to confirm.
+
+**When to raise N:** if your agent's pass_rate=1.0 is
+overfitting the design set (held-out fails), raise
+`--success-after` to 3 or 4. The driver will require
+more consecutive generalizing cycles before stopping,
+giving the agent more time to escape the overfit.
+
+**When to set N=0:** when the loop is being driven by
+a test (e.g. the verifier's method test), not by a
+real agent. The test wants a fixed number of cycles
+regardless of success, to exercise the loop's
+improvement-tracking machinery.
 
 ## Condition 2: wall-clock exhausted
 

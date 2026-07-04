@@ -106,19 +106,48 @@ via `LFD_REAL_BUDGET` (e.g. `LFD_REAL_BUDGET=900` for
 
 ## What the verifier proves
 
-The verifier exercises every bundle skill end-to-end:
+The verifier exercises every bundle skill end-to-end. The
+two gates exercise different things:
+
+**Tools gate** (`run-verification.sh`): every test is a
+**shape check** of a specific bundle component. It passes
+deterministically if the shape is right. The 5 design
+tasks and 5 held-out tasks each target a different
+component:
 
 | Component | How it's tested |
 |---|---|
-| `install.sh` | design task `d3-verify-install-script`; held-out `h2-install-determinism` |
-| `bundle.json` manifest | design task `d2-verify-bundle-manifest` |
+| `install.sh` | design task `d3-verify-install-script` (runs `install.sh --check` against a fresh profile); held-out `h2-install-determinism` (asserts the same install produces the same output across two runs) |
+| `bundle.json` manifest | design task `d2-verify-bundle-manifest`; held-out `h5-compatibility-matrix-consistency` |
 | Adapter parsers (5 of them) | design task `d1-parse-cline-output`; held-out `h1-shared-parser-shape` |
 | Per-cycle sub-loss scorer | design task `d4-compute-sub-losses`; held-out `h3-drift-opt-in` |
 | Loop driver (`cycle.sh`) | design task `d5-loop-driver-smoke`; held-out `h4-force-entropy-trigger` |
-| Compatibility matrix | held-out `h5-compatibility-matrix-consistency` |
+| Method test (3 cycles) | method task `method-drives-improvement` (improvement tracking + forced-entropy rule) |
 
-If this verifier passes, the LFD system is healthy. If
-it fails, the report tells you which component regressed.
+> **Caveat:** the d1-d4 graders mostly check **the
+> fixture data + the parser/installer shape**, not the
+> agent's output. They pass whether or not the agent
+> actually did anything. **d5 is the only design task
+> that actually requires the inner agent to invoke
+> `cycle.sh` and verify its outputs.** This is
+> intentional for the deterministic baseline (we
+> want the tools gate to be reproducible) but it
+> means the tools gate alone is not sufficient —
+> the integration gate (`run-verification-real.sh`)
+> is what proves the wrappers actually wire a real
+> agent to those tools.
+
+**Integration gate** (`run-verification-real.sh`): the
+inner agent is a real coding agent (Cline, Claude Code,
+Codex, Hermes, OpenCode). The wrapper actually invokes
+the agent binary, captures its NDJSON / JSON output,
+parses it, and the per-task graders evaluate the
+agent's actual output. Non-deterministic by
+construction; pass_rate ≥ 0.8 is the threshold.
+
+If both gates pass, the LFD system is operational. If
+either fails, the report tells you which component
+regressed.
 
 ## Determinism
 

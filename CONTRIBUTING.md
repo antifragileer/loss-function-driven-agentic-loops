@@ -11,7 +11,7 @@ bar is high: portable, agent-legible, and verified.
 - [Compatibility matrix](./compatibility.md) — version
   rules + adapter contract
 - [Bundle manifest](./bundle.json) — single source of
-  truth for the 10-skill inventory
+  truth for the 11-skill inventory
 
 ## What we accept
 
@@ -21,7 +21,7 @@ We welcome:
   `continue-orchestration`, `goose-orchestration`) — see
   the [adapter contract](#the-agent-adapter-contract)
   below.
-- **Bug fixes** to any of the 10 skills, the installer,
+- **Bug fixes** to any of the 11 skills, the installer,
   the parser scripts, or the wrapper contracts.
 - **Documentation improvements** — clearer
   troubleshooting recipes, more examples, sharper
@@ -107,6 +107,65 @@ print('all SKILL.md files valid')
 grep -rE "oxenated|/Users/[A-Za-z]+|antifragileer" skills/ install.sh uninstall.sh bundle.json compatibility.md README.md && \
   { echo "FAIL: portability violation found"; exit 1; } || true
 ```
+
+### 3a. Run the LFD system verifier (dogfood)
+
+The LFD system verifies itself. The
+[`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
+project exercises every bundle skill end-to-end. **Both of
+the following must pass** before a contribution is mergeable:
+
+```bash
+cd examples/lfd-system-verifier
+
+# Fast deterministic gate (~15s, no model, no network).
+# Tests that the LFD *tools* work: parsers, install,
+# driver, scorer shape. Bit-exact reproducible.
+./run-verification.sh
+
+# Real-agent gate (~3-5 min, requires a real coding agent
+# on $PATH — Cline by default; claude-code, codex,
+# hermes-agent, opencode also supported).
+# Tests that the LFD *integration* works: the wrapper
+# actually invokes the agent, the per-cycle outputs
+# flow correctly, the per-task graders evaluate real
+# agent output.
+#
+# pass_rate >= 0.8 is the threshold (4/5 on the 5-task
+# design set is the expected norm; 5/5 is the gold
+# standard). The full criteria are documented in the
+# verifier's README and report.
+./run-verification-real.sh
+```
+
+Why **both** are required:
+
+- The fake-agent run is the **bit-exact CI gate** —
+  fast, deterministic, catches contract drift in
+  parsers, install, driver, scorer shape, sub-loss
+  shape, the method test, the held-out grader. A
+  failure here is a real regression in the LFD
+  system.
+- The real-agent run is the **integration gate** —
+  proves the system is actually usable with a real
+  coding agent. Catches integration bugs the
+  fake-agent can't: the wrapper failing to invoke the
+  binary, the parser misreading the agent's actual
+  output, the per-cycle state files surviving a
+  real agent's per-cycle directory creation. A
+  failure here is a real integration regression.
+
+Contributions that don't run both are **not mergeable**
+— the LFD system can't be considered verified without
+both gates green.
+
+If your change touches the real-agent path (the wrapper
+script, the run-design-set harness, or the per-task
+graders) and you don't have a real coding agent on
+$PATH, you can skip the real-agent gate for the PR
+but you must note it in the PR description so the
+maintainer can run it. Don't fake the gate by
+tweaking the threshold.
 
 ### 4. Commit and push
 
