@@ -1,4 +1,4 @@
-# Loss Function Development Skills
+# 0x278's Loss Function Development Skills
 
 A drop-in skill bundle for **loss-function-driven (LFD)
 agentic loops** — turn a high-level goal into a
