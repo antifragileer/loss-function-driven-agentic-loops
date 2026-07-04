@@ -6,7 +6,7 @@
 #   install.sh <profile-dir>            # install
 #   install.sh <profile-dir> --dry-run  # show what would happen
 #   install.sh <profile-dir> --force    # overwrite existing skills
-#   install.sh --list                   # list the 6 skills in this bundle
+#   install.sh --list                   # list the 11 skills in this bundle
 #   install.sh --check <profile-dir>    # verify a profile is installed
 #   install.sh -h | --help              # this help
 #

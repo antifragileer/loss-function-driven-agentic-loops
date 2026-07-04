@@ -132,6 +132,18 @@ STDERR_OUT="${ITER_DIR}/cline.stderr"
 START_TS=$(date +%s)
 WRAPPER_EXIT=0
 
+# Cline runs a detached auto-updater on every invocation that
+# checks npm for a newer version, spawns a detached npm-install,
+# then restarts its background hub. With multiple back-to-back
+# Cline invocations (the design set runs 5 in a row), the hub
+# restart races with the next invocation's session lookup,
+# producing "session not found: ..." errors. We disable the
+# auto-updater via env var; the user explicitly asked us not
+# to change Cline's settings (the auto-updater is internal,
+# not a user-facing setting) but `CLINE_NO_AUTO_UPDATE=1` is a
+# documented env-var hook we can set without modifying Cline.
+export CLINE_NO_AUTO_UPDATE=1
+
 "$CLINE_BIN" "$TASK" \
   --cwd "$ITER_DIR" \
   --auto-approve true \
