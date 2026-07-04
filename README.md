@@ -14,6 +14,37 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
 - **Bundle version:** 2.1.0
+- **Install (skills.sh):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
+
+---
+
+## Install
+
+The bundle is published to **[skills.sh](https://skills.sh/)** — the
+`npx skills` CLI installs all 11 skills into your agent's skill
+directory in one command. Works with Claude Code, Cline, Codex,
+Cursor, GitHub Copilot, Windsurf, Gemini, OpenCode, Hermes Agent,
+and 12 more.
+
+```bash
+# One-shot install of all 11 skills
+npx skills add antifragileer/loss-function-driven-agentic-loops -y -g
+
+# Install only specific skills (repeat -s for each)
+npx skills add antifragileer/loss-function-driven-agentic-loops \
+  -s loss-function-design -s loop-driver -y -g
+
+# List what's available in the bundle without installing
+npx skills add antifragileer/loss-function-driven-agentic-loops --list
+```
+
+After install, each skill shows up under the agent's skills path
+(e.g. `~/.agents/skills/` for the universal store, `~/.claude/skills/`
+for Claude Code). A skill page also appears on
+<https://www.skills.sh/antifragileer/loss-function-driven-agentic-loops>.
+
+If you'd rather install by hand or pin to a specific Hermes profile,
+see the [Quick start](#quick-start) below.
 
 ---
 
