@@ -1,0 +1,13 @@
+All 5 adapter parsers must produce the same 8-key shared
+shape on identical empty input. This proves the parser
+contract is uniform across adapters.
+
+The 5 parsers are:
+- cline-orchestration/scripts/parse_cline_output.py
+- claude-code-orchestration/scripts/parse_claude_output.py
+- codex-orchestration/scripts/parse_codex_output.py
+- hermes-agent-orchestration/scripts/parse_hermes_output.py
+- opencode-orchestration/scripts/parse_opencode_output.py
+
+For each: invoke with an empty path, assert the 8 keys are
+present and have the right types.

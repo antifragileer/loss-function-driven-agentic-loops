@@ -210,6 +210,37 @@ def parse_wrapper_output(summary_file: Path) -> dict:
 
 
 def _extract_run_result(obj: dict) -> dict:
+    """Extract the shared-shape fields from a wrapper's output.
+
+    Adapters in this bundle normalize their output to a
+    shared 8-key shape (snake_case: tokens, duration_ms,
+    candidate_text, model, provider, finish_reason, iterations,
+    tool_calls). The legacy Cline shape uses camelCase
+    (durationMs, text, finishReason, model.id) — we still
+    support that for backward compatibility with raw Cline
+    output, but the shared shape is preferred.
+
+    Detection: if the object has `finish_reason` or
+    `duration_ms` (shared shape), use those. Otherwise fall
+    back to the Cline shape.
+    """
+    is_shared = "finish_reason" in obj or "duration_ms" in obj
+    if is_shared:
+        # Shared 8-key shape (used by all adapters in v2.x).
+        # model may be a string or a {id, provider} dict.
+        model = obj.get("model", "")
+        if isinstance(model, dict):
+            model_id = model.get("id", "")
+        else:
+            model_id = str(model)
+        return {
+            "durationMs": int(obj.get("duration_ms", 0) or 0),
+            "tokens": int(obj.get("tokens", 0) or 0),
+            "candidate_text": str(obj.get("candidate_text", "") or ""),
+            "finishReason": str(obj.get("finish_reason", "") or ""),
+            "model": model_id,
+        }
+    # Legacy Cline shape (run_result event from Cline's NDJSON).
     agg = obj.get("aggregateUsage") or {}
     tokens = (
         int(agg.get("inputTokens", 0) or 0)

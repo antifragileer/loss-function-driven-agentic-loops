@@ -765,8 +765,12 @@ def main():
     parser.add_argument("--goal-prompt", type=Path, default=None,
                         help="Path to the /goal prompt (default: <project>/GOAL.md)")
     parser.add_argument("--runtime", default=None,
-                        choices=["cline", "codex", "aider"],
-                        help="Agent runtime (default: detected from /goal prompt)")
+                        help=("Agent runtime name. The scaffold templates this "
+                              "into <runtime>-wrapper.sh, run-design-set.sh, "
+                              "and AGENTS.md. Free-form; the bundle ships "
+                              "adapters for cline, claude-code, codex, "
+                              "hermes-agent, opencode, and fake. "
+                              "(default: detected from /goal prompt)"))
     parser.add_argument("--no-private", action="store_true",
                         help="Skip the held-out grader scaffold")
     args = parser.parse_args()

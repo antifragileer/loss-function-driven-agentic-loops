@@ -1,0 +1,29 @@
+---
+name: h4-force-entropy-trigger
+description: |
+  The loop's force-entropy rule must be wired into the cycle
+  driver: the cycle.sh script must contain the FORCED_ENTROPY
+  logic (the constant, the append-to-log call, the
+  "consecutive no improvement" counter), and it must
+  apply the entropy on a real stall.
+---
+
+# h4-force-entropy-trigger
+
+The loop's force-entropy rule is a documented feature of
+`loss-function-design` — when pass_rate stops improving,
+the loop forces the agent to make the OPPOSITE change.
+The cycle.sh script implements this rule.
+
+This held-out task verifies two things:
+
+1. **The logic is present in cycle.sh.** A grep for the
+   constants and the append-to-log call must succeed.
+2. **The logic fires on a real stall.** Run 2 cycles with
+   the same candidate and the same expected score; the
+   second cycle must append a `FORCED_ENTROPY=true` entry
+   to the iteration log.
+
+The two checks together prove the rule is both *coded*
+and *triggered*. A regression in either dimension (the
+code is removed, or the trigger is broken) is caught.

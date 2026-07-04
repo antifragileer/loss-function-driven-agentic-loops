@@ -1,6 +1,6 @@
 # Compatibility — loss-function-driven-agentic-loops bundle
 
-Versioned compatibility rules for the 10 skills in the bundle.
+Versioned compatibility rules for the 11 skills in the bundle.
 This file is the single source of truth for "which version of
 which works with which." When you upgrade, read this first.
 
@@ -15,6 +15,7 @@ which works with which." When you upgrade, read this first.
 | `codex-orchestration` | 1.0.0 | agent adapter (Codex v1) | optional — substitute for non-Codex agents |
 | `hermes-agent-orchestration` | 1.0.0 | agent adapter (Hermes Agent v2) | optional — substitute for non-Hermes agents |
 | `opencode-orchestration` | 1.0.0 | agent adapter (OpenCode v1) | optional — substitute for non-OpenCode agents |
+| `fake-agent-orchestration` | 1.0.0 | agent adapter (deterministic stub) | optional — dogfood testing only |
 | `meta-loss-function-development` | 1.0.0 | meta-skill (emits /goal prompt) | yes |
 | `harness-scaffold` | 1.0.0 | build-tool (scaffolds project tree) | yes |
 | `loop-driver` | 1.0.0 | runtime (runs the outer loop) | yes |
@@ -152,7 +153,7 @@ git pull  # or download the new tarball
 ./install.sh --check <profile-dir>
 ```
 
-The installer overwrites the 10 skill directories but does
+The installer overwrites the 11 skill directories but does
 **not** touch any other skills in the profile.
 
 ## Downgrading
@@ -164,7 +165,7 @@ loop-driver) are version-coupled and must match.
 
 ## What is NOT in this bundle
 
-The 10-skill bundle is the *minimum* for a loss-function-driven
+The 11-skill bundle is the *minimum* for a loss-function-driven
 loop. Optional additions that work with the bundle but are
 not included:
 
@@ -172,10 +173,10 @@ not included:
   `harness-engineering` skill describes how to wire one in;
   the actual exporter setup is per-project.
 - **Additional inner-agent skills** (Aider, Continue,
-  Goose, etc.). The 5 included adapters are
-  Cline, Claude Code, Codex, Hermes Agent, and OpenCode.
-  See the "drop-in substitution" section above for the
-  adapter contract.
+  Goose, etc.). The 6 included adapters are
+  Cline, Claude Code, Codex, Hermes Agent, OpenCode, and
+  fake-agent. See the "drop-in substitution" section above
+  for the adapter contract.
 - **CI integration** (run the loop in GitHub Actions).
   `loop-driver/scripts/run-loop.sh` exits 0/3 — wrap it in
   your CI's shell step.

@@ -72,7 +72,7 @@ online or offline event.
 Instances of abusive, harassing, or otherwise
 unacceptable behavior may be reported to the community
 leaders responsible for enforcement at
-[security@antifragileer.dev](mailto:security@antifragileer.dev).
+[jeremy@0x278.com](mailto:jeremy@0x278.com).
 All complaints will be reviewed and investigated
 promptly and fairly.
 

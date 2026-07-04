@@ -6,7 +6,7 @@
 vulnerabilities.**
 
 Send a private report to
-[security@antifragileer.dev](mailto:security@antifragileer.dev)
+[jeremy@0x278.com](mailto:jeremy@0x278.com)
 with:
 
 - A description of the vulnerability

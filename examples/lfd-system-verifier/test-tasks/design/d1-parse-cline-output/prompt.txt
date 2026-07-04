@@ -1,0 +1,12 @@
+Parse a sample Cline NDJSON transcript and verify the output
+has the 8 required shared keys. The sample transcript is at
+test-tasks/design/d1-parse-cline-output/sample.ndjson. Run
+the parser and assert:
+- output is valid JSON
+- has all 8 required keys: tokens, duration_ms,
+  candidate_text, model, provider, finish_reason, iterations,
+  tool_calls
+- tokens and duration_ms are integers
+- candidate_text is a non-empty string
+- tool_calls is a list
+- exit code is 0

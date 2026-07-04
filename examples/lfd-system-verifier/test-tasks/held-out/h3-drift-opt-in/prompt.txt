@@ -1,0 +1,6 @@
+The drift sub-loss must correctly handle the
+expected_model="" opt-in: when expected_model is unset,
+drift is graded 1.0 (no expectation = no penalty).
+
+Test: invoke compute_sub_losses.py with an input that has
+expected_model="" and assert the drift sub-loss is 1.0.

@@ -1,0 +1,8 @@
+Run the per-cycle sub-loss scorer (compute_sub_losses.py
+copied into verifiers/) on a sample input and verify:
+- output JSON has the 7 sub-losses: correctness, performance,
+  safety, legibility, invariants, drift, cost
+- output has weights, gates, weighted_sum, weighted_total,
+  weighted_normalized, gates_passed fields
+- the 3 gate sub-losses (correctness, safety, invariants)
+  are scored >= 1.0 when input is clean

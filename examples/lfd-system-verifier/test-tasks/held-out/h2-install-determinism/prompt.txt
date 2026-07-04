@@ -1,0 +1,7 @@
+install.sh must be deterministic: two consecutive runs
+against the same fresh profile must produce byte-identical
+output (modulo timestamps in stderr).
+
+Run install.sh twice against a fresh profile each time, then
+diff the resulting profiles (after sorting file listings and
+ignoring chmod-only differences).

@@ -1,0 +1,23 @@
+Run the loss-function-driven loop for 3 cycles using the
+fake-method wrapper and verify the *method* (not just the
+tools) works end-to-end:
+
+- The iteration log must have 3 cycle entries
+  (cycle 1, cycle 2, cycle 3).
+- best-cycle.json must be UPDATED at least once (cycle 2's
+  weighted_sum must be > cycle 1's, since cycle 2's
+  candidate is much better than cycle 1's empty stub).
+- Each cycle's sub-losses.json must exist and have a
+  `weighted_normalized` field.
+- Cycle 3's log line must contain FORCED_ENTROPY=true
+  (because cycle 3 sees no improvement over cycle 2, the
+  loop's force-entropy rule fires).
+- At least one cycle's sub-losses.json must have
+  weighted_normalized >= 0.8 (cycle 2's improvement is
+  real and visible in the score).
+
+The fake-method wrapper is a deterministic stub that emits
+different candidates per cycle:
+  - cycle 1: empty candidate_text (legibility 0.0)
+  - cycle 2: great candidate (legibility 1.0)
+  - cycle 3+: same great candidate (plateau, force-entropy fires)

@@ -1,0 +1,6 @@
+{"type":"hook_event","event":{"type":"agent_start"}}
+{"type":"agent_event","event":{"type":"iteration_start","iteration":1}}
+{"type":"agent_event","event":{"type":"content_start","contentType":"text"}}
+{"type":"agent_event","event":{"type":"content_end","contentType":"text","text":"I'll start by reading the test file and then writing the candidate."}}
+{"type":"agent_event","event":{"type":"tool_call","name":"read_file","args":{"path":"/tmp/test.txt"}}}
+{"type":"run_result","aggregateUsage":{"inputTokens":1500,"outputTokens":2400,"cacheReadTokens":0},"durationMs":12345,"text":"Done.","model":{"id":"test-model","provider":"openai-compatible"},"finishReason":"completed","iterations":1}

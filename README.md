@@ -5,10 +5,11 @@ agentic loops** — turn a high-level goal into a
 paste-able `/goal` prompt, scaffold a harness, and run the
 outer loop until the inner agent's skill converges.
 
-The bundle ships **10 cooperating skills** that implement
-the LFD pattern, with **5 agent-adapter skills** so the same
+The bundle ships **11 cooperating skills** that implement
+the LFD pattern, with **6 agent-adapter skills** so the same
 loop works against Cline, Claude Code, Codex, Hermes Agent,
-or OpenCode.
+OpenCode, or the deterministic `fake-agent` stub used for
+dogfood testing (see `examples/lfd-system-verifier/`).
 
 - **Repository:** https://github.com/antifragileer/loss-function-development-skills
 - **License:** MIT
@@ -27,6 +28,7 @@ or OpenCode.
 | [`codex-orchestration`](./skills/codex-orchestration) | 1.0.0 | **Agent adapter** — Codex CLI v1.x (OpenAI) | optional |
 | [`hermes-agent-orchestration`](./skills/hermes-agent-orchestration) | 1.0.0 | **Agent adapter** — Hermes Agent v2.x (provider-agnostic) | optional |
 | [`opencode-orchestration`](./skills/opencode-orchestration) | 1.0.0 | **Agent adapter** — OpenCode v1.x (provider-agnostic) | optional |
+| [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
 | [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.0.0 | The meta-skill that emits the `/goal` prompt | yes |
 | [`harness-scaffold`](./skills/harness-scaffold) | 1.0.0 | Build tool — scaffolds the project tree from a `/goal` prompt | yes |
 | [`loop-driver`](./skills/loop-driver) | 1.0.0 | Runtime — runs the outer loop until a stop condition fires | yes |
@@ -100,7 +102,7 @@ search over a candidate skill:
    on stall, and stops on success / wall-clock / tokens /
    plateau.
 
-The driver layer is **runtime-agnostic**. The 5 agent
+The driver layer is **runtime-agnostic**. The 6 agent
 adapters are siblings; pick one when you scaffold, and the
 loop runs against it. To add a new coding agent, write a
 new adapter skill with the same shape and the loop
@@ -121,15 +123,58 @@ you:
 - **An outer driver** (loop-driver) that runs the
   hypothesis → candidate → score → forced-entropy cycle
   until the inner agent's skill converges.
-- **A pluggable inner agent** (5 adapters) so the same
+- **A pluggable inner agent** (6 adapters) so the same
   loop works against the coding agent you already use.
 - **A meta-skill** (meta-loss-function-development) that
   turns "build X" into a `/goal` prompt you can paste.
+- **A dogfood verifier** (`examples/lfd-system-verifier/`)
+  that proves the LFD system itself works — see
+  "Verifying the LFD system" below.
 
 The 4-piece loss anatomy — **target / constraints /
 instruments / forced entropy** — is the design contract.
 Every project you scaffold has the same shape, so the
 loop is reusable across them.
+
+## Verifying the LFD system (dogfood)
+
+The LFD system verifies itself. The
+[`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
+project scaffolds a complete loss-function-driven loop
+that exercises every bundle skill end-to-end, runs in
+under 5 minutes, and produces a deterministic report
+(`verification-report.md` + `verification-report.json`).
+
+It uses the `fake-agent` adapter
+(`fake-agent-orchestration`, v1.0.0) — a deterministic
+stub that has no model and no network, so the verifier
+is bit-exact reproducible. Every run produces the same
+output.
+
+To run the verifier:
+
+```bash
+cd examples/lfd-system-verifier
+./run-verification.sh
+```
+
+The script:
+1. Installs the LFD bundle into a fresh test profile
+2. Invokes the loss-function-driven loop against the
+   fake agent for 1 cycle
+3. Runs 5 deterministic design tasks that exercise the
+   bundle's parsers, the loop driver, the sub-loss
+   scorer, the install/uninstall scripts, and the
+   bundle manifest
+4. Produces a `verification-report.md` with pass/fail
+   per task, sub-loss scores, and a summary
+5. Cleans all per-cycle artifacts (`.iterations/`,
+   `logs/cycle-*/`) keeping only the report
+
+The verifier is the source of truth that the LFD
+system is operational. If the verifier passes, the
+bundle is healthy. If it fails, the report tells you
+which component regressed.
 
 ---
 

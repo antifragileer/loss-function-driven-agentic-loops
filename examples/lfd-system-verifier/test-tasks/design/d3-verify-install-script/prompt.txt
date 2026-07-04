@@ -1,0 +1,6 @@
+Run install.sh --check against a fresh empty profile and
+verify it reports all 11 LFD bundle skills are present.
+The profile must be a fresh temp dir; the test asserts:
+- install.sh --check exits 0
+- the report contains the substring "11 LFD bundle skills"
+- after install, the profile has 11 skill subdirs

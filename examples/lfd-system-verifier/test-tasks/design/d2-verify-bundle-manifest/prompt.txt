@@ -1,0 +1,10 @@
+Read the LFD bundle's bundle.json and verify:
+- version is exactly 2.1.0
+- skills list has exactly 11 entries
+- install_order has exactly 11 entries, matches skills list
+- license is "MIT"
+- repository URL is the antifragileer GitHub repo
+- All 6 adapter names are present: cline-orchestration,
+  claude-code-orchestration, codex-orchestration,
+  hermes-agent-orchestration, opencode-orchestration,
+  fake-agent-orchestration

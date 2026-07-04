@@ -1,14 +1,14 @@
 {
   "bundle": "loss-function-driven-agentic-loops",
-  "version": "2.0.0",
-  "description": "Ten cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with five agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode) so the same loop works across coding agents.",
+  "version": "2.1.0",
+  "description": "Eleven cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with six agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode, fake-agent) so the same loop works across coding agents and across deterministic dogfood testing.",
   "skills": [
     {
       "name": "loss-function-design",
       "version": "2.0.0",
       "role": "vocabulary",
       "required": true,
-      "summary": "The 4-piece loss anatomy (target / constraints / instruments / forced entropy). The other 9 skills reference this vocabulary.",
+      "summary": "The 4-piece loss anatomy (target / constraints / instruments / forced entropy). The other 10 skills reference this vocabulary.",
       "load_trigger": "user says 'loss function', 'reward hacking', 'verifier', 'gate sub-loss', or describes a stuck loop"
     },
     {
@@ -24,7 +24,7 @@
       "version": "2.0.0",
       "role": "agent-adapter",
       "required": false,
-      "substitute": "any other agent-adapter skill in this bundle (claude-code, codex, hermes-agent, opencode) if not using Cline",
+      "substitute": "any other agent-adapter skill in this bundle (claude-code, codex, hermes-agent, opencode, fake-agent) if not using Cline",
       "summary": "Cline v3 CLI surface, NDJSON parser, wrapper contract, per-iteration isolation.",
       "load_trigger": "user says 'Cline', 'Cline version', 'wrapper script', 'Cline flags', or the wrapper errors out"
     },
@@ -33,7 +33,7 @@
       "version": "1.0.0",
       "role": "agent-adapter",
       "required": false,
-      "substitute": "any other agent-adapter skill in this bundle (cline, codex, hermes-agent, opencode) if not using Claude Code",
+      "substitute": "any other agent-adapter skill in this bundle (cline, codex, hermes-agent, opencode, fake-agent) if not using Claude Code",
       "summary": "Claude Code CLI (Anthropic) print-mode surface, --output-format json parser, wrapper contract, per-iteration isolation.",
       "load_trigger": "user says 'Claude Code', 'claude -p', 'Claude Code wrapper', or the Claude Code wrapper errors out"
     },
@@ -42,7 +42,7 @@
       "version": "1.0.0",
       "role": "agent-adapter",
       "required": false,
-      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, hermes-agent, opencode) if not using Codex",
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, hermes-agent, opencode, fake-agent) if not using Codex",
       "summary": "OpenAI Codex CLI exec-mode surface, --json NDJSON parser, wrapper contract, git-init per-iteration isolation.",
       "load_trigger": "user says 'Codex', 'codex exec', 'Codex wrapper', or the Codex wrapper errors out"
     },
@@ -51,7 +51,7 @@
       "version": "1.0.0",
       "role": "agent-adapter",
       "required": false,
-      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, opencode) if not using Hermes Agent",
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, opencode, fake-agent) if not using Hermes Agent",
       "summary": "Hermes Agent CLI chat-mode surface, --output-format json parser, wrapper contract, profile-based per-iteration isolation.",
       "load_trigger": "user says 'Hermes', 'hermes chat', 'Hermes wrapper', or wants a provider-agnostic inner agent"
     },
@@ -60,9 +60,18 @@
       "version": "1.0.0",
       "role": "agent-adapter",
       "required": false,
-      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent) if not using OpenCode",
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent, fake-agent) if not using OpenCode",
       "summary": "OpenCode CLI run-mode surface, --format json parser, wrapper contract, --workdir per-iteration isolation.",
       "load_trigger": "user says 'OpenCode', 'opencode run', 'OpenCode wrapper', or the OpenCode wrapper errors out"
+    },
+    {
+      "name": "fake-agent-orchestration",
+      "version": "1.0.0",
+      "role": "agent-adapter",
+      "required": false,
+      "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent, opencode) if not using the deterministic fake stub",
+      "summary": "Deterministic stub adapter for dogfood testing. No model, no network, bit-exact output. Used by the LFD system verifier.",
+      "load_trigger": "user says 'fake agent', 'deterministic test', 'LFD system verifier', or is building a CI test that runs the LFD loop without a real model"
     },
     {
       "name": "meta-loss-function-development",
@@ -97,6 +106,7 @@
     "codex-orchestration",
     "hermes-agent-orchestration",
     "opencode-orchestration",
+    "fake-agent-orchestration",
     "meta-loss-function-development",
     "harness-scaffold",
     "loop-driver"
@@ -105,7 +115,7 @@
     "1. User describes a goal in plain language.",
     "2. meta-loss-function-development emits a paste-able /goal prompt.",
     "3. User opens a fresh session and pastes the /goal prompt.",
-    "4. Fresh session runs harness-scaffold to build the project tree (with --runtime {cline,claude-code,codex,hermes-agent,opencode}).",
+    "4. Fresh session runs harness-scaffold to build the project tree (with --runtime {cline,claude-code,codex,hermes-agent,opencode,fake}).",
     "5. User (or fresh session) fills in the per-task grade.sh scripts.",
     "6. Fresh session runs loop-driver/run-loop.sh to drive the cycles.",
     "7. Loop stops on success / wall-clock / tokens / plateau.",
@@ -119,14 +129,16 @@
     "claude-code-orchestration": "targets Claude Code v2.x; the wrapper is portable across v2.x patch versions",
     "codex-orchestration": "targets Codex CLI v1.x; the wrapper requires git in the iteration dir",
     "hermes-agent-orchestration": "targets Hermes Agent v2.x; the wrapper is provider-agnostic",
-    "opencode-orchestration": "targets OpenCode v1.x; the wrapper is provider-agnostic"
+    "opencode-orchestration": "targets OpenCode v1.x; the wrapper is provider-agnostic",
+    "fake-agent-orchestration": "deterministic stub; no version target, no real CLI"
   },
   "agent_adapters": {
     "cline": "cline-orchestration (v2.0.0, included) — Cline v3.0.34+",
     "claude-code": "claude-code-orchestration (v1.0.0, included) — Claude Code v2.x (Anthropic-only)",
     "codex": "codex-orchestration (v1.0.0, included) — Codex CLI v1.x (OpenAI-only, requires git)",
     "hermes-agent": "hermes-agent-orchestration (v1.0.0, included) — Hermes Agent v2.x (provider-agnostic)",
-    "opencode": "opencode-orchestration (v1.0.0, included) — OpenCode v1.x (provider-agnostic)"
+    "opencode": "opencode-orchestration (v1.0.0, included) — OpenCode v1.x (provider-agnostic)",
+    "fake": "fake-agent-orchestration (v1.0.0, included) — deterministic stub for dogfood testing, no model, no network"
   },
   "license": "MIT",
   "repository": "https://github.com/antifragileer/loss-function-development-skills",

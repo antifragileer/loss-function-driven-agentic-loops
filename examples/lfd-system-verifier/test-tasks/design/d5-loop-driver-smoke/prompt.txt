@@ -1,0 +1,10 @@
+Run the loop driver's cycle.sh with the fake-agent wrapper
+and verify the cycle produces:
+- cycle-summary.json (from the wrapper)
+- design-set-score.json (from run-design-set.sh)
+- sub-losses.json (from compute_sub_losses.py)
+- best-cycle.json (updated by the cycle)
+- iteration-log.md (appended by the cycle)
+
+Also verify the cycle's exit code is 0 (the wrapper cannot
+fail) and the wall-clock elapsed is < 30 seconds.

@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# d3-verify-install-script grader
+# Runs install.sh --check against a fresh profile and asserts
+# the bundle installs cleanly.
+set -uo pipefail
+
+PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
+REPO_ROOT="$(cd "$PROJECT_DIR/../.." && pwd)"
+INSTALL_SH="$REPO_ROOT/install.sh"
+TEST_PROFILE="$(mktemp -d -t lfd-verify-d3-XXXXXX)"
+CHECK_LOG="$(mktemp -t lfd-verify-d3-check-XXXXXX.log)"
+
+score=0.0
+cleanup() {
+  rm -rf "$TEST_PROFILE"
+  rm -f "$CHECK_LOG"
+}
+trap cleanup EXIT
+
+if [[ ! -x "$INSTALL_SH" ]]; then
+  echo "FAIL: install.sh not found or not executable" >&2
+  echo "score=$score"
+  exit 1
+fi
+
+# First install (without --check), then check
+mkdir -p "$TEST_PROFILE/skills"
+if ! "$INSTALL_SH" "$TEST_PROFILE" --force >/dev/null 2>&1; then
+  echo "FAIL: install.sh --force failed" >&2
+  echo "score=$score"
+  exit 1
+fi
+
+# Now run --check
+if ! "$INSTALL_SH" --check "$TEST_PROFILE" > "$CHECK_LOG" 2>&1; then
+  echo "FAIL: install.sh --check exited non-zero" >&2
+  cat "$CHECK_LOG" >&2
+  echo "score=$score"
+  exit 1
+fi
+
+# Verify the report
+if ! grep -q "11 LFD bundle skills" "$CHECK_LOG"; then
+  echo "FAIL: check report does not mention 11 skills" >&2
+  cat "$CHECK_LOG" >&2
+  echo "score=$score"
+  exit 1
+fi
+
+# Count actual skill dirs
+n_skills=$(ls -1 "$TEST_PROFILE/skills" 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$n_skills" -ne 11 ]]; then
+  echo "FAIL: profile has $n_skills skill dirs, expected 11" >&2
+  echo "score=$score"
+  exit 1
+fi
+
+score=1.0
+echo "score=$score"
+exit 0

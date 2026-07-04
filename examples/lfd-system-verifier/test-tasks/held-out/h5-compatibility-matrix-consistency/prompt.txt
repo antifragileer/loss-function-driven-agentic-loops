@@ -1,0 +1,5 @@
+The compatibility.md matrix must be internally consistent:
+every "yes" cell in the forward matrix must correspond to
+two skills that exist in the bundle and are listed as
+compatible. Every skill listed in "Current versions" must
+appear in the matrix.
