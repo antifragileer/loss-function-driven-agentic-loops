@@ -14,17 +14,53 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
 - **Bundle version:** 2.1.0
-- **Install (skills.sh):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
+- **Install (Hermes, per-profile):** `./install.sh ~/.hermes/profiles/<name>`
+- **Install (universal / non-Hermes agents):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
 
 ---
 
 ## Install
 
-The bundle is published to **[skills.sh](https://skills.sh/)** — the
-`npx skills` CLI installs all 11 skills into your agent's skill
-directory in one command. Works with Claude Code, Cline, Codex,
-Cursor, GitHub Copilot, Windsurf, Gemini, OpenCode, Hermes Agent,
-and 12 more.
+There are two install paths. Pick by how you use the
+bundle:
+
+| Use case | Install path | Where it lands |
+|---|---|---|
+| **Multiple Hermes profiles, want per-profile isolation** (the bundle's primary design) | `./install.sh <profile-dir>` | `~/.hermes/profiles/<name>/skills/` (only that profile) |
+| **One Hermes profile, or you also use Claude Code / Cline / Codex / Cursor / etc.** | `npx skills add antifragileer/loss-function-driven-agentic-loops` | `~/.agents/skills/` (universal store, all profiles see it; symlinks also created in `~/.claude/skills/`) |
+
+### Option A: per-Hermes-profile (recommended for multi-profile users)
+
+The bundle's primary design is profile-scoped: each
+Hermes profile (`~/.hermes/profiles/<name>/`) has its
+own `skills/` directory, and the bundle's skills only
+load for the profile that has them. `./install.sh`
+writes to *one* profile at a time, which is the safe
+default for users running more than one profile.
+
+```bash
+git clone https://github.com/antifragileer/loss-function-driven-agentic-loops.git
+cd loss-function-driven-agentic-loops
+./install.sh ~/.hermes/profiles/<your-profile>     # install
+./install.sh --check ~/.hermes/profiles/<your-profile>   # verify
+./uninstall.sh ~/.hermes/profiles/<your-profile>   # remove
+```
+
+For full per-profile operations (listing skills, the
+held-out grader format, the verifier scripts), see the
+[Quick start](#quick-start) below.
+
+### Option B: universal store via `npx skills` (for single-profile or non-Hermes agents)
+
+The bundle is also published to **[skills.sh](https://skills.sh/)**.
+The `npx skills` CLI installs all 11 skills into the
+universal store, which Hermes reads *in addition* to
+the per-profile `skills/` directory (Hermes walks both
+paths at load time), and which Claude Code, Cline,
+Codex, Cursor, GitHub Copilot, Windsurf, Gemini, and
+OpenCode all read natively. The universal store is
+**shared across all Hermes profiles** — if you have
+more than one, every profile will see these skills.
 
 ```bash
 # One-shot install of all 11 skills
@@ -38,13 +74,44 @@ npx skills add antifragileer/loss-function-driven-agentic-loops \
 npx skills add antifragileer/loss-function-driven-agentic-loops --list
 ```
 
-After install, each skill shows up under the agent's skills path
-(e.g. `~/.agents/skills/` for the universal store, `~/.claude/skills/`
-for Claude Code). A skill page also appears on
+After install, the skills are at `~/.agents/skills/`
+(universal store, with symlinks in `~/.claude/skills/`
+for Claude Code). To remove:
+
+```bash
+npx skills remove -y -g loss-function-design loop-driver \
+  meta-loss-function-development harness-scaffold \
+  harness-engineering cline-orchestration \
+  claude-code-orchestration codex-orchestration \
+  hermes-agent-orchestration opencode-orchestration \
+  fake-agent-orchestration
+```
+
+There is **no per-profile removal** for the npx path —
+removing from the universal store removes from every
+profile. If you need per-profile control, use Option A.
+
+A skill page also appears on
 <https://www.skills.sh/antifragileer/loss-function-driven-agentic-loops>.
 
-If you'd rather install by hand or pin to a specific Hermes profile,
-see the [Quick start](#quick-start) below.
+### Which option should I pick?
+
+- **One Hermes profile, or you also use Claude Code /
+  Cline / Codex / Cursor / etc.** → Option B
+  (`npx`). Less to copy-paste, works for every
+  agent at once.
+- **Multiple Hermes profiles and you want the LFD
+  skills in *some* profiles but not *others*** →
+  Option A (`./install.sh`). The npx path can't
+  distinguish between profiles.
+- **You want to bump to a new bundle version
+  surgically** → Option A. `./install.sh --force`
+  overwrites the 11 skills in one profile; the
+  universal store update happens on the next
+  `npx skills add` with `--upgrade`.
+- **CI / headless** → Option A. `install.sh` is
+  pure bash, no Node, no network on every run
+  (after clone).
 
 ---
 
