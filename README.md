@@ -103,6 +103,29 @@ agents.
 
 ---
 
+## New here? Read this first
+
+Before installing, decide what you want out of the bundle:
+
+- **"Show me what a working LFD project looks like."** →
+  [`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
+  is a complete scaffolded project. Run its
+  `run-verification.sh` (15s, deterministic) and
+  `run-verification-real.sh` (3-5 min, real agent) to see
+  the LFD loop in action.
+- **"Show me a `/goal` prompt the meta-skill would emit."**
+  → [`examples/goal-prompts/`](./examples/goal-prompts/)
+  has three worked examples (slack clone in Go, Python-to-
+  Rust port, FlashAttention-2 from the paper) plus the
+  prompt anatomy so you can write your own.
+- **"Just install it, I'll figure it out."** → skip to
+  [Quick start](#quick-start) below.
+
+The full on-ramp (all three reading paths) is at
+[`examples/README.md`](./examples/README.md).
+
+---
+
 ## Quick start
 
 ```bash
@@ -313,9 +336,14 @@ process.
 │   ├── meta-loss-function-development/
 │   ├── harness-scaffold/
 │   └── loop-driver/
-└── examples/                 # sample /goal prompts and the LFD system verifier
+└── examples/                 # on-ramp for new users (3 reading paths)
+    ├── README.md             # the on-ramp — start here
     ├── lfd-system-verifier/  # dogfood verifier (run-verification.sh, run-verification-real.sh)
-    └── cli-tool-rust.md      # example /goal prompt
+    └── goal-prompts/         # three worked /goal prompt examples + anatomy
+        ├── README.md
+        ├── slack-clone-golang.md
+        ├── cli-tool-rust.md
+        └── algorithm-from-paper.md
 ```
 
 ---

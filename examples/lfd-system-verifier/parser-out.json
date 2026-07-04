@@ -1,0 +1,17 @@
+{
+  "tokens": 3900,
+  "duration_ms": 12345,
+  "candidate_text": "Done.",
+  "model": "test-model",
+  "provider": "openai-compatible",
+  "finish_reason": "completed",
+  "iterations": 1,
+  "tool_calls": [
+    {
+      "name": "read_file",
+      "args": {
+        "path": "/tmp/test.txt"
+      }
+    }
+  ]
+}

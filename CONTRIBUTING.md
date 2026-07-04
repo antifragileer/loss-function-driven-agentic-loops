@@ -27,7 +27,15 @@ We welcome:
   troubleshooting recipes, more examples, sharper
   descriptions in `SKILL.md` frontmatter.
 - **New `/goal` prompt examples** in
-  `examples/` (or under `skills/meta-loss-function-development/examples/`).
+  `skills/meta-loss-function-development/examples/`
+  (canonical — the meta-skill's `SKILL.md` links here).
+  New examples should *also* be mirrored at
+  `examples/goal-prompts/` (the new-user on-ramp
+  directory) so users browsing the repo root can find them
+  without knowing the skill name. Keep both locations
+  bit-identical; the duplication is intentional and
+  verified by the LFD system verifier's "no drift"
+  check.
 - **Compatibility matrix updates** when a new major
   version of a coding agent ships.
 
