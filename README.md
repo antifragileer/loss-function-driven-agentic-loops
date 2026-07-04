@@ -1,4 +1,4 @@
-# 0x278's Loss Function Development Skills
+# 0x278's Loss Function Driven Development Skills
 
 A drop-in skill bundle for **loss-function-driven (LFD)
 agentic loops** — turn a high-level goal into a
@@ -14,6 +14,29 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
 - **Bundle version:** 2.1.0
+
+---
+
+## What is Loss Function Driven Development?
+
+Imagine you are trying to throw a paper ball into a trash can. If you miss,
+you learn *how* you missed — too far left, too short, too much spin — and
+you adjust your next throw. **Loss Function Driven Development (LFD)** is the
+same idea, but for building software.
+
+A "loss function" is just a fancy score that says, "How far away from the
+goal is this attempt?" The lower the score, the better. In LFD, we write
+down the goal, the rules, and a clear way to measure each try. Then we
+loop:
+
+1. **Try** — let the coding agent attempt the task.
+2. **Score** — check how close it got.
+3. **Adjust** — use the score to guide the next attempt.
+4. **Repeat** until the score is good enough.
+
+If the agent gets stuck, we add a little "forced entropy" — a small, random
+nudge, like shaking the paper ball — to break out of a rut. The whole point
+is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
 
 ---
 
