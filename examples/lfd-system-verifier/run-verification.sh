@@ -150,6 +150,26 @@ echo "  cycle output: $CYCLE_OUT" | head -10
 # The verifier runs 1 cycle then exits. The cycle's rc is
 # informational; the real pass/fail is from the per-task
 # graders + the held-out grader.
+
+# ----- snapshot phase 3 outputs (BEFORE phase 3.5 wipes them) -----
+#
+# Phase 3.5 (the method test) runs cycle.sh 3 times. Each
+# cycle.sh invocation overwrites logs/cycle-1/, etc., and
+# the d6 grader cleans its cycle dirs at the end. Without
+# this snapshot, phase 5 would read stale or missing data.
+#
+# Important: the snapshot filenames use a distinct prefix
+# so they're not clobbered by anything else.
+
+DESIGN_SNAPSHOT="$SCRIPT_DIR/logs/design-set-score.snapshot.json"
+SUB_LOSSES_SNAPSHOT="$SCRIPT_DIR/logs/sub-losses.snapshot.json"
+if [[ -f "$SCRIPT_DIR/logs/cycle-1/design-set-score.json" ]]; then
+  cp "$SCRIPT_DIR/logs/cycle-1/design-set-score.json" "$DESIGN_SNAPSHOT"
+fi
+if [[ -f "$SCRIPT_DIR/logs/cycle-1/sub-losses.json" ]]; then
+  cp "$SCRIPT_DIR/logs/cycle-1/sub-losses.json" "$SUB_LOSSES_SNAPSHOT"
+fi
+
 echo
 
 # ----- phase 3.5: method test (3 cycles with fake-method wrapper) -----
@@ -205,22 +225,14 @@ echo "[phase 4/5] Running held-out grader..."
 
 # The held-out grader (specifically h4-force-entropy-trigger) runs
 # cycle.sh itself, which creates its own logs/cycle-1/ and
-# wipes ours at the end. Snapshot our design-set-score + sub-losses
-# BEFORE the held-out grader runs so phase 5 has stable input.
+# wipes ours at the end. The snapshot we made in phase 3
+# (before phase 3.5 ran) is the source of truth for phase 5.
 #
 # Important: the snapshot filenames use a prefix that does NOT
 # match the h4 grader's `rm -rf logs/cycle-*` cleanup pattern
 # (which would match `cycle-1-*` filenames). Use a distinct
 # prefix like `cycle1-` or `design-set-snapshot-` to avoid
 # being clobbered.
-DESIGN_SNAPSHOT="$SCRIPT_DIR/logs/design-set-score.snapshot.json"
-SUB_LOSSES_SNAPSHOT="$SCRIPT_DIR/logs/sub-losses.snapshot.json"
-if [[ -f "$SCRIPT_DIR/logs/cycle-1/design-set-score.json" ]]; then
-  cp "$SCRIPT_DIR/logs/cycle-1/design-set-score.json" "$DESIGN_SNAPSHOT"
-fi
-if [[ -f "$SCRIPT_DIR/logs/cycle-1/sub-losses.json" ]]; then
-  cp "$SCRIPT_DIR/logs/cycle-1/sub-losses.json" "$SUB_LOSSES_SNAPSHOT"
-fi
 
 HELD_OUT_LOG="$SCRIPT_DIR/logs/held-out.log"
 HELD_OUT_SCORE="$SCRIPT_DIR/logs/held-out-score.json"

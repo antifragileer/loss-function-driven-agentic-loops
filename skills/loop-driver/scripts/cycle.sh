@@ -8,7 +8,7 @@
 #
 # Usage:
 #   cycle.sh --project-root PATH [--cycle N] [--delta 0.05] \
-#            [--max-stall 3] [--wrapper-timeout 600] \
+#            [--max-stall 3] [--success-after 2] [--wrapper-timeout 600] \
 #            [--runtime cline|codex|aider] \
 #            [--artifact-name NAME] [--dry-run]
 #
@@ -42,6 +42,7 @@ PROJECT_ROOT=""
 CYCLE=""
 DELTA="0.05"
 MAX_STALL="3"
+SUCCESS_AFTER="2"
 WRAPPER_TIMEOUT="600"
 RUNTIME=""
 ARTIFACT_NAME=""
@@ -53,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --cycle) CYCLE="$2"; shift 2 ;;
     --delta) DELTA="$2"; shift 2 ;;
     --max-stall) MAX_STALL="$2"; shift 2 ;;
+    --success-after) SUCCESS_AFTER="$2"; shift 2 ;;
     --wrapper-timeout) WRAPPER_TIMEOUT="$2"; shift 2 ;;
     --runtime) RUNTIME="$2"; shift 2 ;;
     --artifact-name) ARTIFACT_NAME="$2"; shift 2 ;;
@@ -200,12 +202,15 @@ while IFS= read -r line; do
   fi
 done <<< "$LAST_5"
 
-# Success: 2 consecutive cycles with pass_rate=1.0 and g
-SUCCESS_COUNT=$(tail -10 "$LOG_FILE" 2>/dev/null | grep -E 'pass_rate=1\.0' | grep -E 'generalizing_or_memorizing=g' | tail -2 | wc -l | tr -d ' \n' 2>/dev/null) || SUCCESS_COUNT=0
+# Success: SUCCESS_AFTER consecutive cycles with pass_rate=1.0 and g
+# (default 2, configurable via --success-after; pass a very large
+# number to disable the early-success stop, e.g. when you want the
+# loop to run a fixed number of cycles for testing.)
+SUCCESS_COUNT=$(tail -10 "$LOG_FILE" 2>/dev/null | grep -E 'pass_rate=1\.0' | grep -E 'generalizing_or_memorizing=g' | tail -"$SUCCESS_AFTER" | wc -l | tr -d ' \n' 2>/dev/null) || SUCCESS_COUNT=0
 SUCCESS_COUNT="${SUCCESS_COUNT:-0}"
-echo "[cycle] SUCCESS_COUNT=$SUCCESS_COUNT" >&2
-if [[ "$SUCCESS_COUNT" -ge 2 ]]; then
-  echo '{"stop": "success", "reason": "pass_rate=1.0 for 2 consecutive cycles, both generalizing"}'
+echo "[cycle] SUCCESS_COUNT=$SUCCESS_COUNT (threshold $SUCCESS_AFTER)" >&2
+if [[ "$SUCCESS_COUNT" -ge "$SUCCESS_AFTER" && "$SUCCESS_AFTER" -gt 0 ]]; then
+  echo "{\"stop\": \"success\", \"reason\": \"pass_rate=1.0 for $SUCCESS_AFTER consecutive cycles, both generalizing\"}"
   exit 3
 fi
 

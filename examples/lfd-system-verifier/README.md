@@ -1,23 +1,37 @@
 # LFD System Verifier
 
 The LFD system verifies itself. This project scaffolds a
-complete loss-function-driven loop against the
-deterministic `fake-agent` adapter and runs the loop to
-prove the LFD system itself is operational.
+complete loss-function-driven loop and runs it two ways:
+
+- **Fake-agent** (deterministic, no model, no network):
+  tests that the LFD *tools* work — parsers, install,
+  driver, scorer shape. Bit-exact reproducible, ~10s.
+- **Real-agent** (with a real coding agent — Cline,
+  Claude Code, Codex, Hermes, OpenCode): tests that the
+  LFD *integration* works — the agent actually exercises
+  the harness, the per-cycle outputs flow correctly, and
+  the per-task graders evaluate real agent output. Non-
+  deterministic by construction, runs in ~3-5 minutes.
 
 This is **dogfood**: the system is its own first user.
-The verifier is bit-exact reproducible (the fake agent
-has no model and no network), runs in under 5 minutes,
-and produces a deterministic report.
+Both verifiers must pass for the LFD system to be
+considered fully verified.
 
 ## Quick start
 
 ```bash
 cd examples/lfd-system-verifier
+
+# Fast deterministic gate (CI, ~10s)
 ./run-verification.sh
+
+# Real-agent gate (proves integration, ~3-5 min)
+./run-verification-real.sh              # Cline (default)
+./run-verification-real.sh "" "" claude-code
+./run-verification-real.sh "" "" opencode
 ```
 
-The script:
+The fake-agent script (`run-verification.sh`):
 
 1. Installs the LFD bundle into a fresh temp profile
 2. Runs 1 cycle of the loss-function-driven loop against
@@ -25,21 +39,37 @@ The script:
 3. Runs 5 design tasks (the loop's main grader)
 4. Runs 5 held-out tasks (a separate grader for harder
    properties)
-5. Produces `verification-report.md` and
+5. Runs 1 method task (3 cycles with the fake-method
+   wrapper, to exercise the loop's improvement + plateau
+   detection machinery)
+6. Produces `verification-report.md` and
    `verification-report.json`
-6. Cleans all per-cycle artifacts (`.iterations/`,
+7. Cleans all per-cycle artifacts (`.iterations/`,
    `logs/cycle-*/`) keeping only the report
+
+The real-agent script (`run-verification-real.sh`):
+
+1. Installs the LFD bundle into a fresh temp profile
+2. Runs 5 design tasks with a real coding agent
+3. Produces `verification-report-real.md` and
+   `verification-report-real.json`
+4. Cleans all per-cycle artifacts
 
 After the run, only these files remain:
 
 ```
+# Fake-agent run outputs (run-verification.sh)
 verification-report.md       # the markdown report
 verification-report.json     # the machine-readable report
 logs/iteration-log.md        # the loop's log
 logs/best-cycle.json         # the best cycle so far
 logs/held-out.log            # the held-out grader log
-logs/held-out-score.json     # the held-out aggregate score
-logs/<task>.log              # per-task grader logs
+
+# Real-agent run outputs (run-verification-real.sh)
+verification-report-real.md
+verification-report-real.json
+logs/iteration-log.md        # overwritten by the real-agent run
+logs/best-cycle.json         # overwritten by the real-agent run
 ```
 
 All `.iterations/` and `logs/cycle-*/` artifacts are
@@ -47,19 +77,25 @@ removed.
 
 ## How long does it take?
 
-The verifier is designed to run in **under 5 minutes**
-on any modern machine. The fake agent is instant, so
-the wall-clock is dominated by:
+**Fake-agent** (`run-verification.sh`): ~10–15 seconds.
+The fake agent is instant, so the wall-clock is dominated
+by:
 
 - `install.sh --force` (~1 s)
 - 5 design tasks (each ~0.5 s, total ~3 s)
 - 5 held-out tasks (each ~0.5 s, total ~3 s)
+- Method test (3 cycles, ~5 s)
 - Cycle driver overhead (~1 s)
-- Held-out grader runs (each ~0.5 s, total ~3 s)
 
-Total: ~10–15 seconds in practice. The 5-minute budget
-is generous; if the verifier takes more than 60 seconds,
+If the fake-agent verifier takes more than 60 seconds,
 something is wrong.
+
+**Real-agent** (`run-verification-real.sh`): ~3-5 minutes,
+depending on the agent. Cline with kimi-for-coding in our
+test runs took ~3.5 minutes. Claude Code or Codex will
+vary. Wall-clock budget is 5 min by default; configurable
+via `LFD_REAL_BUDGET` (e.g. `LFD_REAL_BUDGET=900` for
+15 min).
 
 ## What the verifier proves
 

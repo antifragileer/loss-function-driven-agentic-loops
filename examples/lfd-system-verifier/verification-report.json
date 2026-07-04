@@ -1,0 +1,78 @@
+{
+  "timestamp": "2026-07-04T00:25:49Z",
+  "bundle_version": "2.1.0",
+  "repo": "/Users/oxenated/fleet/loss-function-development-skills",
+  "profile": "/var/folders/36/4qcyx1yx7936hgvr4lxvv1h80000gp/T/lfd-verify-profile-XXXXXX.ENDpaWbdXw",
+  "elapsed_seconds": 2,
+  "overall": "PASS",
+  "design_pass_rate": 1.0,
+  "weighted_normalized": 1.0,
+  "gates_passed": true,
+  "cycle_driver_exit": 0,
+  "held_out_grader_exit": 0,
+  "sub_losses": {
+    "sub_losses": {
+      "correctness": {
+        "score": 1.0,
+        "details": {
+          "pass_rate": 1.0,
+          "n_pass": 5,
+          "n_total": 0
+        }
+      },
+      "performance": {
+        "score": 1.0,
+        "details": {
+          "elapsed_s": 0
+        }
+      },
+      "safety": {
+        "score": 1.0,
+        "details": {
+          "findings": []
+        }
+      },
+      "legibility": {
+        "score": 1.0,
+        "details": {
+          "lines": 34,
+          "chars": 2081
+        }
+      },
+      "invariants": {
+        "score": 1.0,
+        "details": {
+          "finish_reason": "completed"
+        }
+      },
+      "drift": {
+        "score": 1.0,
+        "details": {}
+      },
+      "cost": {
+        "score": 1.0,
+        "details": {
+          "tokens": 0
+        }
+      }
+    },
+    "weights": {
+      "correctness": 1.0,
+      "performance": 0.5,
+      "safety": 1.0,
+      "legibility": 0.3,
+      "invariants": 1.0,
+      "drift": 0.2,
+      "cost": 0.3
+    },
+    "gates": [
+      "correctness",
+      "safety",
+      "invariants"
+    ],
+    "weighted_sum": 4.3,
+    "weighted_total": 4.3,
+    "weighted_normalized": 1.0,
+    "gates_passed": true
+  }
+}

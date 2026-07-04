@@ -1,20 +1,20 @@
 # LFD System Verification Report (real-agent)
 
-**Generated:** 2026-07-04T00:20:39Z
+**Generated:** 2026-07-04T00:29:33Z
 **Bundle version:** 2.1.0
 **Repo:** `/Users/oxenated/fleet/loss-function-development-skills`
-**Profile:** `/var/folders/36/4qcyx1yx7936hgvr4lxvv1h80000gp/T/lfd-verify-real-XXXXXX.c0IVUzLmCN`
+**Profile:** `/var/folders/36/4qcyx1yx7936hgvr4lxvv1h80000gp/T/lfd-verify-real-XXXXXX.nIPWMMmMo0`
 **Runtime:** `cline` (model: `kimi-for-coding`, provider: `openai-compatible`)
 **Wall-clock budget:** 300s
-**Elapsed:** 255s (remaining: 44s)
+**Elapsed:** 216s (remaining: 83s)
 
 ## Overall: **PASS**
 
 | Metric | Value |
 |---|---|
 | Design-set pass rate | 1.0 (5 pass / 0 fail) |
-| Total tokens | 51766 |
-| Total Cline duration | 18872ms |
+| Total tokens | 74691 |
+| Total Cline duration | 23353ms |
 | Tasks run | 5 |
 | Design-set exit | 0 |
 
@@ -59,8 +59,8 @@ LFD_REAL_BUDGET=900 ./run-verification-real.sh   # 15 min budget
 | | run-verification.sh (fake) | run-verification-real.sh (real) |
 |---|---|---|
 | Inner agent | deterministic stub | cline (kimi-for-coding) |
-| Wall-clock | ~10s | ~255s |
-| Tokens | 0 | 51766 |
+| Wall-clock | ~10s | ~216s |
+| Tokens | 0 | 74691 |
 | Determinism | bit-exact | varies by run |
 | Held-out grader | yes | no (held-out is for the deterministic baseline) |
 | Method test | yes (3 cycles) | no (cycle-of-cycles is too expensive for real agents) |
