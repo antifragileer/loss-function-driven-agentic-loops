@@ -234,6 +234,45 @@ If this verifier passes (both gates), the LFD system is
 operational. If either gate fails, the report tells you
 which component regressed.
 
+### What has been verified end-to-end (and what hasn't)
+
+Out of the six agent-adapter combinations the bundle
+ships, **only one has been run end-to-end with a real
+coding agent**:
+
+| Outer loop | Inner agent | Model | Provider | Result | Evidence |
+|---|---|---|---|---|---|
+| **Hermes Agent v2** | **Cline v3.0.35** | `kimi-for-coding` | `openai-compatible` | **PASS** — all 5 design tasks, design_pass_rate=1.0, 721k tokens, 189s of Cline execution | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) (committed) |
+
+The other five adapters — `claude-code-orchestration`,
+`codex-orchestration`, `hermes-agent-orchestration`,
+`opencode-orchestration`, and the `claude-code` /
+`hermes-agent` / `codex` / `opencode` real-agent
+integrations — are **supported by the adapter contract**
+(the same parser shape, the same wrapper invocation, the
+same per-iteration file layout; see
+[`compatibility.md`](./compatibility.md)) but have **not
+been run end-to-end** as of bundle v2.1.0. They are
+expected to work because the contract is uniform across
+adapters, but "expected to work" is not "verified."
+
+**Contributions are welcome.** If you run the integration
+gate with another adapter and want to add a row to the
+table above:
+
+```bash
+cd examples/lfd-system-verifier
+./run-verification-real.sh "" "" <runtime>   # e.g. claude-code, codex, opencode
+# If overall=PASS, commit verification-report-real.json
+# alongside the existing one and open a PR.
+```
+
+A passing run with a new adapter is a high-value
+contribution: it both grows the matrix and gives the next
+user confidence in that combination. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md) for the PR
+process.
+
 ---
 
 ## Repository layout

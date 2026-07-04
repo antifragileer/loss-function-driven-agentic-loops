@@ -216,3 +216,31 @@ When reporting a compatibility issue, include:
 - The exact error or unexpected behavior
 
 Without the versions, the issue is un-actionable.
+
+## Verified end-to-end combinations
+
+A combination is "verified end-to-end" when the real-agent
+integration gate (`examples/lfd-system-verifier/run-verification-real.sh`)
+has been run against it and produced a passing
+`verification-report-real.json` (overall=PASS,
+design_pass_rate=1.0). The committed report is the
+evidence; the matrix below records what has been checked.
+
+| Outer loop | Inner agent | Model | Provider | Bundle version | Evidence |
+|---|---|---|---|---|---|
+| Hermes Agent v2 | Cline v3.0.35 | `kimi-for-coding` | `openai-compatible` | 2.1.0 | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) |
+
+The other five adapter combinations
+(`hermes-agent`/`claude-code`, `hermes-agent`/`codex`,
+`hermes-agent`/`opencode`, `claude-code`/`claude-code`,
+etc.) are **supported by the adapter contract** — every
+adapter must ship the same parser shape, the same wrapper
+invocation, the same per-iteration file layout. They are
+*expected* to work but are *not verified* as of v2.1.0.
+
+To add a row to this table: run
+`./run-verification-real.sh "" "" <runtime>` from
+`examples/lfd-system-verifier/`, commit the resulting
+`verification-report-real.json` (rename if the existing
+one is for a different runtime), and open a PR. See
+[`CONTRIBUTING.md`](./CONTRIBUTING.md).
