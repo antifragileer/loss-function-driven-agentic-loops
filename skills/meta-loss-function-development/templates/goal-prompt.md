@@ -106,7 +106,32 @@ Local maxima is the default state. Force entropy:
 
 ## First action
 
-1. Read `<GOAL-PATH>`, `<AGENTS-PATH>`, `<README-PATH>`,
+**0. Locate your project root.** This prompt uses `$PROJECT_DIR`
+   to refer to the directory containing the harness tree
+   (the `verifiers/`, `test-tasks/`, `GOAL.md`, etc.). Your
+   shell's cwd may or may not be that directory — you have
+   to find it before any other action.
+
+   In order of preference:
+
+   1. If the env var `LFD_PROJECT_DIR` is set and that
+      directory contains a `GOAL.md` or `verifiers/`, use it.
+   2. If your cwd contains a `GOAL.md` or `verifiers/`, use
+      your cwd.
+   3. Walk up from your cwd: for each ancestor directory,
+      check if it contains a `GOAL.md` or `verifiers/`. The
+      first match is your project root.
+
+   Once you find it: `cd <project-root>` and set
+   `PROJECT_DIR` to that path (either `export
+   PROJECT_DIR=<project-root>` or inline `PROJECT_DIR=<path>
+   <command>` for one-off commands). All `$PROJECT_DIR`
+   references below are relative to that path.
+
+   If none of the three checks finds the root, **stop** and
+   report the failure. Do not guess.
+
+**1.** Read `<GOAL-PATH>`, `<AGENTS-PATH>`, `<README-PATH>`,
    `<WRAPPER>`, `<DESIGN-SET-RUNNER>`, and every script in
    `<INSTRUMENTS-PATH>`. (About 5-10 file reads.)
 2. Read each design task's `prompt.txt` and the buggy file at

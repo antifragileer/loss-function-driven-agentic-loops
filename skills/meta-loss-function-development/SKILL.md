@@ -89,6 +89,37 @@ harness-engineering, cline-orchestration) and the goal prompt
 itself. The goal prompt is the spec; the inner skills are the
 vocabulary; the fresh session does the work.
 
+## How orchestrators drive this skill (non-interactive)
+
+The interactive flow above assumes the user cd'd to the project
+root before opening the fresh session. Non-interactive
+orchestrators (CI scripts, the LFD system verifier, etc.)
+often run from a different working directory. The
+`/goal` prompt's first-action step includes a project-root
+discovery protocol that handles both cases:
+
+- **Interactive (cwd = project root):** the discovery step
+  finds `GOAL.md` (or `verifiers/`) in cwd, uses it, done.
+- **Orchestrator (cwd ≠ project root):** the orchestrator
+  sets `LFD_PROJECT_DIR=/path/to/project` in the env when
+  launching the fresh session; the discovery step finds
+  it first and uses it. No cwd changes needed.
+
+If neither check finds the root, the agent stops and reports
+the failure. This is the right failure mode — silently
+guessing the project root is the bug this design prevents.
+
+Concrete orchestrator pattern (bash):
+
+```bash
+LFD_PROJECT_DIR=/path/to/verifier-project \
+npx skills add antifragileer/loss-function-development-skills -y -g \
+# launch the fresh session with the env var set
+```
+
+The fresh session inherits `LFD_PROJECT_DIR` and the goal
+prompt's discovery step picks it up automatically.
+
 ## How to write the goal prompt (for the skill itself)
 
 A goal prompt has six parts:
@@ -218,8 +249,14 @@ format.
   the same density as the canonical example:
   `examples/slack-clone-golang.md`.
 - **Don't put machine-specific paths in the prompt.** The
-  prompt must work on any machine. Use `$PROJECT_DIR`,
-  `<project-root>`, etc.
+  prompt must work on any machine. Use `$PROJECT_DIR` and
+  add a "Locate your project root" first-action step so the
+  agent knows how to resolve `$PROJECT_DIR` to an actual
+  path regardless of whether the orchestrator (or the user
+  in an interactive session) has cd'd to the project
+  directory. The canonical template at
+  `templates/goal-prompt.md` and all three example prompts
+  show the standard pattern.
 - **Don't hard-code the model.** The model is the user's
   choice. Pick a *capability tier* (e.g., "any current
   Cline-compatible model") and let `cline auth` decide.
