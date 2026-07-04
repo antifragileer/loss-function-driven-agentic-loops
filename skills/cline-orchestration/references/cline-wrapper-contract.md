@@ -102,6 +102,19 @@ CLINE_BIN="${CLINE_BIN:-$(command -v cline 2>/dev/null || true)}"
 ITER_DIR="${CWD}/.iterations/${CYCLE}"
 mkdir -p "$ITER_DIR"
 
+# Cline's binary runs a detached auto-updater on every
+# invocation that fetches the latest version from npm, spawns
+# a detached `npm install`, and RESTARTS the background hub
+# that tracks sessions. With back-to-back Cline invocations
+# (the loss-function loop runs many in a row), the hub
+# restart races with the next invocation's session lookup
+# and produces "session not found: <id>" errors. Cline reads
+# `CLINE_NO_AUTO_UPDATE=1` in its own source to skip the
+# auto-updater. Set it before every Cline invocation to
+# disable. This is internal (no user-facing setting changes).
+# See references/cline-v3-invocation.md for the full story.
+export CLINE_NO_AUTO_UPDATE=1
+
 START_TS=$(date +%s)
 RAW_OUT="${ITER_DIR}/cline.json"
 EXIT_CODE=0
@@ -166,3 +179,21 @@ print(json.dumps(out, indent=2))
   time via `$CLINE_BIN` then `command -v cline`. The wrapper
   must work on any machine, not just the one where it was
   written.
+- **Don't skip `export CLINE_NO_AUTO_UPDATE=1`.** Cline's
+  binary runs a detached auto-updater on every invocation
+  that fetches the latest version from npm, spawns a
+  detached `npm install`, and RESTARTS the background hub
+  that tracks sessions. With back-to-back Cline invocations
+  (the loss-function loop runs many in a row), the hub
+  restart races with the next invocation's session lookup
+  and produces `"session not found: <id>"` errors with
+  286-byte cline.json (only `agent_start` and
+  `iteration_start` events, then the error). Cline reads
+  `CLINE_NO_AUTO_UPDATE=1` in its own source and skips the
+  auto-updater when set. This is internal (no user-facing
+  Cline setting changes) but it is the difference between
+  5/5 design tasks passing and 3/5 with a 1.6M-token task
+  on d1 followed by 4 fail-on-start. See
+  `references/cline-v3-invocation.md` for the full story,
+  including how to clean up the lingering `cline
+  --cline-hub-daemon` processes that accumulate.

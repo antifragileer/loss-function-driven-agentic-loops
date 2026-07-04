@@ -336,6 +336,20 @@ default.
   summary per task; the design-set script runs the per-task
   grader and then writes the aggregate. A cycle that "ran" but
   failed every task is still a 0.0 pass_rate.
+- **Don't skip `export CLINE_NO_AUTO_UPDATE=1` in the wrapper.**
+  Cline's binary runs a detached auto-updater on every
+  invocation that fetches the latest version from npm,
+  spawns a detached `npm install`, and RESTARTS the
+  background hub that tracks sessions. With back-to-back
+  Cline invocations (the loss-function loop runs many in
+  a row), the hub restart races with the next invocation's
+  session lookup and produces `"session not found: <id>"`
+  errors with 286-byte cline.json. Cline reads
+  `CLINE_NO_AUTO_UPDATE=1` in its own source and skips the
+  auto-updater when set. Without this env var, the loop
+  will flake on the second-and-later Cline invocations of
+  any batch. See `references/cline-v3-invocation.md` for
+  the full story.
 
 ## Cline version pinning
 
