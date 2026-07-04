@@ -242,7 +242,19 @@ coding agent**:
 
 | Outer loop | Inner agent | Model | Provider | Result | Evidence |
 |---|---|---|---|---|---|
-| **Hermes Agent v2** | **Cline v3.0.35** | `kimi-for-coding` | `openai-compatible` | **PASS** — all 5 design tasks, design_pass_rate=1.0, 721k tokens, 189s of Cline execution | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) (committed) |
+| **Hermes Agent v2** (orchestrator model: `minimax/minimax-m3`, Nous provider) | **Cline v3.0.35** | `kimi-for-coding` | `openai-compatible` | **PASS** — all 5 design tasks, design_pass_rate=1.0, 721k tokens, 189s of Cline execution | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) (committed) |
+
+> **About the "Outer loop" column.** The report records the
+> *inner-agent* model (`kimi-for-coding`) — the one Cline
+> called when it generated the candidate. The
+> *orchestrator* model — the one Hermes used to *drive*
+> the loop (read the iteration log, write the candidate
+> prompt, run the design set, score, decide whether to
+> refine) — is recorded here as a runtime fact, not as a
+> captured artifact. The verifier script does not record
+> it in the JSON. The combination "Hermes outer +
+> Minimax M3 + Cline inner" is what was actually run;
+> it is not bit-exact reproducible from the JSON alone.
 
 The other five adapters — `claude-code-orchestration`,
 `codex-orchestration`, `hermes-agent-orchestration`,

@@ -228,7 +228,20 @@ evidence; the matrix below records what has been checked.
 
 | Outer loop | Inner agent | Model | Provider | Bundle version | Evidence |
 |---|---|---|---|---|---|
-| Hermes Agent v2 | Cline v3.0.35 | `kimi-for-coding` | `openai-compatible` | 2.1.0 | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) |
+| Hermes Agent v2 (orchestrator: `minimax/minimax-m3`, Nous) | Cline v3.0.35 | `kimi-for-coding` | `openai-compatible` | 2.1.0 | [`examples/lfd-system-verifier/verification-report-real.json`](./examples/lfd-system-verifier/verification-report-real.json) |
+
+> **What the report captures vs. what it doesn't.** The
+> JSON records the *inner-agent* model (`kimi-for-coding`) —
+> the one the coding agent called when it generated the
+> candidate. It does **not** capture the *orchestrator*
+> model — the one Hermes used to *drive* the loop
+> (orchestration decisions, scoring, forced-entropy
+> choices, stop-condition evaluation). The orchestrator
+> model in the table above is recorded as a runtime fact
+> from the verification session, not from the JSON. To
+> make this fully reproducible from artifacts, extend
+> `run-verification-real.sh` to capture the orchestrator
+> model into the report.
 
 The other five adapter combinations
 (`hermes-agent`/`claude-code`, `hermes-agent`/`codex`,
