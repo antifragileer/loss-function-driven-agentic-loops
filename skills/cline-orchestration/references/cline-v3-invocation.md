@@ -48,6 +48,62 @@ Where `ITER_DIR` is a fresh directory per cycle (the wrapper creates it at `${CW
 
 - **Provider config is sacred.** Whatever `cline auth` selected (provider + model) is the source of truth. The wrapper must NEVER pass `--provider` or `--model`. Override only at the model layer (re-run `cline auth`), never in the wrapper.
 - **`--auto-approve true` is mandatory** for non-interactive file work. Safety is NOT enforced by per-tool approval — it's enforced by a separate grep over the cline transcript (`cline.json`) looking for `rm -rf`, `chmod 777`, secret-leak patterns, etc. The safety sub-loss in `loss-function-design` owns this.
+
+## The detached auto-updater (and the hub-restart race)
+
+Cline runs a **detached auto-updater on every invocation**. It
+fetches the latest version from npm, spawns a detached
+`npm install`, and **restarts the background hub** that
+tracks sessions. This is internal to the Cline binary; there
+is no user-facing setting that disables it, but Cline reads
+the `CLINE_NO_AUTO_UPDATE=1` env var in its own source and
+returns early when set.
+
+**The race:** when the loop driver invokes Cline
+back-to-back (the LFD system verifier's design set runs 5
+Cline invocations in a row), the auto-updater on invocation
+N can restart the hub while invocation N+1 is looking up
+its session id in the hub. The new session id is
+timestamp-based (`<unix_ms>_<random>`), so the next
+invocation's id is a brand-new value the hub has never seen.
+The result is:
+
+```
+{"ts":"...","type":"error","message":"session not found: 1783127859213_ni0ah"}
+```
+
+with a 286-byte cline.json (only `agent_start` and
+`iteration_start` events, then the error). This is **not a
+Cline bug** — it's the documented behavior of Cline's
+`SessionNotFoundError` when the hub's state is wiped
+mid-invocation. Reproduced in our verifier with 3-5
+back-to-back invocations; mitigated by `CLINE_NO_AUTO_UPDATE=1`.
+
+**The fix in the LFD reference wrapper** (`examples/lfd-system-verifier/verifiers/cline-wrapper.sh`):
+
+```bash
+export CLINE_NO_AUTO_UPDATE=1
+"$CLINE_BIN" "$TASK" --cwd "$ITER_DIR" --auto-approve true \
+  --thinking none --json
+```
+
+If you are writing your own Cline wrapper for a different
+loop driver and you do multiple Cline invocations in the
+same process, set this env var. Without it, the second and
+later invocations will see `SessionNotFoundError` roughly
+half the time. The user explicitly requested we not change
+any user-facing Cline settings; this is an internal env-var
+hook that Cline checks before running the auto-updater, so
+it is the right level of intervention.
+
+The auto-updater also leaves **lingering hub-daemon
+processes** (`cline --cline-hub-daemon --cwd ...`) after
+each invocation, because the hub is started in detached
+mode and isn't reaped when the parent exits. After many
+runs these accumulate. A `pkill -9 -f cline-hub-daemon`
+cleans them up. The hub state is preserved on disk in
+`~/.cline/data/` (per `--data-dir`); a fresh hub can read
+the existing state when next needed.
 - **Per-cycle isolation** comes from `--cwd $ITER_DIR` where `ITER_DIR` is fresh per cycle, not from `--worktree`. The harness's verifier scripts must also read from `$ITER_DIR`, not from any global cache.
 - **Capture duration from Cline, not from `date`.** Cline's `run_result.durationMs` is the time Cline spent reasoning. Wrapper wall-clock includes Python parsing and is higher. For budget enforcement, use `durationMs` (Cline's view) AND wall-clock (the user's view) — log both.
 
