@@ -241,8 +241,16 @@ echo "[install] done. $n_installed skills $( [[ "$DRY_RUN" == "true" ]] && echo 
 echo "" >&2
 echo "Next steps:" >&2
 echo "  1. Open a session under the profile at $PROFILE_DIR" >&2
-echo "  2. Say 'use loss function development to build X' — meta-loss-function-development will load" >&2
-echo "  3. Follow the /goal prompt the meta-skill emits" >&2
+echo "  2. Ask for a /goal prompt. The meta-skill triggers" >&2
+echo "     on spec-shaped phrases only, e.g.:" >&2
+echo "       'Create a /goal prompt that builds X in Y with Z.'" >&2
+echo "       'Produce a /goal prompt for /path/to/spec.md.'" >&2
+echo "     DO NOT say 'use LFD to build X' — that loads" >&2
+echo "     harness-scaffold + loop-driver and starts the loop" >&2
+echo "     in the current session without a /goal block." >&2
+echo "  3. The meta-skill emits a paste-able /goal block." >&2
+echo "  4. Paste it into a FRESH session; the loop scaffolds" >&2
+echo "     the project tree and runs the design cycles." >&2
 echo "" >&2
 echo "To verify the install later:  $0 --check $PROFILE_DIR" >&2
 echo "To uninstall:                $PROFILE_DIR/lfd-uninstall.sh $PROFILE_DIR" >&2

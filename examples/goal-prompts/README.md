@@ -98,8 +98,20 @@ To write a `/goal` prompt for your own goal:
    Z"), and any quality bar ("passes acceptance tests",
    "looks like the public reference").
 2. **Open a session with the LFD bundle installed** and
-   say: *"use loss function development to build X in
-   Y with constraints Z"*. The meta-skill loads.
+   ask the agent for a `/goal` prompt. The meta-skill
+   triggers on spec-shaped phrases only — say one of:
+
+   - *"Create a /goal prompt that builds X in Y with
+     constraints Z."*
+   - *"Produce a /goal prompt for the spec in
+     /path/to/spec.md."*
+   - *"Turn /path/to/implementation.md into a /goal
+     prompt."*
+
+   Do NOT say *"use loss function development to build
+   X"* — that's execution-shaped and loads the
+   scaffold/loop skills instead of the meta-skill. You
+   never get a `/goal` block to paste.
 3. **Answer 1-3 clarifying questions.** The meta-skill
    asks at most 3 — usually "what does done look like?",
    "what's the budget?", "which agent and model?". For

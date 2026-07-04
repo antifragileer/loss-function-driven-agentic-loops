@@ -209,10 +209,28 @@ cd loss-function-driven-agentic-loops
 # 4. Verify
 ./install.sh --check ~/.hermes/profiles/default
 
-# 5. Open a session under that profile and say
-#    "use loss function development to build X"
-#    — meta-loss-function-development loads and emits a /goal prompt.
-
+# 5. Open a session under that profile and ask for a /goal
+#    prompt. The phrase the meta-skill triggers on is a
+#    spec-shaped request, not an execution-shaped one:
+#
+#      "Create a /goal prompt that builds X in Y with Z."
+#      "Produce a /goal prompt for the spec in
+#       /path/to/implementation.md."
+#      "Turn /path/to/spec.md into a /goal prompt."
+#
+#    The meta-skill loads, asks 1-3 clarifying questions
+#    (target / constraints / runtime), and emits a
+#    paste-able /goal block.
+#
+#    DO NOT say "use LFD to build X" or "use loss function
+#    development to build X" — those phrases are
+#    execution-shaped. The meta-skill's auto-trigger
+#    description is intentionally narrow: it loads on
+#    spec-shaped phrases only. An execution-shaped phrase
+#    loads harness-scaffold + loop-driver instead, which
+#    start the loop in the current session and you never
+#    get a /goal block to paste.
+#
 # 6. Paste the /goal prompt into a fresh session; the loop
 #    scaffolds and runs.
 ```

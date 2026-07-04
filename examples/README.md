@@ -31,13 +31,26 @@ anatomy so you can write your own.
 
 **Path 3 — "I want to use LFD on my own project."** Skip the
 examples. Just install the bundle (see the root README
-[Quick start](../README.md#quick-start)) and tell your
-agent: *"use loss function development to build X in Y
-with constraints Z"*. The meta-skill loads, asks 1-3
-clarifying questions, and emits a paste-able `/goal` block.
-You paste it into a fresh session; the harness-scaffold
-skill builds the project tree; the loop-driver runs the
-loop.
+[Quick start](../README.md#quick-start)) and ask your
+agent for a `/goal` prompt. The meta-skill triggers on
+spec-shaped phrases only — say one of:
+
+- *"Create a /goal prompt that builds X in Y with constraints Z."*
+- *"Produce a /goal prompt for the spec in /path/to/spec.md."*
+- *"Turn /path/to/implementation.md into a /goal prompt."*
+
+The meta-skill loads, asks 1-3 clarifying questions
+(target / constraints / runtime), and emits a
+paste-able `/goal` block. You paste it into a fresh
+session; the harness-scaffold skill builds the project
+tree; the loop-driver runs the loop.
+
+Do NOT say *"use loss function development to build X"*
+or *"use LFD to build X"* — those are execution-shaped
+phrases. The meta-skill won't load; harness-scaffold +
+loop-driver will, and the loop will start in the
+current session without you ever getting a `/goal`
+block to paste.
 
 ## What's *not* in this directory
 
