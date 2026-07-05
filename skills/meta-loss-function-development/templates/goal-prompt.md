@@ -188,9 +188,14 @@ Local maxima is the default state. Force entropy:
 
 - DO NOT read `<HELD_OUT_GRADER-PATH>` or
   `<HELD_OUT_TASKS-PATH>`.
-- DO NOT modify `<HARNESS-PATH>`. The harness is finished.
-  If you find something wrong with it, **stop and report**,
-  do not silently patch it.
+- DO NOT modify `<HELD_OUT_GRADER-PATH>` or
+  `<HELD_OUT_TASKS-PATH>`. These are the held-out target.
+- The rest of the harness (design tasks, instruments,
+  `AGENTS.md`, `run-design-set.sh`, the wrapper) is fair
+  game — if a grader is too lenient, an instrument is
+  wrong, or a design task is trivially solvable, fix it
+  and log the patch in the iteration log. Self-improvement
+  of the harness is the loop's job.
 - The only `<AGENT>` invocation is via `<WRAPPER>`.
 - After EACH design-set run, append a one-line entry to
   `<LOG-PATH>` with cycle number, hypothesis, expected

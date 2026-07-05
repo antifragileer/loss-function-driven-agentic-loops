@@ -180,9 +180,13 @@ Local maxima is the default state. Force entropy:
 ## Hard rules
 
 - DO NOT read `verifiers/private/` or `test-tasks/held-out/`.
-- DO NOT modify `verifiers/`. The harness is finished. If
-  you find something wrong with it, **stop and report**,
-  do not silently patch it.
+- DO NOT modify `verifiers/private/` or
+  `test-tasks/held-out/`. These are the held-out target.
+- The rest of the harness is fair game — fix design
+  graders, instruments, `AGENTS.md`, or the wrapper when
+  they're wrong, and log the patch in
+  `logs/iteration-log.md`. Self-improvement of the
+  harness is the loop's job.
 - The only Cline invocation is via `verifiers/cline-wrapper.sh`.
 - After EACH design-set run, append a one-line entry to
   `logs/iteration-log.md` with cycle number, hypothesis,

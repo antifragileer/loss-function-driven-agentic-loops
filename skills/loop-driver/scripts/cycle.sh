@@ -368,7 +368,12 @@ The artifact should help the inner agent (you) complete the
 # Hard rules
 - DO NOT read $PROJECT_ROOT/verifiers/private/ or
   $PROJECT_ROOT/test-tasks/held-out/
-- DO NOT modify $PROJECT_ROOT/verifiers/
+- DO NOT modify $PROJECT_ROOT/verifiers/private/ or
+  $PROJECT_ROOT/test-tasks/held-out/ (held-out target)
+- The rest of the harness (design tasks, instruments,
+  AGENTS.md, run-design-set.sh, the wrapper) is fair
+  game — fix it when it's wrong, log the patch in
+  $LOG_FILE
 - Your only $RUNTIME invocation is via $WRAPPER
 
 # Overfit reflection

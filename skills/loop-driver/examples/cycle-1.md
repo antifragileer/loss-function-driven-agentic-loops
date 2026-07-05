@@ -65,7 +65,8 @@ Read <project-root>/GOAL.md and <project-root>/AGENTS.md. Write a candidate arti
 
 # Hard rules
 - DO NOT read <project-root>/verifiers/private/ or <project-root>/test-tasks/held-out/
-- DO NOT modify <project-root>/verifiers/
+- DO NOT modify <project-root>/verifiers/private/ or <project-root>/test-tasks/held-out/ (held-out target)
+- The rest of the harness is fair game — fix it when wrong, log the patch in <project-root>/logs/iteration-log.md
 - Your only Cline invocation is via <project-root>/verifiers/cline-wrapper.sh
 
 # Overfit reflection

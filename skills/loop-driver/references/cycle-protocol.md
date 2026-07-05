@@ -131,7 +131,12 @@ The artifact should help the inner agent (you) complete the
 # Hard rules
 - DO NOT read $PROJECT_DIR/verifiers/private/ or
   $PROJECT_DIR/test-tasks/held-out/
-- DO NOT modify $PROJECT_DIR/verifiers/
+- DO NOT modify $PROJECT_DIR/verifiers/private/ or
+  $PROJECT_DIR/test-tasks/held-out/ (held-out target)
+- The rest of the harness (design tasks, instruments,
+  AGENTS.md, run-design-set.sh, the wrapper) is fair
+  game — fix it when it's wrong, log the patch in
+  $PROJECT_DIR/logs/iteration-log.md
 - Your only Cline invocation is via
   $PROJECT_DIR/verifiers/<runtime>-wrapper.sh
 
