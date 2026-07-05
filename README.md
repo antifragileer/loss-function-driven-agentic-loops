@@ -245,6 +245,11 @@ Before installing, decide what you want out of the bundle:
   has three worked examples (slack clone in Go, Python-to-
   Rust port, FlashAttention-2 from the paper) plus the
   prompt anatomy so you can write your own.
+- **"How do I make a great harness (not just a working
+  one)?"** → [`BUILDING-A-GREAT-HARNESS.md`](./BUILDING-A-GREAT-HARNESS.md)
+  is the manual for the human-in-the-loop at V0→V1
+  (expanding the AI's first draft) and V1→V2+ (iterating
+  on the harness while the loop runs).
 - **"Just install it, I'll figure it out."** → skip to
   [Quick start](#quick-start) below.
 
@@ -284,6 +289,15 @@ adapters are siblings; pick one when you scaffold, and the
 loop runs against it. To add a new coding agent, write a
 new adapter skill with the same shape and the loop
 supports it.
+
+The quality of the result is a near-direct function of
+the quality of the harness. A plain `/goal` prompt gives
+you one shot. A great harness gives the loop a measurable
+loss function and a held-out grader the agent can't game.
+For a manual on what makes a harness great — including
+the V0→V1 expansion checklist and the V1→V2+ iteration
+playbook — see
+[`BUILDING-A-GREAT-HARNESS.md`](./BUILDING-A-GREAT-HARNESS.md).
 
 ---
 
@@ -412,6 +426,7 @@ process.
 ```
 .
 ├── README.md                 # this file
+├── BUILDING-A-GREAT-HARNESS.md # HITL manual: V0→V1 expansion + V1→V2+ iteration
 ├── LICENSE                   # MIT
 ├── CONTRIBUTING.md           # how to add a new adapter / fix a bug
 ├── CHANGELOG.md              # version history
