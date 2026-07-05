@@ -20,7 +20,7 @@ description: |
   - harness-engineering: what the agent sees
   - cline-orchestration: the Cline runtime (substitute your
     own if not using Cline)
-version: 1.0.0
+version: 1.1.0
 author: open source
 license: MIT
 platforms: [linux, macos, windows]

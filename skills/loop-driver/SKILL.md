@@ -29,15 +29,7 @@ description: |
 
   The harness is finished before this skill ever loads. The
   loop session reads a complete harness, never builds one.
-
-  Companion skills (install separately if not present):
-  - meta-loss-function-development: produces the /goal prompt
-  - harness-scaffold: scaffolds the project tree
-  - loss-function-design: the 4-piece loss anatomy
-  - harness-engineering: what the agent sees
-  - cline-orchestration: the Cline runtime (substitute
-    your own if not using Cline)
-version: 1.0.0
+version: 1.1.0
 author: open source
 license: MIT
 platforms: [linux, macos, windows]
