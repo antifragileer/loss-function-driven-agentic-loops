@@ -19,12 +19,26 @@ in `verifiers/private/grader.sh` (which you must NOT read) measures
 whether the skill produces a Go binary that behaves like the
 public Slack web/desktop client on a held-out task set.
 
+## DONE WHEN / NOT DONE WHEN
+
+```
+DONE WHEN: pass_rate >= 0.8 on the held-out grader AND
+verifiers/integrity.sh exits 0 AND verifiers/instruments/test-freshness.sh
+exits 0 AND verifiers/instruments/hidden-unread.sh exits 0 AND
+weighted_sum >= 0.85, all holding for 2 consecutive cycles with
+g/m=g.
+NOT DONE WHEN: pass_rate == 1.0 on the design set but the held-out
+score is missing; integrity.sh fails; or the agent declares done
+without running verifiers/private/grader.sh.
+```
+
 ## Target
 
 A Cline skill that, when loaded, helps Cline build a working
 Go binary that mirrors the Slack desktop client's *visible
 behavior* on a held-out task set of 10 unseen feature requests.
-The skill must:
+The skill must satisfy **all axes simultaneously**:
+
 - pass >= 8/10 held-out tasks (Correctness, weight 1.0, gate)
 - the produced binary builds with `go build` on a clean checkout
   (Buildability, weight 0.7, gate)
@@ -36,40 +50,71 @@ The skill must:
   (Invariants, 1.0, gate)
 - skill degrades gracefully on Cline version mismatch (Drift, 0.2)
 - median token spend per task < 8k tokens (Cost, 0.3)
+- `verifiers/integrity.sh` exits 0 (Integrity, 1.0, gate)
+- `verifiers/instruments/test-freshness.sh` exits 0
+  (Freshness, 1.0, gate)
+- `verifiers/instruments/hidden-unread.sh` exits 0
+  (Hidden-Unread, 1.0, gate)
 
-Aggregate target: weighted sum >= 0.85. Correctness,
-Buildability, Safety, and Invariants are gates.
+Aggregate target: weighted sum >= 0.85. Correctness, Buildability,
+Safety, Invariants, Integrity, Freshness, and Hidden-Unread are
+gates — failing any blocks acceptance.
 
 You will NOT see the held-out 10 tasks. You will see 5 design
 tasks. Generalize, do not memorize.
 
 ### Design-set tasks you DO see (the development signal)
 
+The 5 design tasks are split across 4 categories (per
+BUILDING-A-GREAT-HARNESS.md V0-1):
+
+Happy-path (basic shape works):
 1. `test-tasks/design/01-send-message/` — implement a function
    that takes a channel name and message string, posts the
    message, returns the message ID.
-2. `test-tasks/design/02-list-channels/` — implement a function
-   that returns the list of channels the current user belongs
-   to, as a `[]Channel{ID, Name}`.
+
+Error/edge-case (broken input has a specific shape):
+2. `test-tasks/design/02-list-channels-empty-token/` — call
+   the list-channels endpoint with an empty / missing auth
+   token; the function must return the specific documented
+   error code, not retry, not crash, not return an empty list.
+
+Cross-cutting (exercises 2+ components):
 3. `test-tasks/design/03-react-emoji/` — add a `:fire:` (or
    similar) reaction to a given message ID; return the
    reaction count after.
-4. `test-tasks/design/04-thread-reply/` — given a parent
-   message ID and a reply string, post the reply as a
-   threaded reply; return the thread root ID.
+
+Negative (right answer is to NOT do something):
+4. `test-tasks/design/04-thread-reply-no-network/` — given
+   a parent message ID and a reply string, post the reply
+   as a threaded reply from the *cache*; the function must
+   NOT make a network call. (Grader verifies: the function
+   returns the thread root ID AND the function source has no
+   `time.Sleep`, no `http.Get`, no fetch call, no retry loop.)
+
+Happy-path (basic shape works, smaller):
 5. `test-tasks/design/05-mark-read/` — mark a channel as read
    for the current user up to a given message ID.
 
 Each task has a `prompt.txt` (the prompt to give Cline) and a
-`grade.sh` (deterministic grader, exits 0 on pass). Tasks are
-scored by `go build` + `go test` against a mock Slack server
-that the harness spins up per task.
+`grade.sh` (deterministic grader, exits 0 on pass). Each grader
+includes at least one **negative check** (e.g., `grep -v time.Sleep`)
+in addition to the positive check. Tasks are scored by `go build`
++ `go test` against a mock Slack server that the harness spins
+up per task.
 
 ### Held-out tasks you CANNOT see (the test set)
 
-`test-tasks/held-out/h01` ... `h10`. Generated from the public
-Slack web client API docs (https://api.slack.com/web) and
-public webhooks. The grader at
+`test-tasks/held-out/h01` ... `h10`. **The held-out set is
+categorically different from the design set** (BUILDING-A-GREAT-
+HARNESS.md V0-2). It is not "10 more examples of the same shape
+as the 5 design tasks." Held-out tasks exercise rate limits
+(429 after 30 requests/min — the public docs mention this
+but don't fully explain it), retry behavior, auth edge cases
+(missing token, expired token, token rotation), error-format
+quirks (the API returns a specific error code for blocked
+channels that the docs mention in passing), and cross-component
+integration (post + read + react in one call). The grader at
 `verifiers/private/grader.sh` runs the agent's candidate
 artifact against these. **Do not read the task files or
 the grader.** Reading them voids the held-out score.
@@ -104,6 +149,16 @@ the grader.** Reading them voids the held-out score.
   scans for skills
 - `verifiers/instruments/sub-loss-readout.sh <cycle-N.json>` —
   per-cycle sub-losses
+- `verifiers/instruments/test-freshness.sh` — design-set
+  SHA unchanged since last cycle (the agent must not be
+  able to change a test to pass it)
+- `verifiers/instruments/hidden-unread.sh <cycle-dir>` —
+  last transcript does not reference held-out or private
+- `verifiers/instruments/per-cycle-wall-clock.sh` —
+  wall-clock spent in the last cycle
+- `verifiers/integrity.sh` — the 5 anti-cheat guards;
+  exit 0 means the harness is intact. **Run before every
+  cycle; refuse to score if any guard fires.**
 - `verifiers/run-design-set.sh` — runs the 5 design tasks,
   emits `logs/design-set-score.json`
 - `verifiers/cline-wrapper.sh` — the ONLY way to invoke Cline
@@ -117,11 +172,11 @@ Local maxima is the default state. Force entropy:
 
 1. **Overfit reflection.** Before each cycle, append to
    `logs/iteration-log.md`:
-   `cycle N: hypothesis="<one line>", expected_failure="<one line>", generalizing_or_memorizing=<g|m>, pass_rate=<float>`
+   `cycle N: hypothesis="<one line>", expected_failure="<one line>", generalizing_or_memorizing=<g|m>, pass_rate=<float>, axes_met=<true|false>`
    If memorizing, the next change must REMOVE an artifact the
    design set rewards, not add one.
 
-2. **Stall entropy.** If pass_rate did not improve by >=
+2. **Stall entropy.** If weighted_sum did not improve by >=
    0.05 vs prior cycle, you MUST read the last 5 entries of
    `logs/iteration-log.md`, pick the OPPOSITE of your last
    change, and apply it. Log it.
@@ -130,8 +185,15 @@ Local maxima is the default state. Force entropy:
 
 ## Stop when
 
-1. pass_rate == 1.0 for 2 consecutive cycles AND last 2
-   overfit-reflections say "generalizing" — submit.
+1. **All multi-axis target conditions hold simultaneously
+   for 2 consecutive cycles AND the last 2 overfit-reflections
+   say "generalizing":** pass_rate >= 0.8 on the held-out
+   grader AND `verifiers/integrity.sh` exits 0 AND
+   `verifiers/instruments/test-freshness.sh` exits 0 AND
+   `verifiers/instruments/hidden-unread.sh` exits 0 AND
+   weighted_sum >= 0.85. A single-axis pass (e.g.,
+   pass_rate == 1.0 on the design set alone) is not a stop
+   condition. Submit.
 2. Wall-clock or token budget exhausted — submit best.
 3. 3 consecutive cycles with no improvement AND forced
    entropy applied — submit best.
@@ -150,29 +212,37 @@ Local maxima is the default state. Force entropy:
 
 1. Read `GOAL.md`, `AGENTS.md`, `README.md`,
    `verifiers/cline-wrapper.sh`, `verifiers/run-design-set.sh`,
-   and every script in `verifiers/instruments/`. (About 5-10
-   file reads.)
+   `verifiers/integrity.sh`, and every script in
+   `verifiers/instruments/`. (About 12-15 file reads.)
 2. Read each design task's `prompt.txt` and the starting file
    at the top of each design task dir. (5 tasks.)
-3. Establish baseline: with no candidate skill installed,
+3. Run `verifiers/integrity.sh`. If it exits non-zero, STOP
+   and report — the harness is incomplete or has been tampered
+   with. Do not start the loop.
+4. Establish baseline: with no candidate skill installed,
    run `PROJECT_DIR=$(pwd) ./verifiers/run-design-set.sh`
    and record the result. Append cycle 0 to
    `logs/iteration-log.md`.
-4. Begin cycle 1. Write a candidate
+5. Begin cycle 1. Write a candidate
    `skills/slack-clone-driver/SKILL.md` (and references if
    needed).
-5. Install the skill at
+6. Install the skill at
    `~/.cline/skills/slack-clone-driver/SKILL.md` (use
    `verifiers/instruments/cline-skills-dir.sh` to confirm the
    path).
-6. Run `PROJECT_DIR=$(pwd) ./verifiers/run-design-set.sh` to
+7. Run `PROJECT_DIR=$(pwd) ./verifiers/run-design-set.sh` to
    score.
-7. Compare to baseline. If improved, save
+8. Run `verifiers/integrity.sh`,
+   `verifiers/instruments/test-freshness.sh`, and
+   `verifiers/instruments/hidden-unread.sh` on the cycle's
+   transcript. If any fails, log the failure and either fix
+   the harness or force entropy.
+9. Compare to baseline. If improved, save
    `logs/best-cycle.json`. If not, force entropy.
-8. Iterate. After each cycle, append to `logs/iteration-log.md`.
-   Apply forced entropy on stall.
-9. Stop when one of the stop conditions above is met.
-10. On stop, leave `skills/slack-clone-driver/SKILL.md` +
+10. Iterate. After each cycle, append to `logs/iteration-log.md`.
+    Apply forced entropy on stall.
+11. Stop when one of the stop conditions above is met.
+12. On stop, leave `skills/slack-clone-driver/SKILL.md` +
     references + `logs/iteration-log.md` +
     `logs/best-cycle.json`. Verify the skill is also installed
     at `~/.cline/skills/slack-clone-driver/SKILL.md`.
@@ -188,10 +258,24 @@ Local maxima is the default state. Force entropy:
   `logs/iteration-log.md`. Self-improvement of the
   harness is the loop's job.
 - The only Cline invocation is via `verifiers/cline-wrapper.sh`.
+- Before every cycle, run `verifiers/integrity.sh`. If any
+  guard fails, refuse to score that cycle. Do not delete,
+  skip, or comment out guards — the anti-cheat firewall is
+  what keeps the loop honest.
+- Before every cycle, run
+  `verifiers/instruments/test-freshness.sh`. If the design-
+  set SHA has changed since the last cycle, the agent edited
+  a test to pass it — refuse to score and force entropy.
+- Before every cycle, run
+  `verifiers/instruments/hidden-unread.sh` on the agent's
+  last-cycle transcript. If the transcript references
+  `test-tasks/held-out/` or `verifiers/private/`, the held-
+  out score is void.
 - After EACH design-set run, append a one-line entry to
   `logs/iteration-log.md` with cycle number, hypothesis,
-  expected failure, and pass_rate.
-- If pass_rate doesn't improve by >= 0.05, force entropy:
+  expected failure, pass_rate, weighted_sum, gates,
+  axes_met, and wall_clock_s.
+- If weighted_sum doesn't improve by >= 0.05, force entropy:
   pick the OPPOSITE of your last change and apply it.
   Document it.
 - DO NOT load the `meta-loss-function-development` skill.

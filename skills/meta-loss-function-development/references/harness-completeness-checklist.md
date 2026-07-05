@@ -39,9 +39,12 @@ unrecoverable.
 ## Section 2: 4-piece loss spec
 
 - [ ] **Target** — the user has stated what "done" looks
-  like in measurable terms. Form: `pass_rate >= N` on
-  held-out tasks, where N is explicit and the held-out
-  task count is explicit (e.g., "8 of 10").
+  like in measurable terms. The target is **multi-axis**:
+  not just a single `pass_rate >= N` number, but a list
+  of conditions that must all hold (e.g., `pass_rate >= N
+  on held-out tasks` AND `p99 latency < X ms` AND
+  `integrity.sh passes` AND `no AI-modified test files`).
+  Section 9 below requires the full multi-axis shape.
 - [ ] **Constraints** — wall-clock budget, token budget,
   surface (which files the agent can read/write), and
   methodology (LLM-as-judge allowed? External API calls?
@@ -60,7 +63,7 @@ The 4-piece spec is shown to the user as a single markdown
 block. The user can edit it inline. Update the on-disk
 `GOAL.md` to match.
 
-## Section 3: design set (5-10 tasks)
+## Section 3: design set (5-10 tasks, 4 categories)
 
 - [ ] 5-10 tasks exist at `test-tasks/design/NN-<name>/`
 - [ ] Each task has a `prompt.txt` (the prompt given to the
@@ -71,11 +74,25 @@ block. The user can edit it inline. Update the on-disk
   deterministic grader**: exits 0 on pass, non-zero on
   fail, with a real check (`go test`, `pytest`, `diff`,
   `jq` comparison, etc.) — NOT `exit 1 // TODO`
+- [ ] Each `grade.sh` has at least one **negative check**:
+  asserts a behavior the agent must NOT do (e.g., "no
+  `time.Sleep` calls", "no deleted test files", "no
+  hardcoded answer key"). A grader that only checks the
+  positive case passes for an empty stub function.
 - [ ] Each `grade.sh` is runnable standalone from inside
   the task dir (`cd test-tasks/design/NN-<name>/ && bash
   grade.sh` works)
 - [ ] The user has run each `grade.sh` by hand and
   confirmed it actually checks the right thing
+- [ ] **The 5-10 design tasks are split across 4 categories:**
+  - [ ] 2-4 **happy-path** tasks (the basic case works)
+  - [ ] 2-4 **error/edge-case** tasks (broken / empty /
+    oversized / weird input; specific error shape)
+  - [ ] 1-2 **cross-cutting** tasks (exercises 2+ components
+    at once; breaks naive solutions)
+  - [ ] 1-2 **negative** tasks (right answer is to NOT do
+    something; the agent must NOT call a helper, NOT retry
+    forever, NOT block)
 - [ ] The design set as a whole covers the user's
   "definition of done" — no obvious gaps the user can
   name
@@ -89,7 +106,7 @@ grader with the user — even if that means asking "what
 should this actually check?" and waiting for the answer.
 Stub graders are forbidden in the finished harness.
 
-## Section 4: held-out set (5-10 tasks)
+## Section 4: held-out set (5-10 tasks, categorically different)
 
 - [ ] 5-10 tasks exist at `test-tasks/held-out/hNN/`
 - [ ] Each task has real task content (the user has
@@ -110,6 +127,14 @@ Stub graders are forbidden in the finished harness.
   agent can't pattern-match its way to 100% without
   actually solving the problem. The user has reviewed
   for this.
+- [ ] **The held-out set is categorically different from
+  the visible (design) set.** It is not just "10 more
+  examples of the same shape as the 5 design tasks." A
+  valid held-out set has at least one of: rate-limit
+  tests, retry/quota tests, auth-edge tests, error-format
+  quirks, cross-component tests the design set does not
+  exercise, or any property the public docs *mention but
+  don't fully explain*. The user has reviewed for this.
 - [ ] The held-out set is **not in this session's context
   window at /goal-paste time** — it lives only on disk
   in chmod'd directories. (This is automatic if the user
@@ -117,7 +142,7 @@ Stub graders are forbidden in the finished harness.
   prompt into a *fresh* session later. Remind the user
   to use a fresh session.)
 
-## Section 5: instruments
+## Section 5: instruments and integrity script
 
 - [ ] One instrument script per constraint, in
   `verifiers/instruments/`
@@ -129,8 +154,32 @@ Stub graders are forbidden in the finished harness.
   and exits non-zero only on its own internal failure
   (not on a "constraint violated" condition — that's
   the loop's job to detect)
+- [ ] `verifiers/instruments/test-freshness.sh` exists
+  and detects modification of the visible test set
+  across cycles (the agent must not be able to change
+  a test to pass it). Records SHA on first run, fails
+  on subsequent change.
+- [ ] `verifiers/instruments/hidden-unread.sh` exists
+  and fails if the agent's last-cycle transcript
+  references `test-tasks/held-out/` task names or
+  `verifiers/private/`.
+- [ ] `verifiers/instruments/per-cycle-wall-clock.sh`
+  exists and records per-cycle wall-clock so the loop
+  can reward fast-improving cycles.
+- [ ] `verifiers/integrity.sh` exists and runs at
+  least 3 anti-cheat guards before each cycle. The
+  default guards cover: (1) no grade.sh is a TODO
+  stub, (2) no grade.sh is an empty stub that always
+  passes, (3) no grade.sh uses `sleep` / `time.Sleep`
+  to mask timing failures, (4) `AGENTS.md` still has
+  the hard rules, (5) no transcript references the
+  held-out or private surfaces. The user may add
+  more project-specific guards.
 - [ ] The user has run each instrument by hand and
   confirmed the output is what they expect
+- [ ] The user has run `verifiers/integrity.sh` by
+  hand and confirmed all 5 default guards pass on the
+  finished harness
 
 ## Section 6: AGENTS.md and README.md
 
@@ -167,6 +216,12 @@ Stub graders are forbidden in the finished harness.
   window (which contains the held-out task synthesis, the
   user's private notes, etc.) is the threat model, and a
   fresh session is the mitigation
+- [ ] The /goal prompt's Hard Rules section explicitly
+  requires the loop session to run
+  `verifiers/integrity.sh` before each cycle and to
+  refuse to score if any guard fires. The integrity
+  script must be present in the harness before the
+  /goal prompt is emitted.
 
 ---
 
@@ -183,7 +238,7 @@ emit the prompt"). Write:
 - user: <user-identifier if available>
 - session: <session-id>
 - harness root: <absolute path>
-- sections checked: 1-8 all green
+- sections checked: 1-9 all green
 - notes: <any final user notes>
 ```
 
@@ -210,3 +265,29 @@ What is NEVER acceptable: skipping a section silently,
 emitting a /goal prompt that points at an incomplete
 harness, or filling stubs on the user's behalf without
 asking.
+
+## Section 9: target shape and definition of done
+
+- [ ] `GOAL.md` opens with a 2-3 line `DONE WHEN` /
+  `NOT DONE WHEN` block at the very top, above the
+  target description. `DONE WHEN` states the single
+  testable criterion for success. `NOT DONE WHEN` lists
+  the most common ways the agent will mistakenly claim
+  to be done. The loop, the agent, and the user all
+  read these two lines first.
+- [ ] The target is **multi-axis** (a list of conditions,
+  not a single number). A `pass_rate >= 0.8` target is
+  too easy to game. A multi-axis target has at least
+  2 of: pass_rate threshold, p99 latency threshold,
+  "no AI-modified test files" assertion, hidden-test
+  delta threshold, integrity-script-pass assertion,
+  or a smallness reward (fewer lines / fewer files).
+  All axes must hold simultaneously for the loop to
+  stop on success.
+- [ ] The aggregate target (weighted sum) AND each
+  individual axis are stated in `GOAL.md`'s Target
+  section.
+- [ ] The stop conditions in `GOAL.md` reflect the
+  multi-axis target. "Pass `pass_rate == 1.0`" alone
+  is not a sufficient stop condition; the loop also
+  requires gates, integrity-pass, and held-out delta.

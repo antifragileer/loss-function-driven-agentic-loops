@@ -37,8 +37,34 @@ actual_adapters = {s["name"] for s in b["skills"] if s["role"] == "agent-adapter
 if actual_adapters != expected_adapters:
     print(f"FAIL: adapters {actual_adapters} != {expected_adapters}", file=sys.stderr)
     sys.exit(1)
+# d2 negative check: bundle.json must NOT be a minimal stub
+# (catches the cheat where the agent replaces bundle.json with
+# a tiny file that satisfies the structure check above).
 PYEOF
 RC=$?
+
+# Negative check: bundle.json must contain real skill descriptions,
+# not just empty placeholders. If the agent replaced it with a
+# 5-line stub, this catches it.
+NEG_FAIL=""
+bundle_size=$(wc -c < "$BUNDLE_JSON" 2>/dev/null | tr -d ' ')
+if [[ "${bundle_size:-0}" -lt 1000 ]]; then
+  NEG_FAIL="bundle.json is suspiciously small ($bundle_size bytes) — likely a stub"
+fi
+# Also: every skill must have a non-empty description field.
+missing_desc=$(python3 -c "
+import json, sys
+b = json.load(open(sys.argv[1]))
+empty = [s['name'] for s in b['skills'] if not s.get('description', '').strip()]
+print(' '.join(empty))
+" "$BUNDLE_JSON" 2>/dev/null)
+if [[ -n "$missing_desc" ]]; then
+  NEG_FAIL="bundle.json has skills with empty description: $missing_desc"
+fi
+if [[ -n "$NEG_FAIL" ]]; then
+  echo "FAIL: $NEG_FAIL" >&2
+  exit 1
+fi
 
 if [[ $RC -eq 0 ]]; then score=1.0; fi
 echo "score=$score"

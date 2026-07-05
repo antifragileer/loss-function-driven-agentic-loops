@@ -131,7 +131,15 @@ dependency, with the user reviewing each piece:
 - Create the directory tree (`verifiers/`, `test-tasks/`,
   `skills/`, `logs/`) using the `harness-scaffold` skill's
   tooling. All files start as stubs with explicit `TODO`
-  comments and `agent-edited: yes` markers absent.
+  comments and `agent-edited: yes` markers absent. The
+  scaffold also generates `verifiers/integrity.sh` with
+  5 default anti-cheat guards (Section 5 of the
+  completeness checklist covers which guards), plus
+  `verifiers/instruments/test-freshness.sh`,
+  `hidden-unread.sh`, and `per-cycle-wall-clock.sh`. The
+  loop session will invoke `integrity.sh` before every
+  cycle; the harness is not runnable until every
+  grade.sh in `test-tasks/design/` is a real grader.
 
 ### Round 1: the 4-piece loss spec
 
@@ -144,7 +152,7 @@ dependency, with the user reviewing each piece:
   `Target`, `Constraints`, `Instruments`, and `Forced
   entropy` sections.
 
-### Round 2: design set (5-10 tasks)
+### Round 2: design set (5-10 tasks, 4 categories)
 
 - For each task, write: a `prompt.txt` (what the inner
   agent sees), a starting file (the buggy code / blank
@@ -152,6 +160,22 @@ dependency, with the user reviewing each piece:
   deterministic grader, exit 0 on pass, non-zero on
   fail, with a real check — `go test`, `pytest`, `diff`,
   `jq` comparison, etc.).
+- The 5-10 tasks must span **4 categories** (BUILDING-A-
+  GREAT-HARNESS.md V0-1):
+  - 2-4 **happy-path** tasks (the basic case works)
+  - 2-4 **error / edge-case** tasks (broken / empty /
+    oversized / weird input; specific error shape)
+  - 1-2 **cross-cutting** tasks (exercise 2+ components
+    at once; break naive solutions)
+  - 1-2 **negative** tasks (right answer is to NOT do
+    something — the agent must NOT call a helper, NOT
+    retry forever, NOT block)
+- Each `grade.sh` must include at least one **negative
+  check** (e.g., `grep -v time.Sleep` to assert the
+  function did not use a sleep to mask a timing failure).
+  A grader with only positive checks passes for an empty
+  stub function — that is the largest single class of V0
+  failure mode.
 - Each grade.sh must be runnable standalone
   (`bash grade.sh` from inside the task dir) and must
   exit 0 deterministically. Stub graders that `exit 1
@@ -161,7 +185,7 @@ dependency, with the user reviewing each piece:
   shape? Any obvious gaps? Any reward hacks these graders
   would reward?" Iterate.
 
-### Round 3: held-out set (5-10 tasks)
+### Round 3: held-out set (5-10 tasks, categorically different)
 
 - Synthesize held-out tasks from public sources (API docs,
   public test cases, the reference's public surface). For
@@ -169,6 +193,15 @@ dependency, with the user reviewing each piece:
   file + grader), but stored in `test-tasks/held-out/`
   with `chmod 700` on the parent and `chmod 600` on the
   files.
+- The held-out set must be **categorically different**
+  from the design set, not just "10 more examples of the
+  same shape" (BUILDING-A-GREAT-HARNESS.md V0-2). At
+  least one held-out task must exercise a property the
+  public docs *mention but don't fully explain* — rate
+  limits, retry behavior, auth edge cases, error-format
+  quirks, cross-component integration. The visible test
+  is the practice exam; the held-out set is the real
+  exam, with different question shapes.
 - The held-out graders are referenced from
   `verifiers/private/grader.sh`, which the loop session
   reads but cannot inspect (it runs the grader, doesn't
@@ -179,20 +212,48 @@ dependency, with the user reviewing each piece:
   unless the user explicitly approves generating
   them). Iterate.
 
-### Round 4: instruments
+### Round 4: instruments and integrity script
 
 - For each constraint in the 4-piece spec, write a CLI
   command the loop can run to measure it. `time-remaining.sh`,
   `tokens-remaining.sh`, etc. Each script must actually
   return a real measurement (parse a log, query an API,
   read a file), not echo a placeholder.
-- Test each instrument by hand (`bash verifiers/instruments/X.sh`)
-  before showing the user.
+- Verify the three loop-side anti-cheat instruments:
+  - `verifiers/instruments/test-freshness.sh` — record
+    the design-set SHA on first run, fail on subsequent
+    change (the agent must not be able to edit a test
+    to pass it).
+  - `verifiers/instruments/hidden-unread.sh` — fail if
+    the agent's last-cycle transcript references
+    `test-tasks/held-out/` task names or
+    `verifiers/private/` paths.
+  - `verifiers/instruments/per-cycle-wall-clock.sh` —
+    record per-cycle wall-clock so the loop can reward
+    fast-improving cycles.
+- Verify `verifiers/integrity.sh` runs the 5 default
+  anti-cheat guards and exits 0 on the finished harness.
+  The 5 guards: no grade.sh is a TODO/stub, no grade.sh
+  is an empty stub-always-passes, no grade.sh uses
+  `sleep` / `time.Sleep`, AGENTS.md still has the hard
+  rules, no transcript references the held-out or
+  private surfaces. The user may add project-specific
+  guards.
+- Test each instrument and `integrity.sh` by hand
+  (`bash verifiers/instruments/X.sh`,
+  `bash verifiers/integrity.sh`) before showing the user.
 
 ### Round 5: AGENTS.md and README.md
 
 - Write `AGENTS.md` (loop driver rules — surface,
-  forbidden files, iteration log format, etc.).
+  forbidden files, iteration log format, and the
+  requirement to run `verifiers/integrity.sh` before
+  every cycle and refuse to score if any guard fires).
+  `AGENTS.md` must be <100 lines, project-specific, and
+  **in your own voice** — not the scaffold's default
+  boilerplate. The default scaffold emits a placeholder;
+  the user must rewrite it before the /goal prompt is
+  emitted.
 - Write `README.md` (how a human runs the loop:
   `bash verifiers/run-design-set.sh`, the loop driver
   command, where to read the iteration log).
@@ -210,6 +271,27 @@ dependency, with the user reviewing each piece:
   the project root, the design task list, the held-out
   task list (names only), the harness layout, the runtime
   instructions.
+- Open `GOAL.md` with a 2-3 line `DONE WHEN` /
+  `NOT DONE WHEN` block (BUILDING-A-GREAT-HARNESS.md
+  V0-8). `DONE WHEN` is the single testable criterion
+  for success; `NOT DONE WHEN` lists the most common
+  ways the agent will mistakenly claim to be done. The
+  loop, the agent, and the user all read these two
+  lines first.
+- The Target section is **multi-axis** (BUILDING-A-
+  GREAT-HARNESS.md ideas-bank #19): a list of
+  conditions, not a single number. At least 2 of
+  pass-rate threshold, p99 latency, "no AI-modified
+  test files" assertion, hidden-test delta, integrity-
+  pass assertion, or a smallness reward (fewer lines /
+  fewer files). All axes must hold simultaneously for
+  the loop to stop on success.
+- The stop conditions in the /goal prompt reflect the
+  multi-axis target. "Pass `pass_rate == 1.0`" alone
+  is not a sufficient stop condition.
+- The Hard Rules section requires the loop session to
+  run `verifiers/integrity.sh` before every cycle and
+  to refuse to score if any guard fires.
 - Print the prompt as a single code-fenced block.
 - Remind the user: paste this into a *fresh session* in a
   *different chat*. Do not resume this session for the

@@ -68,8 +68,30 @@ if not out.get("gates_passed", False):
     print(f"FAIL: gates_passed is False on clean input: {out.get('gates_passed')!r}",
           file=sys.stderr)
     sys.exit(1)
+# d4 negative check: scorer source must NOT use eval/exec or
+# import os.system on user input. (Catches a cheat where the
+# agent replaces compute_sub_losses.py with a stub that always
+# returns 1.0.)
 PYEOF
 RC=$?
+
+# Negative check: scorer source must not be a stub.
+NEG_FAIL=""
+SCORER_PATH="$REPO_ROOT/examples/lfd-system-verifier/verifiers/compute_sub_losses.py"
+if [[ ! -f "$SCORER_PATH" ]]; then
+  # Fall back to the canonical source the orchestrator copies in
+  SCORER_PATH="$REPO_ROOT/skills/cline-orchestration/references/compute-sub-losses.py"
+fi
+if grep -qE 'eval\(|exec\(|os\.system|subprocess.*shell=True' "$SCORER_PATH" 2>/dev/null; then
+  NEG_FAIL="sub-loss scorer source contains eval/exec/os.system"
+fi
+if [[ ${#SCORER_PATH} -eq 0 || ! -s "$SCORER_PATH" ]]; then
+  NEG_FAIL="sub-loss scorer is empty or missing"
+fi
+if [[ -n "$NEG_FAIL" ]]; then
+  echo "FAIL: $NEG_FAIL" >&2
+  exit 1
+fi
 
 rm -f "$SAMPLE" "$OUT"
 

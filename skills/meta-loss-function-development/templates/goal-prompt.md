@@ -22,16 +22,42 @@ You are running an outer optimization loop. The inner loop is the
 held-out grader in `<HELD_OUT_GRADER_PATH>` (which you must NOT
 read) measures whether the artifact is good.
 
+## DONE WHEN / NOT DONE WHEN
+
+```
+DONE WHEN: <ONE-SENTENCE TESTABLE CRITERION, e.g., "all 5 design
+tasks pass, all 5 sub-losses >= 0.8, integrity.sh exits 0, and
+pass_rate >= 0.8 on the held-out grader">
+NOT DONE WHEN: <COMMON WAYS THE AGENT WILL MISTAKENLY CLAIM DONE,
+e.g., "pass_rate == 1.0 on the design set but the held-out
+score is missing; integrity.sh fails; or the agent declares
+done without running verifiers/private/grader.sh">
+```
+
+The loop, the agent, and the user all read these two lines
+first. If the cycle's state does not satisfy `DONE WHEN`, the
+loop continues.
+
 ## Target
 
-A `<WHAT THE ARTIFACT IS>` that:
+A `<WHAT THE ARTIFACT IS>` whose quality is graded on
+**multiple axes simultaneously** (a `pass_rate >= N` alone
+is too easy to game — the loop will converge on a stub
+that prints the expected value). The axes are:
+
 - passes >= `<N>` of `<M>` held-out tasks (Correctness, weight 1.0, gate)
+- p99 latency < `<X>` ms (Performance, weight 0.5, optional)
+- `verifiers/integrity.sh` exits 0 (Integrity, weight 1.0, gate)
+- `verifiers/instruments/test-freshness.sh` exits 0 (no AI-modified test files, gate)
 - `<ADDITIONAL PER-SUBLOSS TARGETS>`
 - `<ADDITIONAL TARGETS>`
 
-Aggregate target: weighted sum >= `<THRESHOLD>` on the held-out
-grader. `<LIST OF GATE SUB-LOSSES>` are gates — failing any blocks
-acceptance.
+**All axes must hold simultaneously** for the loop to
+stop on success. A cycle that satisfies pass_rate but
+fails integrity is not a successful cycle. The aggregate
+weighted sum must also be >= `<THRESHOLD>` and the gates
+(`<LIST OF GATE SUB-LOSSES>` plus integrity) must all
+pass.
 
 You will NOT see the held-out `<M>` tasks. You will see `<K>`
 design-set tasks. Generalize, do not memorize.
@@ -79,11 +105,18 @@ the task files or the grader.
 - `<AGENT-VERSION-INSTRUMENT>` — installed agent version
 - `<SKILLS-DIR-INSTRUMENT>` — where the agent scans for skills
 - `<SUB-LOSS-READOUT-INSTRUMENT>` — per-cycle sub-losses
+- `<TEST-FRESHNESS-INSTRUMENT>` — design-set SHA unchanged since last cycle
+- `<HIDDEN-UNREAD-INSTRUMENT>` — last transcript does not reference held-out or private
+- `<PER-CYCLE-WALL-CLOCK-INSTRUMENT>` — wall-clock spent in the last cycle
+- `<INTEGRITY-SCRIPT>` — the 5 anti-cheat guards; exit 0 means the harness is intact
 - `<DESIGN-SET-RUNNER>` — runs the design tasks, emits score
 - `<WRAPPER>` — the ONLY way to invoke the agent
 
 A constraint without an instrument is a vibe. The agent will
 violate it because it cannot tell it is violating it.
+`<INTEGRITY-SCRIPT>` is the harness's anti-cheat firewall;
+the loop session runs it before every cycle and refuses to
+score if any guard fires.
 
 ## Forced entropy (driver-loop meta-policy)
 
@@ -107,8 +140,14 @@ Local maxima is the default state. Force entropy:
 
 ## Stop when
 
-1. pass_rate == 1.0 for 2 consecutive cycles AND last 2
-   overfit-reflections say "generalizing" — submit.
+1. **All multi-axis target conditions hold simultaneously
+   for `<SUCCESS_AFTER>` consecutive cycles AND the last
+   `<SUCCESS_AFTER>` overfit-reflections say "generalizing"** —
+   pass_rate >= `<N>` AND integrity.sh exits 0 AND
+   test-freshness.sh exits 0 AND hidden-unread.sh exits 0
+   AND the aggregate weighted sum >= `<THRESHOLD>`. A
+   single-axis pass (e.g., pass_rate == 1.0 alone) is not
+   a stop condition. Submit.
 2. Wall-clock or token budget exhausted — submit best.
 3. 3 consecutive cycles with no improvement AND forced
    entropy applied — submit best.
@@ -160,27 +199,36 @@ Local maxima is the default state. Force entropy:
    report the failure. Do not guess.
 
 **1.** Read `<GOAL-PATH>`, `<AGENTS-PATH>`, `<README-PATH>`,
-   `<WRAPPER>`, `<DESIGN-SET-RUNNER>`, and every script in
-   `<INSTRUMENTS-PATH>`. (About 5-10 file reads.)
+   `<WRAPPER>`, `<DESIGN-SET-RUNNER>`, `<INTEGRITY-SCRIPT>`,
+   and every script in `<INSTRUMENTS-PATH>`. (About 8-12
+   file reads.)
 2. Read each design task's `prompt.txt` and the buggy file at
    the top of each design task dir. (`<K>` tasks.)
-3. Establish baseline: with no candidate artifact installed,
+3. Run `<INTEGRITY-SCRIPT>`. If it exits non-zero, STOP
+   and report — the harness is incomplete or has been
+   tampered with. Do not start the loop.
+4. Establish baseline: with no candidate artifact installed,
    run `<DESIGN-SET-RUNNER>` and record the result. Append
    cycle 0 to `<LOG-PATH>`.
-4. Begin cycle 1. Write a candidate
+5. Begin cycle 1. Write a candidate
    `<ARTIFACT-PATH>`. The artifact should be a `<AGENT>`
    `<ARTIFACT-KIND>` that, when loaded, helps the agent
    complete tasks like the design set.
-5. Install the artifact where the agent will pick it up:
+6. Install the artifact where the agent will pick it up:
    `<AGENT-SKILLS-DIR>/<name>/` (use
    `<SKILLS-DIR-INSTRUMENT>` to confirm the path).
-6. Run `<DESIGN-SET-RUNNER>` to score.
-7. Compare to baseline. If improved, save `<BEST-CYCLE-PATH>`.
+7. Run `<DESIGN-SET-RUNNER>` to score.
+8. Run `<INTEGRITY-SCRIPT>`, `<TEST-FRESHNESS-INSTRUMENT>`,
+   and `<HIDDEN-UNREAD-INSTRUMENT>`. If any fails, log the
+   failure and either fix the harness (if the failure is
+   legitimate) or force entropy (if the failure is the
+   agent's doing).
+9. Compare to baseline. If improved, save `<BEST-CYCLE-PATH>`.
    If not, force entropy.
-8. Iterate. After each cycle, append to `<LOG-PATH>`. Apply
-   forced entropy on stall.
-9. Stop when one of the stop conditions above is met.
-10. On stop, leave `<ARTIFACT-PATH>` + references +
+10. Iterate. After each cycle, append to `<LOG-PATH>`. Apply
+    forced entropy on stall.
+11. Stop when one of the stop conditions above is met.
+12. On stop, leave `<ARTIFACT-PATH>` + references +
     `<LOG-PATH>` + `<BEST-CYCLE-PATH>`. Verify the artifact is
     also installed at `<AGENT-SKILLS-DIR>/<name>/`.
 
@@ -197,6 +245,19 @@ Local maxima is the default state. Force entropy:
   and log the patch in the iteration log. Self-improvement
   of the harness is the loop's job.
 - The only `<AGENT>` invocation is via `<WRAPPER>`.
+- Before every cycle, run `<INTEGRITY-SCRIPT>`. If any
+  guard fails, refuse to score that cycle. Do not
+  delete, skip, or comment out guards in
+  `<INTEGRITY-SCRIPT>` — the anti-cheat firewall is
+  what keeps the loop honest.
+- Before every cycle, run `<TEST-FRESHNESS-INSTRUMENT>`.
+  If the design-set SHA has changed since the last
+  cycle, the agent edited a test to pass it — refuse
+  to score and force entropy.
+- Before every cycle, run `<HIDDEN-UNREAD-INSTRUMENT>`
+  on the agent's last-cycle transcript. If the
+  transcript references `<HELD_OUT_TASKS-PATH>` or
+  `<HELD_OUT_GRADER-PATH>`, the held-out score is void.
 - After EACH design-set run, append a one-line entry to
   `<LOG-PATH>` with cycle number, hypothesis, expected
   failure, and pass_rate.

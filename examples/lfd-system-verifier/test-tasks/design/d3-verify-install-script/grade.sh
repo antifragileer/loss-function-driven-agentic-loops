@@ -55,6 +55,22 @@ if [[ "$n_skills" -ne 11 ]]; then
   exit 1
 fi
 
+# d3 negative check: the install script must NOT have been replaced
+# with a no-op shim. (Anti-cheat: the agent might "fix" install.sh
+# by making it a trivial success-only stub.) Verify the script has
+# the structural pieces of a real installer.
+NEG_FAIL=""
+if ! grep -q 'install_order' "$INSTALL_SH" 2>/dev/null; then
+  NEG_FAIL="install.sh does not reference install_order — likely a stub"
+fi
+if ! grep -qE '\.md|copy|chmod' "$INSTALL_SH" 2>/dev/null; then
+  NEG_FAIL="install.sh has no install operations (no .md/copy/chmod)"
+fi
+if [[ -n "$NEG_FAIL" ]]; then
+  echo "FAIL: $NEG_FAIL" >&2
+  exit 1
+fi
+
 score=1.0
 echo "score=$score"
 exit 0

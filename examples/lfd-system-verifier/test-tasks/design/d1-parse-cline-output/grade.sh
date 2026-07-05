@@ -68,10 +68,25 @@ if out["duration_ms"] != 12345:
 if out["model"] != "test-model":
     print(f"FAIL: expected model='test-model', got {out['model']!r}", file=sys.stderr)
     sys.exit(1)
+# d1 negative check: parser source must NOT contain eval/exec of untrusted input.
+# (The agent might try to "fix" the parser by replacing it with an
+# eval-based stub. The grader catches that.)
 PYEOF
-PARSE_RC=$?
+RC=$?
 
-if [[ $PARSE_RC -eq 0 ]]; then
+# Negative check: parser source must not have been replaced with an
+# eval-based shim. (Anti-cheat: the agent might "fix" the parser by
+# writing a stub that always returns the expected JSON.)
+NEG_FAIL=""
+if grep -qE 'eval.*input|exec.*input|subprocess\.call.*shell=True' "$PARSER" 2>/dev/null; then
+  NEG_FAIL="parser source contains eval/exec/shell=True"
+fi
+if [[ -n "$NEG_FAIL" ]]; then
+  echo "FAIL: $NEG_FAIL" >&2
+  exit 1
+fi
+
+if [[ $RC -eq 0 ]]; then
   score=1.0
 fi
 

@@ -174,6 +174,7 @@ fi
 
 mkdir -p "$PROJECT_ROOT/logs"
 LOG_FILE="$PROJECT_ROOT/logs/iteration-log.md"
+[[ -f "$LOG_FILE" ]] || : > "$LOG_FILE"
 BEST_FILE="$PROJECT_ROOT/logs/best-cycle.json"
 [[ -f "$BEST_FILE" ]] || echo '{"weighted_normalized": 0.0, "pass_rate": 0.0}' > "$BEST_FILE"
 
@@ -218,6 +219,52 @@ if [[ "$TOKENS_LEFT" -le 0 ]]; then
   exit 3
 fi
 
+# ----- pre-cycle anti-cheat firewall -----
+#
+# The integrity script is the harness's anti-cheat guard.
+# It runs 5 default checks (no TODO stub grade.sh, no
+# stub-always-passes, no sleep-in-grader, AGENTS.md has hard
+# rules, no transcript references the held-out or private
+# surfaces). On any failure we refuse to run the cycle —
+# the harness is incomplete or has been tampered with.
+INTEGRITY="$PROJECT_ROOT/verifiers/integrity.sh"
+if [[ -x "$INTEGRITY" ]]; then
+  if ! "$INTEGRITY" >&2; then
+    echo '{"stop": "integrity", "reason": "verifiers/integrity.sh failed; harness incomplete or tampered"}'
+    exit 3
+  fi
+fi
+
+# ----- parse multi-axis target from GOAL.md -----
+#
+# The stop condition requires all multi-axis thresholds
+# to hold simultaneously. We parse the Target section
+# of GOAL.md for explicit threshold fields. The default
+# if a field is missing is the single-axis "pass_rate=1.0"
+# legacy behavior, so old GOAL.md files still work.
+TARGET_PASSRATE="1.0"
+TARGET_WEIGHTED="0.85"
+TARGET_REQUIRE_INTEGRITY="true"
+TARGET_REQUIRE_FRESHNESS="true"
+TARGET_REQUIRE_HIDDEN="true"
+GOAL_FILE="$PROJECT_ROOT/GOAL.md"
+if [[ -f "$GOAL_FILE" ]]; then
+  parsed_passrate=$(python3 -c "
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r'pass[_ ]?rate\s*>=\s*([0-9.]+)', text, re.I)
+print(m.group(1) if m else '')
+" "$GOAL_FILE" 2>/dev/null || true)
+  [[ -n "$parsed_passrate" ]] && TARGET_PASSRATE="$parsed_passrate"
+  parsed_wsum=$(python3 -c "
+import re, sys
+text = open(sys.argv[1]).read()
+m = re.search(r'weighted[_ ]?sum\s*>=\s*([0-9.]+)', text, re.I)
+print(m.group(1) if m else '')
+" "$GOAL_FILE" 2>/dev/null || true)
+  [[ -n "$parsed_wsum" ]] && TARGET_WEIGHTED="$parsed_wsum"
+fi
+
 # ----- read recent log for hypothesis + stall detection -----
 
 LAST_5=$(tail -5 "$LOG_FILE" 2>/dev/null || true)
@@ -252,15 +299,57 @@ while IFS= read -r line; do
   fi
 done <<< "$LAST_5"
 
-# Success: SUCCESS_AFTER consecutive cycles with pass_rate=1.0 and g
-# (default 2, configurable via --success-after; pass a very large
-# number to disable the early-success stop, e.g. when you want the
-# loop to run a fixed number of cycles for testing.)
-SUCCESS_COUNT=$(tail -10 "$LOG_FILE" 2>/dev/null | grep -E 'pass_rate=1\.0' | grep -E 'generalizing_or_memorizing=g' | tail -"$SUCCESS_AFTER" | wc -l | tr -d ' \n' 2>/dev/null) || SUCCESS_COUNT=0
+# Success: SUCCESS_AFTER consecutive cycles where ALL
+# multi-axis target conditions hold AND the overfit-
+# reflections say "generalizing". The default
+# --success-after is 2, configurable; --success-after 0
+# disables the early-success stop.
+#
+# We grep the last 10 log lines and count consecutive
+# cycles from the tail that satisfy the multi-axis target.
+# A cycle's log line encodes "axes_met=true" if it
+# satisfied every axis (pass_rate >= TARGET_PASSRATE,
+# weighted_sum >= TARGET_WEIGHTED, integrity ok, freshness
+# ok, hidden-unread ok). Older cycles (without the
+# axes_met field) are treated as single-axis passes if
+# pass_rate=1.0 + g — preserves backward compat.
+SUCCESS_COUNT=$(tail -10 "$LOG_FILE" 2>/dev/null | python3 -c "
+import sys, re
+threshold_passrate = float('${TARGET_PASSRATE}')
+threshold_wsum = float('${TARGET_WEIGHTED}')
+consecutive = 0
+for line in sys.stdin:
+    line = line.strip()
+    if not line or line.startswith('STOP:') or line.startswith('OVERRIDE:'):
+        continue
+    g_match = re.search(r'generalizing_or_memorizing=([gm])', line)
+    if not g_match or g_match.group(1) != 'g':
+        break
+    pass_match = re.search(r'pass_rate=([0-9.]+)', line)
+    wsum_match = re.search(r'weighted_sum=([0-9.]+)', line)
+    if not pass_match or not wsum_match:
+        break
+    pass_ok = float(pass_match.group(1)) >= threshold_passrate
+    wsum_ok = float(wsum_match.group(1)) >= threshold_wsum
+    axes_match = re.search(r'axes_met=(true|false)', line)
+    if axes_match:
+        # New-format line: enforce multi-axis.
+        if axes_match.group(1) == 'true':
+            consecutive += 1
+        else:
+            break
+    else:
+        # Legacy line: single-axis pass.
+        if pass_ok:
+            consecutive += 1
+        else:
+            break
+sys.stdout.write(str(consecutive))
+" 2>/dev/null)
 SUCCESS_COUNT="${SUCCESS_COUNT:-0}"
-echo "[cycle] SUCCESS_COUNT=$SUCCESS_COUNT (threshold $SUCCESS_AFTER)" >&2
+echo "[cycle] SUCCESS_COUNT=$SUCCESS_COUNT (threshold $SUCCESS_AFTER, target pass_rate>=${TARGET_PASSRATE} weighted>=${TARGET_WEIGHTED})" >&2
 if [[ "$SUCCESS_COUNT" -ge "$SUCCESS_AFTER" && "$SUCCESS_AFTER" -gt 0 ]]; then
-  echo "{\"stop\": \"success\", \"reason\": \"pass_rate=1.0 for $SUCCESS_AFTER consecutive cycles, both generalizing\"}"
+  echo "{\"stop\": \"success\", \"reason\": \"multi-axis target met for $SUCCESS_AFTER consecutive cycles, all generalizing\"}"
   exit 3
 fi
 
@@ -419,7 +508,16 @@ fi
 
 # Run the design set
 echo "[cycle $CYCLE] running design set..." >&2
+CYCLE_START_TS=$(date +%s)
 PROJECT_DIR="$PROJECT_ROOT" "$DESIGN_SET" > "$CYCLE_DIR/design-set-score.json" 2>"$CYCLE_DIR/design-set.stderr" || true
+CYCLE_END_TS=$(date +%s)
+CYCLE_WALL_SEC=$((CYCLE_END_TS - CYCLE_START_TS))
+
+# Record per-cycle wall-clock for the speed/anti-overfit signal.
+PER_CYCLE_CLOCK="$PROJECT_ROOT/verifiers/instruments/per-cycle-wall-clock.sh"
+if [[ -x "$PER_CYCLE_CLOCK" ]]; then
+  "$PER_CYCLE_CLOCK" --record "$CYCLE_WALL_SEC" "cycle-$CYCLE" >/dev/null 2>&1 || true
+fi
 
 # Score the cycle
 echo "[cycle $CYCLE] scoring..." >&2
@@ -435,8 +533,67 @@ PASS_RATE=$(python3 -c "import json; d=json.load(open('$CYCLE_DIR/design-set-sco
 WSUM=$(python3 -c "import json; d=json.load(open('$CYCLE_DIR/sub-losses.json')); print(d.get('weighted_normalized', 0.0))")
 GATES=$(python3 -c "import json; d=json.load(open('$CYCLE_DIR/sub-losses.json')); print(d.get('gates_passed', False))")
 
+# ----- post-cycle anti-cheat checks -----
+#
+# Run the two loop-side instruments: test-freshness
+# (design-set SHA unchanged) and hidden-unread
+# (transcript doesn't reference held-out / private).
+# These are recorded on the cycle dir and contribute
+# to the multi-axis `axes_met` field.
+FRESHNESS_OK="true"
+HIDDEN_OK="true"
+FRESHNESS_INSTRUMENT="$PROJECT_ROOT/verifiers/instruments/test-freshness.sh"
+HIDDEN_INSTRUMENT="$PROJECT_ROOT/verifiers/instruments/hidden-unread.sh"
+if [[ -x "$FRESHNESS_INSTRUMENT" ]]; then
+  if "$FRESHNESS_INSTRUMENT" > "$CYCLE_DIR/test-freshness.txt" 2>&1; then
+    echo "ok    test-freshness" > "$CYCLE_DIR/test-freshness.txt"
+  else
+    FRESHNESS_OK="false"
+    echo "FAIL  test-freshness" >> "$CYCLE_DIR/test-freshness.txt"
+  fi
+fi
+if [[ -x "$HIDDEN_INSTRUMENT" ]]; then
+  if "$HIDDEN_INSTRUMENT" "$CYCLE_DIR" > "$CYCLE_DIR/hidden-unread.txt" 2>&1; then
+    echo "ok    hidden-unread" > "$CYCLE_DIR/hidden-unread.txt"
+  else
+    HIDDEN_OK="false"
+    echo "FAIL  hidden-unread" >> "$CYCLE_DIR/hidden-unread.txt"
+  fi
+fi
+
+# Record the freshness baseline on the first cycle (so subsequent
+# cycles can detect tampering). Idempotent — the instrument
+# itself is a pass-through if a baseline already exists.
+if [[ "$CYCLE" -eq 0 && -x "$FRESHNESS_INSTRUMENT" ]]; then
+  "$FRESHNESS_INSTRUMENT" --record >/dev/null 2>&1 || true
+fi
+
+# Compute multi-axis satisfaction.
+AXES_MET=$(python3 -c "
+threshold_passrate = float('${TARGET_PASSRATE}')
+threshold_wsum = float('${TARGET_WEIGHTED}')
+require_integrity = '${TARGET_REQUIRE_INTEGRITY}' == 'true'
+require_freshness = '${TARGET_REQUIRE_FRESHNESS}' == 'true'
+require_hidden = '${TARGET_REQUIRE_HIDDEN}' == 'true'
+pass_rate = float('${PASS_RATE}')
+wsum = float('${WSUM}')
+gates = '${GATES}' == 'True'
+freshness = '${FRESHNESS_OK}' == 'true'
+hidden = '${HIDDEN_OK}' == 'true'
+# integrity was run pre-cycle (it would have stopped the script if it failed),
+# so the pre-check itself counts as the integrity axis being met.
+ok = (
+    pass_rate >= threshold_passrate
+    and wsum >= threshold_wsum
+    and (gates or not require_integrity)
+    and (freshness or not require_freshness)
+    and (hidden or not require_hidden)
+)
+print('true' if ok else 'false')
+")
+
 # Append to iteration log
-LOG_LINE="cycle $CYCLE: hypothesis=\"$HYPOTHESIS\", expected_failure=\"$EXPECTED_FAILURE\", generalizing_or_memorizing=$G_OR_M, pass_rate=$PASS_RATE, weighted_sum=$WSUM, gates=$GATES"
+LOG_LINE="cycle $CYCLE: hypothesis=\"$HYPOTHESIS\", expected_failure=\"$EXPECTED_FAILURE\", generalizing_or_memorizing=$G_OR_M, pass_rate=$PASS_RATE, weighted_sum=$WSUM, gates=$GATES, axes_met=$AXES_MET, wall_clock_s=$CYCLE_WALL_SEC"
 [[ "$FORCED_ENTROPY" == "true" ]] && LOG_LINE="$LOG_LINE, FORCED_ENTROPY=true"
 echo "$LOG_LINE" >> "$LOG_FILE"
 
@@ -445,7 +602,7 @@ PRIOR_WSUM_NUM=$(python3 -c "print(float('$PRIOR_WSUM'))" 2>/dev/null || echo "0
 WSUM_NUM=$(python3 -c "print(float('$WSUM'))" 2>/dev/null || echo "0.0")
 if python3 -c "import sys; sys.exit(0 if $WSUM_NUM > $PRIOR_WSUM_NUM else 1)"; then
   cp "$CYCLE_DIR/sub-losses.json" "$BEST_FILE"
-  echo "[cycle $CYCLE] new best: weighted_sum=$WSUM, pass_rate=$PASS_RATE" >&2
+  echo "[cycle $CYCLE] new best: weighted_sum=$WSUM, pass_rate=$PASS_RATE, axes_met=$AXES_MET" >&2
 fi
 
 # Emit cycle result
@@ -455,6 +612,10 @@ cat <<EOF
   "pass_rate": $PASS_RATE,
   "weighted_sum": $WSUM,
   "gates_passed": $GATES,
+  "axes_met": $AXES_MET,
+  "freshness_ok": $FRESHNESS_OK,
+  "hidden_unread_ok": $HIDDEN_OK,
+  "wall_clock_s": $CYCLE_WALL_SEC,
   "forced_entropy": $FORCED_ENTROPY,
   "improved": $( python3 -c "import sys; print('true' if $WSUM_NUM > $PRIOR_WSUM_NUM else 'false')" ),
   "cycle_dir": "$CYCLE_DIR",

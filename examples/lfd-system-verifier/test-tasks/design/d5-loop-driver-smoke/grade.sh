@@ -82,6 +82,21 @@ if [[ "$n_task_dirs" -lt 1 ]]; then
   FAILS+=("no per-task sub-dirs under $CYCLE_DIR")
 fi
 
+# d5 negative check: cycle.sh must NOT be a no-op that always
+# returns "pass". The harness-completeness-checklist requires
+# per-grader negative checks; d5's negative check is that
+# cycle.sh is the real driver (not a 1-line stub).
+NEG_FAIL=""
+CYCLE_SH="$REPO_ROOT/skills/loop-driver/scripts/cycle.sh"
+if [[ ! -s "$CYCLE_SH" ]]; then
+  NEG_FAIL="cycle.sh is empty or missing"
+elif [[ $(wc -l < "$CYCLE_SH") -lt 50 ]]; then
+  NEG_FAIL="cycle.sh has only $(wc -l < "$CYCLE_SH") lines — likely a stub"
+fi
+if [[ -n "$NEG_FAIL" ]]; then
+  FAILS+=("$NEG_FAIL")
+fi
+
 # All checks passed
 if [[ ${#FAILS[@]} -eq 0 ]]; then
   score=1.0

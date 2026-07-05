@@ -141,6 +141,143 @@ def word_truncate(s, max_len):
     return truncated
 
 
+INTEGRITY_SH = (
+    GENERATED_HEADER
+    + "#!/usr/bin/env bash\n"
+    + "# verifiers/integrity.sh — anti-cheat guards. Runs BEFORE every\n"
+    + "# design-set cycle. Exits 0 if the harness is intact, non-zero\n"
+    + "# if any guard fires.\n"
+    + "#\n"
+    + "# Default guards cover the 5 cheats from BUILDING-A-GREAT-HARNESS.md\n"
+    + "# V0-7: test deletion, stub-always-passes, sleep-to-pass, rules-file\n"
+    + "# modification, hidden-dir read. Replace with project-specific guards\n"
+    + "# before the /goal prompt is emitted.\n"
+    + "#\n"
+    + "# Usage: integrity.sh [--help] [--project-root PATH]\n"
+    + "#   (no flag):  report. exit 0 if all guards pass, 1 if any fail.\n"
+    + "#   --project-root PATH: override the auto-detected project root.\n"
+    + "#   --help:     show this help and exit 0.\n"
+    + "#\n"
+    + "# Project root is auto-detected from this script's location\n"
+    + "# (../.. from verifiers/integrity.sh). The $PROJECT_DIR env var\n"
+    + "# overrides it; --project-root overrides the env var.\n"
+    + "\n"
+    + "set -euo pipefail\n"
+    + "\n"
+    + 'SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"\n'
+    + 'DEFAULT_PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"\n'
+    + 'PROJECT_DIR="${PROJECT_DIR:-$DEFAULT_PROJECT_ROOT}"\n'
+    + "\n"
+    + "while [[ $# -gt 0 ]]; do\n"
+    + '  case "$1" in\n'
+    + '    --help|-h)\n'
+    + '      sed -n "2,/^[^#]/{/^[^#]/q; p}" "$0" | sed "s/^# \\{0,1\\}//"\n'
+    + "      exit 0\n"
+    + "      ;;\n"
+    + '    --project-root) PROJECT_DIR="$2"; shift 2 ;;\n'
+    + '    *) echo "unknown flag: $1" >&2; exit 2 ;;\n'
+    + "  esac\n"
+    + "done\n"
+    + "\n"
+    + "[[ -d \"$PROJECT_DIR\" ]] || { echo \"integrity: project root not found: $PROJECT_DIR\" >&2; exit 2; }\n"
+    + "\n"
+    + "FAILS=0\n"
+    + "REPORT=\"\"\n"
+    + "\n"
+    + "check() {\n"
+    + '  local name="$1"; shift\n'
+    + '  if "$@"; then\n'
+    + '    REPORT+="ok    ${name}\n"\n'
+    + "  else\n"
+    + '    REPORT+="FAIL  ${name}\n"\n'
+    + "    FAILS=$((FAILS + 1))\n"
+    + "  fi\n"
+    + "}\n"
+    + "\n"
+    + "# ----- guards (project-specific) -----\n"
+    + "\n"
+    + "guard_no_grade_todo_stub() {\n"
+    + '  local d="$PROJECT_DIR/test-tasks/design"\n'
+    + '  [[ -d "$d" ]] || return 0\n'
+    + '  local g\n'
+    + '  while IFS= read -r g; do\n'
+    + '    if grep -qE "TODO.*grade|TODO.*meta-fill" "$g" 2>/dev/null; then\n'
+    + "      return 1\n"
+    + "    fi\n"
+    + "  done < <(find \"$d\" -name grade.sh 2>/dev/null)\n"
+    + "  return 0\n"
+    + "}\n"
+    + "\n"
+    + "guard_no_stub_always_pass() {\n"
+    + '  local d="$PROJECT_DIR/test-tasks/design"\n'
+    + '  [[ -d "$d" ]] || return 0\n'
+    + '  local g\n'
+    + '  while IFS= read -r g; do\n'
+    + '    if ! grep -qE "(\\btest\\b|\\bassert\\b|\\bgrep\\b|\\bdiff\\b|\\bjq\\b|\\bpytest\\b|\\bgo test\\b|\\bnode -e\\b|\\bbash -c\\b|\\bpython3? -c\\b|\\bpython3? -)" "$g" 2>/dev/null; then\n'
+    + "      return 1\n"
+    + "    fi\n"
+    + "  done < <(find \"$d\" -name grade.sh 2>/dev/null)\n"
+    + "  return 0\n"
+    + "}\n"
+    + "\n"
+    + "guard_no_sleep_in_grader() {\n"
+    + '  local d="$PROJECT_DIR/test-tasks/design"\n'
+    + '  [[ -d "$d" ]] || return 0\n'
+    + '  local g\n'
+    + '  while IFS= read -r g; do\n'
+    + '    if grep -qE "time\\.Sleep|\\bsleep [0-9]" "$g" 2>/dev/null; then\n'
+    + "      return 1\n"
+    + "    fi\n"
+    + "  done < <(find \"$d\" -name grade.sh 2>/dev/null)\n"
+    + "  return 0\n"
+    + "}\n"
+    + "\n"
+    + "guard_agents_md_has_hard_rules() {\n"
+    + '  local f="$PROJECT_DIR/AGENTS.md"\n'
+    + '  [[ -f "$f" ]] || return 1\n'
+    + '  grep -q "DO NOT read .*verifiers/private" "$f" \\\n'
+    + '    && grep -q "DO NOT read .*test-tasks/held-out" "$f"\n'
+    + "}\n"
+    + "\n"
+    + "guard_no_hidden_read() {\n"
+    + '  local d="$PROJECT_DIR/test-tasks/held-out"\n'
+    + '  local names=""\n'
+    + '  [[ -d "$d" ]] && names=$(find "$d" -mindepth 1 -maxdepth 1 -type d -exec basename {} \\; 2>/dev/null)\n'
+    + '  local cdir="$PROJECT_DIR/logs"\n'
+    + '  local latest\n'
+    + '  latest=$(ls -1t "$cdir"/cycle-*/cycle-summary.json 2>/dev/null | head -1)\n'
+    + '  [[ -z "$latest" ]] && return 0\n'
+    + '  local text\n'
+    + '  text=$(cat "$latest" 2>/dev/null || true)\n'
+    + '  local n\n'
+    + '  for n in $names; do\n'
+    + '    if echo "$text" | grep -qF "$n"; then\n'
+    + "      return 1\n"
+    + "    fi\n"
+    + "  done\n"
+    + '  if echo "$text" | grep -qE "verifiers/private|chmod 600|chmod 700"; then\n'
+    + "    return 1\n"
+    + "  fi\n"
+    + "  return 0\n"
+    + "}\n"
+    + "\n"
+    + 'check "no-grade-todo-stub"     guard_no_grade_todo_stub\n'
+    + 'check "no-stub-always-pass"    guard_no_stub_always_pass\n'
+    + 'check "no-sleep-in-grader"     guard_no_sleep_in_grader\n'
+    + 'check "agents-md-has-hard-rules" guard_agents_md_has_hard_rules\n'
+    + 'check "no-hidden-read"         guard_no_hidden_read\n'
+    + "\n"
+    + 'printf "%s" "$REPORT"\n'
+    + 'if [[ "$FAILS" -gt 0 ]]; then\n'
+    + '  echo "" >&2\n'
+    + '  echo "integrity: $FAILS guard(s) failed" >&2\n'
+    + "  exit 1\n"
+    + "fi\n"
+    + 'echo "integrity: all guards pass"\n'
+    + "exit 0\n"
+)
+
+
 # ----- file content templates -----
 
 AGENTS_MD = lambda project_name: (
@@ -298,6 +435,130 @@ INSTRUMENT_FILES = {
         + 'CYCLE_JSON="${1:?usage: sub-loss-readout.sh <cycle-N.json>}"\n'
         + 'SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"\n'
         + 'python3 "$SCRIPT_DIR/../compute_sub_losses.py" "$CYCLE_JSON"\n'
+    ),
+    "test-freshness.sh": (
+        GENERATED_HEADER
+        + "#!/usr/bin/env bash\n"
+        + "# Assert the visible test set has not been modified since the\n"
+        + "# last cycle. The agent must not be able to change a test to\n"
+        + "# pass it. Stores the SHA-256 of the design set on first run,\n"
+        + "# compares on subsequent runs.\n"
+        + "#\n"
+        + "# Usage: test-freshness.sh [--record]\n"
+        + "#   (no flag): compare current SHA to recorded; exit 1 if changed.\n"
+        + "#   --record:  record the current SHA as the baseline.\n"
+        + "set -euo pipefail\n"
+        + 'PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"\n'
+        + 'STATE_DIR="${PROJECT_DIR}/logs"\n'
+        + 'FRESHNESS_FILE="${STATE_DIR}/.test-freshness.sha256"\n'
+        + 'TASK_ROOT="${PROJECT_DIR}/test-tasks/design"\n'
+        + '[[ -d "$TASK_ROOT" ]] || { echo "no design set at $TASK_ROOT" >&2; exit 1; }\n'
+        + 'CURRENT=$(find "$TASK_ROOT" -type f -name "grade.sh" -o -name "prompt.txt" \\\n'
+        + '             -o -name "README.md" 2>/dev/null | sort \\\n'
+        + '             | xargs -I {} shasum -a 256 {} 2>/dev/null \\\n'
+        + '             | shasum -a 256 | awk "{print \\$1}")\n'
+        + 'if [[ "${1:-}" == "--record" ]]; then\n'
+        + '  mkdir -p "$STATE_DIR"\n'
+        + '  echo "$CURRENT" > "$FRESHNESS_FILE"\n'
+        + '  echo "recorded: $CURRENT"\n'
+        + '  exit 0\n'
+        + 'fi\n'
+        + 'if [[ ! -s "$FRESHNESS_FILE" ]]; then\n'
+        + '  echo "no baseline recorded; pass-through (first cycle)" >&2\n'
+        + '  exit 0\n'
+        + 'fi\n'
+        + 'PRIOR=$(cat "$FRESHNESS_FILE")\n'
+        + 'if [[ "$PRIOR" != "$CURRENT" ]]; then\n'
+        + '  echo "FAIL: design set modified since last cycle" >&2\n'
+        + '  echo "  prior:    $PRIOR" >&2\n'
+        + '  echo "  current:  $CURRENT" >&2\n'
+        + '  exit 1\n'
+        + 'fi\n'
+        + 'echo "ok: design set unchanged ($CURRENT)"\n'
+    ),
+    "hidden-unread.sh": (
+        GENERATED_HEADER
+        + "#!/usr/bin/env bash\n"
+        + "# Assert the agent's last-cycle transcript contains no references\n"
+        + "# to the held-out test directory or the private grader. The agent\n"
+        + "# must not be reading the exam.\n"
+        + "#\n"
+        + "# Usage: hidden-unread.sh <cycle-summary.json|cycle-dir>\n"
+        + "# Exits 0 on clean, 1 if any path/name from the held-out surface\n"
+        + "# appears in the agent's *output* (cycle-summary.json, wrapper.stderr).\n"
+        + "# The loop's own prompt.txt (which contains the warning\n"
+        + "# 'DO NOT read verifiers/private/') is excluded — that is\n"
+        + "# the loop's instruction, not the agent's leak.\n"
+        + "set -euo pipefail\n"
+        + 'INPUT="${1:?usage: hidden-unread.sh <cycle-summary-or-dir>}"\n'
+        + 'PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"\n'
+        + '# Collect names from the held-out surface (h01..h10, private paths).\n'
+        + 'HELD_OUT_DIR="${PROJECT_DIR}/test-tasks/held-out"\n'
+        + 'HELD_OUT_NAMES=$(\n'
+        + '  [[ -d "$HELD_OUT_DIR" ]] && find "$HELD_OUT_DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \\; 2>/dev/null\n'
+        + ')\n'
+        + 'PRIVATE_PATTERNS="verifiers/private|chmod 600|chmod 700"\n'
+        + '# Resolve input to a list of agent-output files to scan.\n'
+        + '# The scan targets: cycle-summary.json (parsed agent output),\n'
+        + '# wrapper.stderr (raw stderr from the agent), and any transcript\n'
+        + '# or response files. Excludes the loop prompt/input files.\n'
+        + 'if [[ -d "$INPUT" ]]; then\n'
+        + '  SCAN_FILES=$(\n'
+        + '    find "$INPUT" -maxdepth 1 -type f \\( \\\n'
+        + '        -name "cycle-summary.json" -o \\\n'
+        + '        -name "wrapper.stderr" -o \\\n'
+        + '        -name "transcript.*" -o \\\n'
+        + '        -name "response.*" \\\n'
+        + '      \\) 2>/dev/null\n'
+        + '  )\n'
+        + 'else\n'
+        + '  SCAN_FILES="$INPUT"\n'
+        + 'fi\n'
+        + '[[ -z "$SCAN_FILES" ]] && { echo "no agent transcript to scan at $INPUT" >&2; exit 0; }\n'
+        + 'SCAN_TEXT=""\n'
+        + 'for f in $SCAN_FILES; do\n'
+        + '  [[ -f "$f" ]] || continue\n'
+        + '  SCAN_TEXT="${SCAN_TEXT}\\n$(cat "$f" 2>/dev/null || true)"\n'
+        + 'done\n'
+        + '[[ -n "$SCAN_TEXT" ]] || { echo "no agent transcript content" >&2; exit 0; }\n'
+        + '# Check private path patterns.\n'
+        + 'if echo "$SCAN_TEXT" | grep -qE "$PRIVATE_PATTERNS"; then\n'
+        + '  echo "FAIL: transcript references the private grader surface" >&2\n'
+        + '  echo "$SCAN_TEXT" | grep -nE "$PRIVATE_PATTERNS" | head -5 >&2\n'
+        + '  exit 1\n'
+        + 'fi\n'
+        + '# Check each held-out task name.\n'
+        + 'for name in $HELD_OUT_NAMES; do\n'
+        + '  if echo "$SCAN_TEXT" | grep -qF "$name"; then\n'
+        + '    echo "FAIL: transcript references held-out task $name" >&2\n'
+        + '    echo "$SCAN_TEXT" | grep -nF "$name" | head -5 >&2\n'
+        + '    exit 1\n'
+        + '  fi\n'
+        + 'done\n'
+        + 'echo "ok: transcript contains no references to held-out or private surfaces"\n'
+    ),
+    "per-cycle-wall-clock.sh": (
+        GENERATED_HEADER
+        + "#!/usr/bin/env bash\n"
+        + "# Print seconds spent in the most recent cycle. Records the\n"
+        + "# wall-clock per cycle so the loop can reward fast-improving\n"
+        + "# cycles and penalize slow ones (the smallness / speed signal).\n"
+        + "#\n"
+        + "# Usage: per-cycle-wall-clock.sh [--record SECONDS] | (no flag = read latest)\n"
+        + "set -euo pipefail\n"
+        + 'PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"\n'
+        + 'STATE_DIR="${PROJECT_DIR}/logs"\n'
+        + 'CLOCK_FILE="${STATE_DIR}/.per-cycle-wall-clock.tsv"\n'
+        + 'if [[ "${1:-}" == "--record" ]]; then\n'
+        + '  SEC="${2:?usage: per-cycle-wall-clock.sh --record SECONDS [CYCLE]}"\n'
+        + '  CYCLE="${3:-$(date +%s)}"\n'
+        + '  mkdir -p "$STATE_DIR"\n'
+        + '  echo -e "${CYCLE}\\t${SEC}" >> "$CLOCK_FILE"\n'
+        + '  echo "recorded: cycle=$CYCLE sec=$SEC"\n'
+        + '  exit 0\n'
+        + 'fi\n'
+        + '[[ -s "$CLOCK_FILE" ]] || { echo 0; exit 0; }\n'
+        + 'tail -1 "$CLOCK_FILE" | awk -F"\\t" "{print \\$2}"\n'
     ),
 }
 
@@ -691,6 +952,11 @@ def scaffold_instruments(project):
         safe_write(inst / name, content, executable=True)
 
 
+def scaffold_integrity(project):
+    safe_write(project / "verifiers" / "integrity.sh",
+               INTEGRITY_SH, executable=True)
+
+
 def scaffold_compute_sub_losses(project):
     safe_write(project / "verifiers" / "compute_sub_losses.py",
                COMPUTE_SUB_LOSSES_STUB)
@@ -802,6 +1068,7 @@ def main():
     elif not (project / "GOAL.md").exists() and goal:
         safe_write(project / "GOAL.md", goal)
     scaffold_instruments(project)
+    scaffold_integrity(project)
     scaffold_compute_sub_losses(project)
     scaffold_parse_cline_output(project)
     scaffold_cline_wrapper(project, runtime)

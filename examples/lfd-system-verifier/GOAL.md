@@ -6,6 +6,19 @@ This is the `/goal` prompt for the LFD system verifier
 coding agent. The loop runs for **1 cycle only**, and
 the verifier is bit-exact deterministic.
 
+## DONE WHEN / NOT DONE WHEN
+
+```
+DONE WHEN: verification-report.md exists at
+$VERIFY_ROOT/verification-report.md, marked PASS, with all
+5 design tasks passing, all 5 held-out tasks passing,
+verifiers/integrity.sh exits 0, test-freshness.sh exits 0,
+hidden-unread.sh exits 0, and weighted_sum >= 0.85.
+NOT DONE WHEN: design set pass_rate == 1.0 but the held-out
+score is missing; integrity.sh fails; or any of the
+verifiers/private/ contents are missing.
+```
+
 ## Target
 
 **Goal:** Prove the LFD system itself is operational by
@@ -13,9 +26,17 @@ running a complete loss-function-driven loop against
 itself, in under 5 minutes, with bit-exact reproducible
 output.
 
-**Done condition:** `verification-report.md` exists at
-`$VERIFY_ROOT/verification-report.md`, marked `PASS`,
-with all 5 design tasks and all 5 held-out tasks passing.
+**Done condition (multi-axis):** ALL of the following
+must hold:
+
+- `verification-report.md` exists at
+  `$VERIFY_ROOT/verification-report.md`, marked `PASS`
+- All 5 design tasks pass
+- All 5 held-out tasks pass
+- `verifiers/integrity.sh` exits 0
+- `verifiers/instruments/test-freshness.sh` exits 0
+- `verifiers/instruments/hidden-unread.sh` exits 0
+- Weighted sum >= 0.85
 
 ## Constraints
 
@@ -48,6 +69,14 @@ with all 5 design tasks and all 5 held-out tasks passing.
   agent's skills directory (the fake agent's)
 - `verifiers/instruments/sub-loss-readout.sh` — per-cycle
   sub-loss scorer
+- `verifiers/instruments/test-freshness.sh` — design-set
+  SHA unchanged since last cycle
+- `verifiers/instruments/hidden-unread.sh` — transcript
+  does not reference held-out or private surfaces
+- `verifiers/instruments/per-cycle-wall-clock.sh` —
+  per-cycle wall-clock recorder
+- `verifiers/integrity.sh` — the 5 anti-cheat guards;
+  exit 0 means the harness is intact
 
 ## Design-set tasks
 

@@ -12,24 +12,16 @@ workflow.
 
 1. Read `GOAL.md` first.
 2. Hard rules:
-   - DO NOT read `verifiers/private/` or
-     `test-tasks/held-out/`. These are graded
-     out-of-band by the held-out grader.
-   - DO NOT modify `verifiers/`. The wrapper,
-     parsers, sub-loss scorer, and instruments
-     are the system under test.
-   - The only agent invocation is via
-     `verifiers/fake-wrapper.sh` (in the
-     `run-verification.sh` tools gate) or
-     `verifiers/<runtime>-wrapper.sh` (in the
-     `run-verification-real.sh` integration gate;
-     the runtime is selected by the script's
-     third arg, default `cline`).
+   - DO NOT read `verifiers/private/` or `test-tasks/held-out/`. These are graded out-of-band by the held-out grader.
+   - DO NOT modify `verifiers/`. The wrapper, parsers, sub-loss scorer, and instruments are the system under test.
+   - The only agent invocation is via `verifiers/fake-wrapper.sh` (in the `run-verification.sh` tools gate) or `verifiers/<runtime>-wrapper.sh` (in the `run-verification-real.sh` integration gate; the runtime is selected by the script's third arg, default `cline`).
+   - Before every cycle, run `verifiers/integrity.sh`. If any guard fails, refuse to score that cycle.
 3. After EACH design-set run, append a one-line
    entry to `logs/iteration-log.md` with cycle
-   number, hypothesis, expected failure, and
-   pass_rate.
-4. If pass_rate does not improve by >= 0.05,
+   number, hypothesis, expected failure,
+   pass_rate, weighted_sum, gates, axes_met,
+   and wall_clock_s.
+4. If weighted_sum does not improve by >= 0.05,
    force entropy: pick the OPPOSITE of your last
    change, apply it, document it. (This is the
    loss-function-design rule, applied even when
