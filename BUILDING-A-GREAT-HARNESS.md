@@ -1,381 +1,518 @@
 # Building a Great Harness
 
-The LFD pattern works like this: a meta-skill turns your
-goal into a `/goal` prompt, a harness is scaffolded, and an
-outer loop runs the inner agent against the harness until
-it converges. The pattern works at *any* harness quality —
+This is a manual for the human in the loop (HITL) when
+you want to use a coding agent to do a non-trivial task
+well. The LFD (Loss-Function Driven) pattern is one way
+to do that. The pattern works at *any* harness quality —
 but the *quality of the result* is a near-direct function
-of the *quality of the harness*. A great harness turns a
+of *the quality of the harness*. A great harness turns a
 plain coding agent into something that converges on a
 strong solution. A thin harness turns it into something
 that plateaus at "OK."
 
-This document is the manual for the human in the loop
-(HITL) at the two points that matter most:
+If you have never used LFD before, read **What the
+harness actually does** first. If you have used a plain
+`/goal` or "ask the AI to write X" prompt and it "kind of
+worked," the **V0 → V1: Expand the first attempt** section
+is where the leverage is. If your loop is already
+running, skip to **V1 → V2+: Iterate on the harness
+while the loop runs**.
 
-1. **V0 → V1**: the AI's first attempt at the harness is
-   almost always too thin. This document gives you a
-   checklist for expanding it *before* you paste the
-   `/goal` prompt into the loop session.
-2. **V1 → V2+**: as the loop runs, you'll see the harness
-   itself start to drift, get bypassed, or show up as the
-   bottleneck. This document gives you the playbook for
-   iterating on the harness *while the loop is running* —
-   which is the only way to keep the descent going.
+## What the harness actually does
 
-If you have never used LFD before, read the **Plain `/goal`
-vs LFD** section first to understand why a harness is
-worth the effort. If you've used a plain `/goal` prompt
-before and it "kind of worked," the **V0 → V1: Expand the
-first attempt** section is where the leverage is.
+Think of the AI as a student taking a test. The
+"harness" is everything around the test: the questions,
+the answer key, the timer, the calculator, the rules
+about what books the student can bring in.
 
-## Plain `/goal` vs LFD — what the harness actually buys you
+```
+                ┌──────────────────────────────────┐
+                │           THE HARNESS             │
+                │                                  │
+                │  The questions the AI sees       │
+                │  The answer key the AI does NOT  │
+                │  The timer ("2 hours max")       │
+                │  The rules ("don't read the      │
+                │  answer key", "no network")      │
+                │  The grader ("right answer =     │
+                │  pass, wrong = fail")            │
+                │  The score ("8/10 questions      │
+                │  right = 80%")                   │
+                │                                  │
+                └──────────────────────────────────┘
+                              ▲
+                              │ takes the test
+                              │
+                          ┌───┴───┐
+                          │  AI  │
+                          └───┬───┘
+                              │
+                              ▼
+                ┌──────────────────────────────────┐
+                │  GRADED RESULT: pass / fail,     │
+                │  plus a score 0.0 - 1.0          │
+                └──────────────────────────────────┘
+```
 
-A plain `/goal` (or `claude code`, or any coding agent
-prompted directly) takes a goal and tries once or twice.
-You get back a candidate. The candidate might be good. The
-candidate might be bad. You have no instrument to tell
-the difference; you read the code and form a judgment.
+The "score" in the picture is the **loss function**.
+A low score means the AI is far from done. A high score
+means the AI is close. The loop runs the AI again and
+again, with the goal of making the score go up. That's
+all "loss-function driven" means: a number the loop
+tries to make bigger (or smaller, depending on the
+convention).
 
-LFD replaces the judgment with a measurable signal. The
-harness *defines* what "good" means for your specific
-project: which behaviors the artifact must exhibit, which
-edge cases the design set exercises, which constraints
-the loop enforces. With the harness in place, the loop
-runs dozens or hundreds of candidates, scores each one
-against the same rubric, and the score trajectory tells
-you *and* the agent whether the work is converging.
+A plain prompt is like giving the student a question and
+hoping for the best. A harness is like giving them a
+*practice test* with a known answer key, a timer, and a
+grader — and then running them through it 50 times,
+studying what they get wrong, and giving them another
+chance. The harness is the practice test.
 
-The harness is the *loss function* that makes the loop
-descent-shaped instead of random-walk-shaped. A bad
-harness = a random walk. A great harness = a steep,
-auditable descent.
+### Why bother with a harness
 
-**Three concrete differences you'll see:**
+A plain prompt gives you one shot. A harness lets the AI
+improve over many shots, with measurable feedback. Three
+concrete differences:
 
-1. **You can stop the loop at any cycle and tell whether
-   the candidate is real progress.** The iteration log
-   shows hypothesis → expected failure → pass rate per
-   cycle. A plain `/goal` gives you one shot.
-2. **The agent can't quietly cheat the spec.** A good
-   harness has held-out tasks the agent has never seen.
-   If the design set is gamed, the held-out grader
-   catches it. A plain `/goal` has no held-out.
+1. **You can stop the loop at any time and see whether
+   the AI is making real progress.** The log shows each
+   attempt: what the AI tried, what it expected to go
+   wrong, what actually went wrong, and what the score
+   is. A plain prompt gives you a single answer; you
+   have to read it and judge for yourself.
+2. **The AI can't quietly cheat.** A good harness has
+   questions the AI has never seen (the "held-out" set).
+   If the AI memorizes the visible questions, the
+   hidden questions catch it. A plain prompt has no
+   hidden questions.
 3. **You can hand the harness to someone else and they
-   can re-run the loop.** A plain `/goal` is one
-   conversation; an LFD harness is a reusable artifact.
+   can re-run the loop.** A plain prompt is one
+   conversation; a harness is a reusable artifact.
 
-If you've never used LFD before, the V0→V1 section below
-will turn a plain `/goal`-shaped prompt into a real
-harness with the same effort, just spread across two
-sessions instead of one.
+### The four parts of every harness
+
+Every harness has the same four parts. If any of them
+is missing, the loop will fail in a predictable way.
+
+**1. The target — what does "good" look like?**
+
+A description of what the AI is trying to produce.
+"The function should return the channel list as a
+JSON array" is a target. "Build a Slack clone" is not
+a target — it's a wish.
+
+The target needs to be **specific and measurable**.
+Not "the code is good" but "this function takes a
+channel name and a message, posts the message, and
+returns the message ID; the test runs the function
+and checks the returned ID matches the message the
+mock server received."
+
+A good target is also **hard to memorize**. If the
+target is "pass these 5 questions," the AI will
+memorize the 5 questions and pass them without
+learning anything. A good target has 50-200 examples
+the AI has never seen, and the AI has to learn the
+*pattern* to pass them.
+
+**2. The constraints — what the AI is not allowed to do**
+
+The rules. "No more than 2 hours wall-clock." "No
+more than $5 of API spend." "You can't read the held-
+out directory." "You can't change the test file."
+
+A constraint without an instrument (below) is not a
+real constraint. The AI will break it because it has
+no way to know it's breaking it. Writing "no network
+calls" in the prompt doesn't work. Shipping a CLI
+command that checks "did the AI make a network call?"
+and refuses to score if it did — *that* works.
+
+**3. The instruments — the things that measure**
+
+A CLI command, or a script, or a test, that the loop
+can run to check the AI's work. Every constraint needs
+an instrument. Every part of the target needs an
+instrument.
+
+Examples:
+- "The function should return in < 100ms" → a timer
+  that measures the function call
+- "No network calls" → a network monitor that
+  records every outbound request
+- "The test should pass" → the test runner itself
+- "No more than 1000 lines of code" → a `wc -l` on
+  the candidate
+
+If a constraint has no instrument, it's a wish. The
+AI will violate it because it cannot tell it is
+violating it.
+
+**4. Forced entropy — what to do when the AI gets stuck**
+
+The loop runs the AI many times. After enough rounds,
+the AI will find itself doing the same small thing
+over and over, getting a tiny bit better each time.
+This is called "hitting a wall" or "local maximum" —
+the AI is on a small hill and can't see the bigger
+hills.
+
+The fix: when the AI's score stops improving, *force
+it to try something different*. The harness tells the
+AI: "You haven't improved in 3 rounds. Stop tweaking
+the same thing. Try a completely different approach."
+
+This is one of the most important parts of the
+harness, and one of the easiest to skip. A harness
+without forced entropy will grind forever on the
+same small improvement and never escape.
+
+### The "3 cheats" story — why all of this matters
+
+The most important reason to use a harness is that
+the AI will cheat if you let it. Here's a real
+sequence of what happens when you don't fence off
+the cheating:
+
+**Round 1 (5 minutes):** You give the AI a test with
+30 questions. The AI memorizes the 30 questions, and
+the answers, in 5 minutes. The grader says 100% pass.
+But the AI didn't learn anything — it just memorized.
+*Score: 100%. Real quality: 0%.*
+
+**Fix:** Hide the answer key from the AI. Now the AI
+can't memorize because it can't see the answers.
+
+**Round 2 (20 minutes):** Without the answer key, the
+AI runs the test, gets 25/30 right. You tell it "you
+missed these 5." The AI notices: every miss becomes a
+keyword to add to its next attempt. After a few rounds,
+the AI has memorized 30 keywords (one per question) and
+gets 100% again. *Score: 100%. Real quality: 0%.*
+
+**Fix:** Make the test bigger. 200 questions instead
+of 30.
+
+**Round 3 (30 minutes):** With 200 questions, the AI
+tries to memorize 200 keywords. The keyword list
+balloons to hundreds of entries. The grader still says
+100% — but the AI is just keyword-matching, not actually
+solving the problem. *Score: 100%. Real quality: 0%.*
+
+**Fix:** Block the cheating. Cap the keyword list. Force
+the AI to use real logic. Require the test cases to
+cover edge cases the AI hasn't seen. Now the only way
+to get 100% is to actually be good at the task.
+
+**Round 4 (30 hours):** The AI runs. It can't cheat
+anymore. It actually learns. After 30 hours, it
+produces something that's not just a memorizer — it's
+genuinely better at the task. The final score is high
+because the AI is actually good. *Score: high. Real
+quality: high.*
+
+This is the entire reason the harness exists. **Every
+shortcut you don't block is a direction the AI will
+sprint down.** The harness is what blocks the
+shortcuts so the only path forward is the right one.
 
 ## V0 → V1: Expand the first attempt
 
 The AI's first draft of a harness, in response to a goal
 like "build a Slack clone in Go," will look like this:
 
-- 5 design tasks, all on the same shape (one function
-  per task, all "write a function that does X and
-  returns Y")
-- A held-out set of 5-10 tasks lifted from the public
-  docs, often at exactly the same surface as the design
-  set
-- Instruments that just `echo` placeholder values
-- A `grade.sh` per task that asserts "the file exists and
-  has the function name" rather than testing behavior
+- 5 questions, all on the same shape ("write a function
+  that does X")
+- 5 hidden questions lifted from the public docs, often
+  at exactly the same shape as the visible ones
+- Measurement tools that just print placeholder values
+  like "100"
+- A grader that checks "the file exists" rather than
+  testing behavior
 
 This V0 harness is functional. The loop will run. The
-score will move. But the score will plateau quickly
+score will move. But the score will stop moving quickly
 because the harness is measuring the wrong things. Your
 job in V0 → V1 is to expand the harness so it measures
 the *right* things.
 
 ### The V0 expansion checklist
 
-Walk through this with the AI in the meta-session,
-before you paste the `/goal` prompt into the loop
-session. Each item is a *specific* expansion; don't
-skip any.
+Walk through this with the AI *before* you paste the
+`/goal` prompt into the loop session. Each item is a
+specific expansion. Don't skip any.
 
-**1. Triple the design set, not double it.** A 5-task
-design set has too few axes. Aim for 15-25 tasks across
+**1. Triple the question set, not double it.** Five
+questions aren't enough. Aim for 15-25 questions across
 deliberately different shapes:
-- 5-6 happy-path tasks ("the basic case works")
-- 5-7 error/edge cases ("what happens when X is empty,
-  null, oversized, or malformed")
-- 3-5 cross-cutting tasks (a task that exercises 2-3
-  components at once — the kind of task that breaks
-  naive implementations)
-- 2-4 negative tasks (a task where the right answer is
-  *not* to do something — "the function should NOT
-  crash, NOT block, NOT retry forever")
+- 5-6 happy-path questions ("the basic case works")
+- 5-7 error/edge cases ("what happens when the input is
+  empty, missing, oversized, or weird")
+- 3-5 cross-cutting questions (a question that exercises
+  2-3 components at once — the kind that breaks naive
+  solutions)
+- 2-4 negative questions (a question where the right
+  answer is *not* to do something — "the function should
+  NOT crash, NOT block, NOT retry forever")
 
-The negative tasks are the ones the AI will skip by
+The negative questions are the ones the AI will skip by
 default. Insist on them. They catch the largest class
-of agent failures (over-eager implementations).
+of AI failures: over-eager implementations that do too
+much.
 
-**2. Make the held-out set *categorically different*
-from the design set.** A common V0 mistake: the AI
+**2. Make the hidden test set *categorically different*
+from the visible one.** A common V0 mistake: the AI
 reads the public docs, sees 30 examples, and uses 5 for
-design + 5 for held-out. The agent memorizes the
-category. The right structure:
+the visible test + 5 for the hidden test. The AI
+memorizes the category. The right structure:
 
-- Design set: standard public-API examples
-- Held-out set: things the public docs mention but don't
-  fully specify (rate limits, retry semantics,
-  authorization edge cases, format quirks in error
-  responses)
+- Visible test: standard examples from the public docs
+- Hidden test: things the public docs *mention* but
+  don't fully explain (rate limits, retry behavior,
+  auth edge cases, error format quirks)
 
-The held-out should make the agent *reason* about
-behavior, not match patterns.
+The hidden test should make the AI *think* about the
+problem, not match patterns.
 
-**3. Replace every placeholder `grade.sh`.** The V0
-harness often has graders that check "the file
-exists" or "the function compiles" — those are
-smoke tests, not graders. A real `grade.sh`:
-- Exits 0 on real success
-- Exits non-zero on real failure
-- Has a deterministic, reproducible check
-  (assertion, file diff, subprocess test, JSON shape
-  match)
-- Takes < 60 seconds to run
-- Has at least one *negative* assertion
-  (e.g., `assert output != "TODO"`)
+**3. Replace every placeholder grader.** A V0 grader
+often just checks "the file exists" or "the function
+compiles" — those are smoke tests, not graders. A real
+grader:
+- Returns "pass" (exit 0) on real success
+- Returns "fail" (non-zero exit) on real failure
+- Has a *deterministic* check (assertion, file diff,
+  test run, JSON shape match)
+- Takes less than 60 seconds to run
+- Has at least one *negative* check
+  (e.g., "the function must NOT call `time.Sleep`")
 
-If a `grade.sh` doesn't have a negative assertion, it's
-reward-hackable. The agent will pass it with an empty
-function and a comment.
+If a grader doesn't have a negative check, the AI can
+pass it with an empty function and a comment. That's
+not a real test.
 
-**4. Add at least one cross-task `grade.sh`.** Beyond
-the per-task graders, add a `verifiers/cross-task-check.sh`
-that runs after the design set and checks a property
-that spans tasks (e.g., "no two tasks import the same
-helper", "the artifact is under 100KB", "no test takes
-longer than 30s"). This catches architectural smells
-that per-task graders miss.
+**4. Add a cross-task grader.** Beyond the per-question
+graders, add one that runs after the whole test set
+and checks a property that spans questions (e.g.,
+"no two questions import the same helper", "the
+artifact is under 100KB", "no test takes longer than
+30 seconds"). This catches architectural problems
+that per-question graders miss.
 
-**5. Make the instruments actually measure.** V0
-instruments often `echo "100"` for "100% budget
-remaining" or `cat /dev/null` for "no tokens used."
-Insist that each instrument:
+**5. Make the measurement tools actually measure.** V0
+measurement tools often just `echo "100"` (claiming
+"100% budget remaining") or `cat /dev/null` (claiming
+"no tokens used"). Insist that each measurement tool:
 - Reads a real log / queries a real API / parses a
   real file
-- Returns a numeric or structured value, not a string
-  placeholder
-- Exits non-zero on its own internal failure
-  (file missing, parse error), not on a "constraint
-  violated" condition — that's the loop's job
+- Returns a real number, not a placeholder string
+- Fails loudly (non-zero exit) on its own internal
+  error (file missing, parse broken) — but does NOT
+  fail on a "constraint violated" condition (that's
+  the loop's job, not the instrument's)
 
-A constraint without a real instrument is a vibe. The
-agent will violate it because it cannot tell it is
+A constraint without a real instrument is a wish. The
+AI will violate it because it cannot tell it is
 violating it.
 
-**6. Write the AGENTS.md in your own voice.** The V0
-AGENTS.md is a generic "operating rules" list. Replace
-it with what *you* would want a new engineer to read
-on their first day:
+**6. Write the rules file (`AGENTS.md`) in your own
+voice.** The V0 rules file is a generic "operating
+rules" list. Replace it with what *you* would want a
+new engineer to read on their first day:
 - What this project is, in 2 sentences
 - The 3-5 hard rules (what NOT to do)
-- The iteration log format
+- The log format
 - The "go look at X first" links (your docs, your
   conventions, your anti-patterns)
 
-The agent reads AGENTS.md every cycle. The more
+The AI reads the rules file every round. The more
 project-specific it is, the more the loop converges on
-*your* project, not on a generic.
+*your* project, not on a generic one.
 
-**7. Add 3-5 explicit reward-hack guards to the
-target.** The @elvissun pattern: think about how a
-motivated agent could game your grader. Common hacks:
-- The agent deletes the test file
-- The agent writes a stub that always returns the
+**7. Add 3-5 explicit anti-cheat guards.** Think about
+how a determined AI could game your grader. Common
+cheats:
+- The AI deletes the test file
+- The AI writes a stub that always returns the
   expected output
-- The agent adds a `sleep` to make a timeout pass
-- The agent modifies `AGENTS.md` to remove the hard
+- The AI adds a `sleep` to make a timeout pass
+- The AI modifies the rules file to remove the hard
   rule
-- The agent reads the held-out directory
+- The AI reads the hidden test directory
 
-For each guard, add a check to `verifiers/integrity.sh`
-that runs before scoring and refuses to score if the
-guard is tripped.
+For each cheat, add a check to a `verifiers/integrity.sh`
+script that runs *before* scoring and refuses to score
+if the cheat is detected.
 
 **8. Add a 2-3 line "definition of done" at the top of
-GOAL.md.** The V0 GOAL.md opens with a long description
-of the project. Replace the first 3 lines with:
+the goal file (`GOAL.md`).** The V0 goal file opens
+with a long description of the project. Replace the
+first 3 lines with:
 
 ```
 DONE WHEN: <the single testable criterion that
 defines success for this project, in one sentence>
-NOT DONE WHEN: <the most common ways an agent will
+NOT DONE WHEN: <the most common ways an AI will
 mistakenly claim to be done>
 ```
 
-The loop driver reads this. The agent reads this. You
-read this. Keep it ruthlessly specific.
+The loop reads this. The AI reads this. You read this.
+Keep it ruthlessly specific.
 
-### Sample HITL exchange (V0 → V1)
+### A sample conversation: V0 → V1
 
 This is a real exchange from expanding a Slack-clone
 harness. Use it as a template.
 
-> **You**: The design set is too uniform. All five tasks
-> are "write a function that does X." Add three tasks
-> where the function has to handle a malformed input
-> and return an error, plus two where the right answer
-> is to do *nothing* (e.g., posting to a channel the
-> user isn't in should return a specific error code, not
-> retry).
+> **You:** The question set is too uniform. All five
+> questions are "write a function that does X." Add
+> three questions where the function has to handle a
+> broken input and return an error, plus two where the
+> right answer is to do *nothing* (for example, posting
+> to a channel the user isn't in should return a
+> specific error code, not retry).
 
-> **AI**: Adding tasks 06, 07, 08 for malformed inputs
+> **AI:** Adding questions 06, 07, 08 for broken inputs
 > and 09, 10 for "right answer is no-op"...
 
-> **You**: Task 04's grader passes when the function
-> returns nil for everything. Make it assert the return
-> value is a specific `*Thread` struct with a
-> non-empty `RootID`. And add a negative assertion:
-> the function should NOT call `time.Sleep`.
+> **You:** Question 04's grader passes when the
+> function returns nothing for everything. Make it
+> check that the return value is a specific struct with
+> a non-empty field. And add a negative check: the
+> function should NOT call `time.Sleep`.
 
-> **AI**: Updated grade.sh to assert the struct shape
-> and grep the agent's output for `time.Sleep`...
+> **AI:** Updated the grader to check the struct shape
+> and search the AI's code for `time.Sleep`...
 
-> **You**: The held-out set is the same shape as the
-> design set. Replace three of them with rate-limit
-> behavior tests (the public docs say "429 after 30
-> req/min" — the agent has to actually implement
-> rate limiting, not match an example).
+> **You:** The hidden test set is the same shape as the
+> visible one. Replace three of them with rate-limit
+> tests (the public docs say "429 after 30 requests
+> per minute" — the AI has to actually implement rate
+> limiting, not match an example).
 
-This is what HITL looks like. You're not writing the
-harness; you're directing the AI to write a *better*
-harness. Each round of the exchange makes the
-harness 10-30% better, and the gains compound
-across the loop.
+This is what working with the AI looks like. You're
+not writing the harness; you're directing the AI to
+write a *better* harness. Each round of the exchange
+makes the harness 10-30% better, and the gains
+compound across the loop.
 
 ## V1 → V2+: Iterate on the harness while the loop runs
 
-The V0 → V1 expansion is the easy HITL. You do it once,
-in the meta-session, with the AI focused on the
+The V0 → V1 expansion is the easy part. You do it
+once, in the meta-session, with the AI focused on the
 harness. The V1 → V2+ iteration is harder because it
 happens *while the loop is running*, and you have to
-read the iteration log to figure out when the harness
-is the bottleneck rather than the candidate.
+read the log to figure out when the harness is the
+bottleneck rather than the AI's work.
 
 ### When to improve the harness vs. let the loop work
 
-The loop's iteration log tells you everything. Read the
-last 10-20 entries. For each cycle, look at:
+The loop's log tells you everything. Read the last
+10-20 entries. For each round, look at:
 
-- **Hypothesis**: what change did the agent try?
-- **Expected failure**: what did it predict would go
-  wrong?
-- **Pass rate**: did it actually go wrong?
+- **What the AI tried:** the change it made
+- **What it expected to go wrong:** its prediction
+- **The score:** whether the change actually helped
 
 Three patterns, three responses:
 
-**Pattern 1: pass rate stuck at 0.X for many cycles**
+**Pattern 1: score stuck at 0.X for many rounds**
 
-The loop is trying and failing. The hypotheses are
+The loop is trying and failing. The changes are
 sensible but the work doesn't move the score. This
-usually means the harness is too narrow — the design
-set isn't covering the failure modes the agent is
+usually means the harness is too narrow — the visible
+test isn't covering the failure modes the AI is
 hitting.
 
-*Action:* pause the loop, look at the failed cycle
-transcripts in `logs/cycle-N/`, identify the failure
-mode the agent is hitting, add a design task that
-exercises that mode, restart the loop. Don't change
-the held-out set — that's the test, not the training
-set.
+*Action:* pause the loop, look at the failed-round
+transcripts, identify the failure mode the AI is
+hitting, add a question that exercises that mode,
+restart the loop. Don't change the hidden test — the
+hidden test is the real exam, not the practice test.
 
-**Pattern 2: pass rate stuck at 1.0 but the candidate
+**Pattern 2: score stuck at 1.0 but the AI's work
 looks bad**
 
-The agent is gaming the grader. The design set is
-reward-hackable — there's a shortcut that passes all
-the checks but produces something you don't want.
+The AI is gaming the grader. The visible test is
+cheatable — there's a shortcut that passes all the
+checks but produces something you don't want.
 
-*Action:* pause the loop, look at the actual candidate
-in `skills/<name>/`, identify which `grade.sh` is
-being gamed, tighten that `grade.sh` with a
-behavioral assertion, restart the loop. The held-out
-grader will likely catch the gaming on the next run,
-but don't wait for that — fix the design grader
-directly.
+*Action:* pause the loop, look at the actual AI
+output, identify which grader is being gamed, tighten
+that grader with a real-behavior check, restart the
+loop. The hidden test will likely catch the gaming on
+the next run, but don't wait for that — fix the
+visible grader directly.
 
-**Pattern 3: pass rate oscillating (0.4, 0.8, 0.3, 0.7,
+**Pattern 3: score oscillating (0.4, 0.8, 0.3, 0.7,
 0.2, 0.9...)**
 
-The agent is making changes, scoring, sometimes
-regressing. The loop is in forced-entropy territory
-but not making net progress. This usually means the
-harness is rewarding a proxy for the real goal, and
-the proxy has multiple local maxima the agent is
-jumping between.
+The AI is making changes, scoring, sometimes
+regressing. The loop is trying to escape but not
+making net progress. This usually means the harness
+is rewarding a *proxy* for the real goal, and the
+proxy has multiple local maxima the AI is jumping
+between.
 
 *Action:* pause the loop, look at the highest-scoring
-candidate, look at the lowest-scoring candidate, look
-at what distinguishes them. The proxy is probably
-something like "uses a specific API call" or
-"matches a specific output structure." Replace the
-proxy with a behavioral check (e.g., "the function
-completes in < 1s on the mock server" instead of "the
-function calls `slack.PostMessage`").
+output, look at the lowest-scoring output, look at
+what distinguishes them. The proxy is probably
+something like "uses a specific function call" or
+"matches a specific output shape." Replace the proxy
+with a behavioral check (e.g., "the function
+completes in < 1 second" instead of "the function
+calls `slack.PostMessage`").
 
 ### The "the loop is stuck" playbook
 
-When the loop has been running for >2 hours with
-<10% improvement, stop and read `logs/iteration-log.md`
+When the loop has been running for more than 2 hours
+with less than 10% improvement, stop and read the log
 end-to-end. The pattern usually emerges:
 
-1. **Last 5 hypotheses are minor variations of each
-   other** → the agent is in a local maximum. Force
-   entropy should have caught this, but the entropy
-   rule is too small. Tighten `--delta` to require
-   bigger improvements, or add a manual
-   `cycle=N: forced-entropy=true` entry to the log to
-   push the loop out.
+1. **Last 5 changes are minor variations of each
+   other** → the AI is on a small hill. The forced-
+   entropy rule should have caught this, but the rule
+   is too gentle. Make the rule stricter, or push
+   the loop out manually.
 
-2. **Last 5 hypotheses are unrelated** → the agent
-   has no idea what to try. The harness is too broad
-   and the agent is sampling randomly. Tighten the
-   target: pick the 3-5 design tasks that matter most
-   and disable the rest temporarily. The loop will
+2. **Last 5 changes are unrelated** → the AI has no
+   idea what to try. The harness is too broad and
+   the AI is sampling randomly. Tighten the target:
+   pick the 3-5 questions that matter most and
+   disable the rest temporarily. The loop will
    converge on a smaller problem faster.
 
-3. **Pass rate is 1.0 for 2+ cycles but you don't
-   believe the candidate** → the harness is
-   reward-hackable. The iteration log will lie. Don't
-   trust it. Read the candidate, find the hack,
-   tighten the grader.
+3. **Score is 1.0 for 2+ rounds but you don't
+   believe the output** → the harness is
+   cheat-able. The log will lie. Don't trust it. Read
+   the output, find the cheat, tighten the grader.
 
-4. **Held-out score is way below design score** →
-   the agent is overfitting to the design set. The
-   design set is too narrow or too similar to itself.
-   Add design tasks that span the gap between design
-   and held-out (these are sometimes called
-   "validation" tasks — they live in design but act
-   like a held-out-lite).
+4. **Hidden score is way below visible score** →
+   the AI is overfitting to the visible test. Add
+   questions that span the gap between visible and
+   hidden (these are sometimes called "validation"
+   questions — they live in the visible test but act
+   like a hidden-lite).
 
 ### Things that look like harness problems but aren't
 
-- **"The agent is making dumb mistakes"** → usually a
-  prompt problem, not a harness problem. The agent
-  needs a clearer instruction in the per-task
-  `prompt.txt`. Improve the prompt, not the harness.
-- **"The agent runs out of tokens"** → the
-  `wall-clock` / `tokens-remaining` instruments are
-  reporting wrong, OR the design tasks are too big
-  (a single task is the size of three). Check the
-  instruments; if they're right, split the task.
-- **"The agent's output is good but the iteration log
-  is messy"** → not a problem. The iteration log is
-  for the agent and the verifier, not for you. Leave
-  it.
+- **"The AI is making dumb mistakes"** → usually a
+  prompt problem, not a harness problem. The AI
+  needs a clearer instruction in the per-question
+  prompt. Improve the prompt, not the harness.
+- **"The AI runs out of tokens"** → the wall-clock /
+  tokens-remaining measurement tools are reporting
+  wrong, OR the questions are too big (a single
+  question is the size of three). Check the tools; if
+  they're right, split the question.
+- **"The AI's output is good but the log is messy"**
+  → not a problem. The log is for the AI and the
+  grader, not for you. Leave it.
 - **"The loop finished but I want a different
-  solution"** → the held-out is the answer. If
-  pass_rate=1.0 and held-out is satisfied, the loop
-  found the optimum *of the harness*. Change the
-  harness, not the loop.
+  solution"** → the hidden test is the answer. If
+  the visible score is 1.0 and the hidden test is
+  satisfied, the loop found the optimum *of the
+  harness*. Change the harness, not the loop.
 
 ### The V1 → V2 HITL cycle
 
@@ -386,35 +523,30 @@ shapes of HITL:
 - `tail -f logs/iteration-log.md` in a terminal
 - Check for the three stuck patterns above
 - Add a manual entry to the log if you want to push
-  the agent in a direction: `cycle 7: hypothesis="add
-  3 negative-case tasks to the design set",
-  expected_failure="score drops to 0.6, then climbs
-  over 3 cycles", g, pass_rate=0.7`
+  the AI in a direction
 
 **Synchronous** (you're in the loop session):
-- The `/goal` prompt says to stop and report if
-  something is wrong. When the agent stops, the
+- The loop prompt says to stop and report if
+  something is wrong. When the AI stops, the
   conversation is the HITL. Most often the right
   answer is "tighten this grader" or "add this
-  design task."
+  question."
 
 **Batch** (the loop finishes):
-- Read `logs/best-cycle.json` to see the final
-  score
-- Read the winning candidate in
-  `skills/<name>/SKILL.md`
-- If the candidate is good: ship it.
-- If the candidate is bad but the score was 1.0: the
+- Read `logs/best-cycle.json` to see the final score
+- Read the winning output
+- If the output is good: ship it.
+- If the output is bad but the score was 1.0: the
   harness is wrong. Go back to the meta-session, fix
   the harness, re-run.
-- If the candidate is bad and the score was <1.0: the
+- If the output is bad and the score was <1.0: the
   loop didn't have time. Increase budget, re-run.
 
 **The loop is a tool; the harness is the design.**
-Improving the loop (more cycles, better entropy rules,
-faster inner agent) is 20% of the leverage. Improving the
-harness (better design tasks, tighter graders, real
-instruments) is 80%.
+Improving the loop (more rounds, better entropy rules,
+faster AI) is 20% of the leverage. Improving the
+harness (better questions, tighter graders, real
+measurement tools) is 80%.
 
 ## Ideas bank: 20 specific ways to make a V0 harness better
 
@@ -422,98 +554,119 @@ These are tactics that consistently move the needle.
 Pick the ones relevant to your project; don't try to
 do all 20.
 
-### Design set (the visible training tasks)
+### Visible test set (the practice questions)
 
-1. **Add an "empty input" task per group.** A task
-   where the input is `""`, `null`, or `[]` and the
-   right answer is a specific error.
-2. **Add an "oversized input" task per group.** A task
-   where the input is 10x larger than the docs
-   suggest and the right answer is a graceful
+1. **Add an "empty input" question per group.** A
+   question where the input is `""`, `null`, or `[]`
+   and the right answer is a specific error.
+2. **Add an "oversized input" question per group.** A
+   question where the input is 10x larger than the
+   docs suggest and the right answer is a graceful
    rejection.
-3. **Add a "concurrent" task per group.** A task that
-   runs the same function twice in parallel and
-   checks the outputs are consistent.
-4. **Add a "round-trip" task.** A task that takes the
-   output of one function and feeds it as input to
-   another, and checks the result is correct.
-5. **Add a "performance" task.** A task that runs the
-   function 1000 times and asserts p99 < some bound.
-6. **Add a "no-network" task.** A task that runs the
-   function with no network access and asserts it
-   still returns a sensible answer.
-7. **Add a "second-instance" task.** A task that
-   constructs the function twice and asserts they
-   don't share state.
-8. **Add a "resource-cleanup" task.** A task that
-   runs the function and asserts no goroutines,
-   file handles, or temp files are leaked.
-9. **Add a "documentation" task.** A task where the
-   agent has to *document* a function (write a
-   docstring that matches a fixture's expected
-   docstring) — this catches a class of agent
-   failure where the code works but the public
-   surface is undocumented.
-10. **Add a "negative space" task.** A task where the
-    function should NOT call a specific API or
-    trigger a specific event. (e.g., "fetch the
-    channel list, but do NOT make a network call to
-    the channels endpoint — use the cache.")
+3. **Add a "concurrent" question per group.** A
+   question that runs the same function twice in
+   parallel and checks the outputs are consistent.
+4. **Add a "round-trip" question.** A question that
+   takes the output of one function and feeds it as
+   input to another, and checks the result is
+   correct.
+5. **Add a "performance" question.** A question that
+   runs the function 1000 times and checks the
+   slowest run is under some time bound.
+6. **Add a "no-network" question.** A question that
+   runs the function with no network access and
+   checks it still returns a sensible answer.
+7. **Add a "second-instance" question.** A question
+   that constructs the function twice and checks
+   they don't share state.
+8. **Add a "resource-cleanup" question.** A question
+   that runs the function and checks no leftover
+   processes, file handles, or temp files exist.
+9. **Add a "documentation" question.** A question
+   where the AI has to *document* a function (write
+   a comment that matches a fixture's expected
+   comment) — this catches a class of AI failure
+   where the code works but the public surface is
+   undocumented.
+10. **Add a "negative space" question.** A question
+    where the function should NOT call a specific
+    helper or trigger a specific event. (For
+    example, "fetch the channel list, but do NOT
+    make a network call — use the cache.")
 
-### Held-out set (the invisible test set)
+### Hidden test set (the real exam)
 
-11. **Use the docs' "see also" links.** If the public
-    docs for one API mention a related API in a
-    "see also," the held-out task should require
-    both.
+11. **Use the docs' "see also" links.** If the
+    public docs for one function mention a related
+    function in a "see also," the hidden question
+    should require both.
 12. **Use the docs' "common pitfalls."** Most public
-    API docs have a "common pitfalls" or "gotchas"
-    section. Each pitfall is a held-out task.
-13. **Use the bug tracker / changelog.** The public
-    changelog of most APIs lists the bugs that were
-    fixed in each version. Each fix implies a
-    behavior that *used to* fail. Those are held-out
-    tasks.
-14. **Use the rate limits.** A held-out task that
-    calls the function 1000 times in 60 seconds
-    and asserts the rate-limit response comes back
-    at the documented threshold.
-15. **Use the auth model.** A held-out task that
+    docs have a "common pitfalls" or "gotchas"
+    section. Each pitfall is a hidden question.
+13. **Use the changelog.** The public changelog of
+    most products lists the bugs that were fixed
+    in each version. Each fix implies a behavior
+    that *used to* fail. Those are hidden questions.
+14. **Use the rate limits.** A hidden question that
+    calls the function 1000 times in 60 seconds and
+    checks the rate-limit response comes back at the
+    documented threshold.
+15. **Use the auth model.** A hidden question that
     calls the function with a missing or invalid
-    auth token and asserts the specific documented
+    auth token and checks the specific documented
     error.
 
-### Instruments (the things that measure the loop)
+### Measurement tools (the things that measure the loop)
 
-16. **Add a "design set freshness" instrument.** Run
-    it before each cycle; assert that the design set
-    hasn't been modified since the last cycle (the
-    agent shouldn't be able to change the test to
-    pass it).
-17. **Add a "held-out unread" instrument.** Run it
-    before each cycle; assert that the agent's
-    transcript contains zero references to the
-    held-out path. (The agent is reading the test.)
-18. **Add a "wall-clock per cycle" instrument.**
-    The loop's wall-clock budget is total, not
-    per-cycle. Add a per-cycle budget that
-    contributes to the score, so a fast-improving
-    cycle ranks above a slow-improving one.
+16. **Add a "test freshness" tool.** Run it before
+    each round; assert that the visible test
+    hasn't been modified since the last round
+    (the AI shouldn't be able to change the test
+    to pass it).
+17. **Add a "hidden unread" tool.** Run it before
+    each round; assert that the AI's transcript
+    contains zero references to the hidden test
+    directory. (The AI is reading the exam.)
+18. **Add a "wall-clock per round" tool.** The
+    loop's wall-clock budget is total, not per-
+    round. Add a per-round budget that contributes
+    to the score, so a fast-improving round ranks
+    above a slow-improving one.
 
-### Target (the loss function itself)
+### Target (the score itself)
 
-19. **Make the target a list, not a number.** V0
-    targets are usually `pass_rate >= 0.8`. Better
-    target: `pass_rate >= 0.8 AND p99_latency < 200ms
-    AND no agent-modified-test-files AND held_out
-    delta < 0.2`. The loop can't game a multi-axis
-    target.
-20. **Add a "specificity" reward.** Beyond pass/fail,
-    reward candidates that are *smaller* (fewer
+19. **Make the target a list, not a number.** A
+    V0 target is usually "pass rate >= 0.8."
+    Better: "pass rate >= 0.8 AND p99 latency <
+    200ms AND no AI-modified test files AND
+    hidden-test delta < 0.2." The loop can't
+    game a multi-axis target.
+20. **Add a "smallness" reward.** Beyond pass/fail,
+    reward outputs that are *smaller* (fewer
     lines, fewer files, fewer dependencies). The
-    simplest candidate that passes is the best
-    candidate. This is a strong anti-overfit
-    signal.
+    simplest output that passes is the best
+    output. This is a strong anti-overfit signal.
+
+## Why the harness is the moat
+
+The product is the AI's output, and the AI's output
+is bounded by what the harness measures. A weak
+harness produces a weak output. A strong harness
+produces a strong output. The company that owns the
+strongest, most private test set wins, because their
+test set is something the AI of any competitor can't
+see or train against.
+
+This is why all the work in this document matters.
+The 20 ideas in the bank aren't busywork — they're
+how you build a test set that no one else has. The
+expansion checklist is how you make it hard to cheat.
+The 3-cheats story is why the test set has to be
+fenced off. The 4-part anatomy is how you keep the
+test set honest as the loop runs.
+
+A great harness is the single most leveraged thing
+in this whole system. Build it well.
 
 ## See also
 
@@ -521,18 +674,14 @@ do all 20.
   — the 8-section checklist the meta-skill walks
   through with you. Run this *before* you paste the
   `/goal` prompt.
-- `skills/harness-engineering/SKILL.md` — the
-  play-book for designing the harness itself. Read
-  this if you want to understand *why* the
-  expansions above work.
+- `skills/harness-engineering/SKILL.md` — the playbook
+  for designing the harness itself.
 - `skills/loss-function-design/SKILL.md` — the
-  4-piece loss anatomy. The "V0 → V1" expansion
-  above is a translation of the 4-piece spec into
-  concrete changes.
+  4-part loss anatomy in technical detail. The "4
+  parts of every harness" section above is the
+  plain-language version.
 - `examples/lfd-system-verifier/` — a real LFD
   harness used to verify the LFD system itself.
   Read its `verifiers/` and `test-tasks/` to see
   what a complete harness looks like in practice.
-
-
 
