@@ -134,8 +134,8 @@ if [[ -d "$PROJECT_ROOT/test-tasks/design" ]]; then
   while IFS= read -r -d '' g; do
     # Anything that says "TODO" or has an `exit 1` with a comment
     # that doesn't actually check anything is a stub. We grep for
-    # the explicit stub marker the meta-skill uses, plus a
-    # defensive "exit 1" + "TODO" co-occurrence.
+    # the explicit stub marker, plus a defensive "exit 1" + "TODO"
+    # co-occurrence.
     if grep -qE '(TODO.*grade|TODO.*meta-fill|exit 1[[:space:]]*#.*TODO)' "$g" 2>/dev/null; then
       STUB_HITS=$((STUB_HITS + 1))
       STUB_FILES+=("$g")

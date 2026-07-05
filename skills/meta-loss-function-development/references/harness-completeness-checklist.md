@@ -1,29 +1,26 @@
 # Harness Completeness Checklist
 
-The meta-skill walks through this checklist with the user
-**before** emitting the /goal prompt. Every item must be
-checked. If any item is unchecked, go back to the relevant
-round and finish the work. The /goal prompt is emitted only
-after every box is ticked and the user has signed off.
+Walk through this checklist with the user **before** emitting
+the /goal prompt. Every item must be checked. If any item is
+unchecked, go back to the relevant round and finish the work.
+The /goal prompt is emitted only after every box is ticked
+and the user has signed off.
 
-This checklist is the **explicit HITL gate**. Without it, the
-harness ends up minimal and the candidates end up minimal —
-exactly the failure mode this checklist exists to prevent.
+This checklist is the **HITL gate**. Without it, the harness
+ends up minimal and the candidates end up minimal.
 
 ## How to use this checklist
 
-The meta-skill reads each section aloud (or summarizes it),
-shows the user the relevant on-disk artifacts, and asks "is
-this complete?" The user replies yes, no, or "here's the
-change." If the user says no or requests a change, the
-meta-skill updates the harness, then re-shows that section.
-Only after the user explicitly says "complete" or "approved"
-does the meta-skill tick the box and move on.
+Read each section aloud (or summarize it), show the user
+the relevant on-disk artifacts, and ask "is this complete?"
+The user replies yes, no, or "here's the change." If the user
+says no or requests a change, update the harness, then
+re-show that section. Only after the user explicitly says
+"complete" or "approved" tick the box and move on.
 
 The user signs off at the end with a single message ("harness
-approved" or equivalent). The meta-skill records the
-sign-off timestamp in `logs/harness-signoff.md` and then
-emits the /goal prompt.
+approved" or equivalent). Record the sign-off timestamp in
+`logs/harness-signoff.md` and then emit the /goal prompt.
 
 ---
 
@@ -36,8 +33,8 @@ emits the /goal prompt.
 - [ ] `PROJECT_DIR` value matches what the user said
 
 If the directory is not empty and the user has not approved
-merging, the meta-skill must ask before writing. Wrong-path
-harnesses are unrecoverable.
+merging, ask before writing. Wrong-path harnesses are
+unrecoverable.
 
 ## Section 2: 4-piece loss spec
 
@@ -60,8 +57,8 @@ harnesses are unrecoverable.
   threshold (default 0.05, 3-stall cap).
 
 The 4-piece spec is shown to the user as a single markdown
-block. The user can edit it inline. The meta-skill updates
-the on-disk `GOAL.md` to match.
+block. The user can edit it inline. Update the on-disk
+`GOAL.md` to match.
 
 ## Section 3: design set (5-10 tasks)
 
@@ -87,19 +84,17 @@ the on-disk `GOAL.md` to match.
   hardcoded the answer key"). The user has reviewed
   each grader for hack-resistance.
 
-If any `grade.sh` is a stub, the meta-skill does NOT
-proceed. It writes the real grader with the user — even
-if that means asking "what should this actually check?"
-and waiting for the answer. Stub graders are forbidden in
-the finished harness.
+If any `grade.sh` is a stub, do NOT proceed. Write the real
+grader with the user — even if that means asking "what
+should this actually check?" and waiting for the answer.
+Stub graders are forbidden in the finished harness.
 
 ## Section 4: held-out set (5-10 tasks)
 
 - [ ] 5-10 tasks exist at `test-tasks/held-out/hNN/`
 - [ ] Each task has real task content (the user has
-  reviewed the names and the meta-skill has shown
-  high-level descriptions; the user has either
-  approved the meta-skill to generate the contents
+  reviewed the names and high-level descriptions; the
+  user has either approved generating the contents
   from public sources, OR has written the contents
   themselves)
 - [ ] Each held-out task dir is `chmod 700`, each file
@@ -115,13 +110,12 @@ the finished harness.
   agent can't pattern-match its way to 100% without
   actually solving the problem. The user has reviewed
   for this.
-- [ ] The held-out set is **not in the meta-session's
-  context window at /goal-paste time** — it lives only
-  on disk in chmod'd directories. (This is automatic
-  if the user signs off in this session and then
-  pastes the /goal prompt into a *fresh* session
-  later. The meta-skill must remind the user to use
-  a fresh session.)
+- [ ] The held-out set is **not in this session's context
+  window at /goal-paste time** — it lives only on disk
+  in chmod'd directories. (This is automatic if the user
+  signs off in this session and then pastes the /goal
+  prompt into a *fresh* session later. Remind the user
+  to use a fresh session.)
 
 ## Section 5: instruments
 
@@ -161,18 +155,18 @@ the finished harness.
   the right path) and the wrapper is runnable from
   inside the project
 
-## Section 8: meta-skill discipline
+## Section 8: session discipline
 
 - [ ] The user has been told explicitly: **paste the /goal
-  prompt into a fresh session, do not resume this
-  meta-session for the loop run**
+  prompt into a fresh session, do not resume this session
+  for the loop run**
 - [ ] The /goal prompt's Hard Rules section explicitly
   forbids loading `meta-loss-function-development` in
   the loop session
-- [ ] The user understands that the meta-session's
-  context window (which contains the held-out task
-  synthesis, the user's private notes, etc.) is the
-  threat model, and a fresh session is the mitigation
+- [ ] The user understands that this session's context
+  window (which contains the held-out task synthesis, the
+  user's private notes, etc.) is the threat model, and a
+  fresh session is the mitigation
 
 ---
 
@@ -180,21 +174,20 @@ the finished harness.
 
 After every section is checked, the user signs off with a
 single message (e.g., "harness approved" or "looks good,
-emit the prompt"). The meta-skill writes:
+emit the prompt"). Write:
 
 ```
 # Harness Sign-off
 
 - date: <ISO timestamp>
 - user: <user-identifier if available>
-- meta-session: <session-id>
+- session: <session-id>
 - harness root: <absolute path>
 - sections checked: 1-8 all green
 - notes: <any final user notes>
 ```
 
-to `logs/harness-signoff.md`. Then the meta-skill emits
-the /goal prompt.
+to `logs/harness-signoff.md`. Then emit the /goal prompt.
 
 The sign-off is for the user's record. The actual gate is
 the on-disk state of the harness — every grade.sh is real,
@@ -206,13 +199,12 @@ not a substitute for it.
 
 If a section genuinely cannot be completed (e.g., the user
 doesn't have a public reference to synthesize held-out
-tasks from, so the held-out set has to be small), the
-meta-skill records the gap explicitly in
-`logs/harness-known-gaps.md` with the user's reason, and
-the user signs off on the gap. The /goal prompt then
-states the limitation in its Target section. The
-limitation is not a bug — it's a recorded constraint
-the loop can score against.
+tasks from, so the held-out set has to be small), record
+the gap explicitly in `logs/harness-known-gaps.md` with
+the user's reason, and the user signs off on the gap. The
+/goal prompt then states the limitation in its Target
+section. The limitation is a recorded constraint the loop
+can score against.
 
 What is NEVER acceptable: skipping a section silently,
 emitting a /goal prompt that points at an incomplete

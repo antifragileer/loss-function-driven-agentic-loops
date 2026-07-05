@@ -1,7 +1,6 @@
 # Four-Piece Loss Anatomy — Reference
 
-The 4-piece loss spec is the heart of the meta-skill. Fill each
-piece from the user's goal.
+Fill each piece from the user's goal.
 
 ## 1. Target
 

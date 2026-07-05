@@ -38,14 +38,12 @@ the harness tree. Output is a runnable project: `verifiers/`,
 tasks with deterministic graders, and the held-out grader
 directory (off-limits to the agent).
 
-**This skill runs in the meta-session, not the loop
-session.** The loop session never calls this skill — the
-harness is already finished by the time the loop session
-sees it.
+**Runs in the meta-session, not the loop session.** The
+loop session never calls this skill — the harness is
+already finished by the time the loop session sees it.
 
 **Stubs the scaffold produces are forbidden in the finished
-harness.** The meta-skill (or the user, working with the
-meta-skill) fills them in before the /goal prompt is
+harness.** The meta-skill (or the user) fills them in before the /goal prompt is
 emitted. See
 `meta-loss-function-development/references/harness-completeness-checklist.md`.
 
@@ -132,10 +130,9 @@ After this skill runs, the project root has:
   reads the harness this skill scaffolded; it does not
   scaffold or modify the harness.
 - **Does not implement the design task graders.** The
-  meta-skill (or the user, working with the meta-skill)
-  writes the actual `grade.sh` scripts. The scaffold writes
-  stubs that must be filled in before the /goal prompt is
-  emitted.
+  meta-skill (or the user) writes the actual `grade.sh`
+  scripts. The scaffold writes stubs that must be filled
+  in before the /goal prompt is emitted.
 - **Does not implement the held-out tasks.** Same reason —
   the meta-skill (or the user) provides them. The scaffold
   creates empty directories with a `README.md` placeholder.
@@ -228,24 +225,22 @@ won't clobber the agent's tuning).
 ## Pitfalls when using this skill
 
 - **The scaffold is a starting point, not a finished
-  project.** The graders are stubs. The meta-skill is
-  responsible for filling them in via the
-  `harness-completeness-checklist.md` before the /goal
-  prompt is emitted. A loop session that finds stub
-  graders must stop and report — it must not fill them
-  in itself.
+  project.** The graders are stubs. The meta-skill fills
+  them in via `harness-completeness-checklist.md` before
+  the /goal prompt is emitted. A loop session that finds
+  stub graders must stop and report — it must not fill
+  them in itself.
 - **The /goal prompt must follow the template.** Free-form
   prompts won't parse cleanly. If parsing fails, the
   scaffold emits a default and a TODO. Use the
   `meta-loss-function-development` skill to emit a
   well-formed prompt.
 - **The held-out tasks are user-provided.** The scaffold
-  creates empty directories. The meta-skill (or the user
-  working with the meta-skill) fills in the actual task
-  files. The agent must not be able to read these
-  directories; the scaffold sets permissions accordingly
-  (`chmod 700` on `private/`, `chmod 600` on
-  `grader.sh`).
+  creates empty directories. The meta-skill (or the user)
+  fills in the actual task files. The agent must not be
+  able to read these directories; the scaffold sets
+  permissions accordingly (`chmod 700` on `private/`,
+  `chmod 600` on `grader.sh`).
 - **The wrapper script depends on the runtime.** The
   scaffold generates the Cline wrapper by default. For
   Codex or Aider, the user (or the loop driver) replaces

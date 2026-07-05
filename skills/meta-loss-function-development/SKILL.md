@@ -176,8 +176,8 @@ dependency, with the user reviewing each piece:
 - Show the user the 10 held-out tasks. The user reviews
   the *names* and high-level descriptions (not the
   contents — those should be the user's secret test set
-  unless the user explicitly approves the meta-skill
-  generating them). Iterate.
+  unless the user explicitly approves generating
+  them). Iterate.
 
 ### Round 4: instruments
 
@@ -200,10 +200,9 @@ dependency, with the user reviewing each piece:
 ### Round 6: completeness check
 
 - Walk through `references/harness-completeness-checklist.md`
-  with the user. Every item must be checked. If any are
-  not, go back to the relevant round and finish them.
-- This is the explicit HITL gate. The user signs off on
-  the harness.
+ with the user. Every item must be checked. If any are
+ not, go back to the relevant round and finish them.
+ The user signs off on the harness.
 
 ### Round 7: emit the /goal prompt
 
@@ -213,22 +212,21 @@ dependency, with the user reviewing each piece:
   instructions.
 - Print the prompt as a single code-fenced block.
 - Remind the user: paste this into a *fresh session* in a
-  *different chat*. Do not resume this meta-session for
-  the loop run.
+  *different chat*. Do not resume this session for the
+  loop run.
 
 ## How orchestrators drive this skill (non-interactive)
 
 The interactive flow above assumes the user is in
-conversation with the meta-session. Non-interactive
+conversation with this skill. Non-interactive
 orchestrators (CI scripts, the LFD system verifier, etc.)
-can drive the meta-skill via a single prompt that asks for
-the full deliverable. The same completeness-checklist gate
+can drive it via a single prompt that asks for the full
+deliverable. The same completeness-checklist gate
 applies, but it's enforced by the orchestrator (e.g. the
 LFD system verifier rejects an emitted /goal prompt if
 grade.sh files in `test-tasks/design/` are still stubs).
 
-The project-root pinning protocol is unchanged from
-v1.0:
+Project-root pinning protocol:
 
 - **Pinned (recommended — interactive or orchestrator).** The
   generated prompt embeds `PROJECT_DIR: <absolute-path>` as a
@@ -246,7 +244,7 @@ the bug this design prevents.
 
 ## How to write the goal prompt (for the skill itself)
 
-The /goal prompt has six parts (unchanged from v1.0):
+The /goal prompt has six parts:
 
 1. **The 4-piece loss spec.** Target, constraints,
    instruments, forced entropy.
@@ -408,7 +406,7 @@ short name for the project.
 ## The 4-piece loss spec — quick reference
 
 This is the same anatomy from `loss-function-design`. The
-meta-skill fills each piece from the user's goal:
+Fill each piece from the user's goal:
 
 - **Target.** What the agent is descending toward. Must be
   large enough that enumeration doesn't pay, and must be
@@ -454,13 +452,10 @@ When invoked, this skill produces:
 
 ## Related skills (install separately if not present)
 
-- `loss-function-design` — the 4-piece loss anatomy. This
-  meta-skill is its upstream.
-- `harness-engineering` — what the agent sees. The
-  meta-skill's harness is informed by this.
-- `harness-scaffold` — the scaffolding tool the meta-skill
-  uses to write the tree. The meta-skill drives this
-  skill, not the other way around.
+- `loss-function-design` — the 4-piece loss anatomy. Its
+  upstream.
+- `harness-engineering` — what the agent sees.
+- `harness-scaffold` — scaffolds the directory tree.
 - `cline-orchestration` — the Cline runtime. Substitute
   your own if not using Cline.
 
@@ -471,11 +466,10 @@ When invoked, this skill produces:
 - `references/research-budget.md` — the 10-minute research
   cap, with examples of what counts and what doesn't.
 - `references/harness-completeness-checklist.md` — the
-  checklist the meta-skill walks through with the user
-  before emitting the /goal prompt. This is the explicit
-  HITL gate.
+  checklist walked through with the user before emitting
+  the /goal prompt.
 - `templates/goal-prompt.md` — the canonical /goal prompt
-  template, the meta-skill fills this in.
+  template, filled in here.
 - `examples/slack-clone-golang.md` — a worked example.
 - `examples/cli-tool-rust.md` — another worked example.
 - `examples/algorithm-from-paper.md` — another worked example.

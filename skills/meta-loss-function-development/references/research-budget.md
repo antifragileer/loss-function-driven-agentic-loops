@@ -1,15 +1,14 @@
 # Research Budget — Reference
 
-The meta-skill has 10 minutes of bounded research. This file
-defines what that means.
+10 minutes of bounded research. This file defines what that
+means.
 
 ## The 10-minute cap
 
 The user is paying for a /goal prompt, not a domain analysis.
 10 minutes of tool calls (web search, file reads, code
-inspection) is the maximum. Beyond that, the meta-skill
-should emit a /goal prompt with whatever it has and a
-"research is incomplete" note.
+inspection) is the maximum. Beyond that, emit a /goal prompt
+with whatever you have and a "research is incomplete" note.
 
 ## What counts as research
 
