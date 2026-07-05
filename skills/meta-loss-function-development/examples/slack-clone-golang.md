@@ -1,12 +1,3 @@
-> **Worked example. Assumes the harness is already
-> complete** (every `grade.sh` is a real grader, every
-> held-out task has real content, every instrument is
-> real). This is the prompt the meta-skill emits at the
-> end of rounds 0-6, after the user has signed off via
-> `references/harness-completeness-checklist.md`. Do not
-> paste this into a fresh session until the harness at
-> `PROJECT_DIR` is finished.
-
 # /goal: Build a Slack Desktop Clone in Go
 
 PROJECT_DIR: <ABSOLUTE-PATH-TO-PROJECT-ROOT>
@@ -191,8 +182,7 @@ Local maxima is the default state. Force entropy:
 - DO NOT read `verifiers/private/` or `test-tasks/held-out/`.
 - DO NOT modify `verifiers/`. The harness is finished. If
   you find something wrong with it, **stop and report**,
-  do not silently patch it. Modifying the harness from
-  inside the loop defeats the held-out grader.
+  do not silently patch it.
 - The only Cline invocation is via `verifiers/cline-wrapper.sh`.
 - After EACH design-set run, append a one-line entry to
   `logs/iteration-log.md` with cycle number, hypothesis,
@@ -200,13 +190,10 @@ Local maxima is the default state. Force entropy:
 - If pass_rate doesn't improve by >= 0.05, force entropy:
   pick the OPPOSITE of your last change and apply it.
   Document it.
-- DO NOT load the `meta-loss-function-development` skill
-  in this session. That skill is what built the harness
-  in the first place — its context contains the held-out
-  synthesis. Loading it here would void the held-out
-  guarantee. The only skills in this session should be
-  `loss-function-design`, `harness-engineering`,
-  `cline-orchestration`, and the contents of this prompt.
+- DO NOT load the `meta-loss-function-development` skill.
+  Allowed skills: `loss-function-design`,
+  `harness-engineering`, `cline-orchestration`, and the
+  contents of this prompt.
 
 ## Practical hints
 

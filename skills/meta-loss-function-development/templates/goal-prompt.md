@@ -12,13 +12,10 @@ PROJECT_NAME: <SHORT-SLUG>
 > PROJECT_DIR=<that-path>`. If the value is missing or the
 > directory does not exist, **stop** and report.
 >
-> **The harness at `$PROJECT_DIR` is complete.** Every
-> `grade.sh` is a real grader (exits 0 on pass, non-zero on
-> fail, with a real check). Every held-out task has real
-> task content. Every instrument script actually measures
-> what it claims to measure. You do NOT need to build,
-> scaffold, or fill in anything. You read the harness and
-> run the loop.
+|> **The harness at `$PROJECT_DIR` is complete.** Every
+|> `grade.sh` is a real grader, every held-out task has real
+|> content, every instrument actually measures what it claims
+|> to. Do not modify the harness from inside the loop.
 
 You are running an outer optimization loop. The inner loop is the
 `<AGENT>` CLI. The artifact is `<ARTIFACT DESCRIPTION>`. The
@@ -166,13 +163,7 @@ Local maxima is the default state. Force entropy:
    `<WRAPPER>`, `<DESIGN-SET-RUNNER>`, and every script in
    `<INSTRUMENTS-PATH>`. (About 5-10 file reads.)
 2. Read each design task's `prompt.txt` and the buggy file at
-   the top of each design task dir. (`<K>` tasks.) Each
-   `grade.sh` is already a real grader — you do not need to
-   implement or modify it. If you find a `grade.sh` that
-   looks like a stub (TODO comment, `exit 1` with no
-   real check), **stop and report** — the harness is
-   incomplete and the meta-session that built it
-   violated the completeness check.
+   the top of each design task dir. (`<K>` tasks.)
 3. Establish baseline: with no candidate artifact installed,
    run `<DESIGN-SET-RUNNER>` and record the result. Append
    cycle 0 to `<LOG-PATH>`.
@@ -199,19 +190,15 @@ Local maxima is the default state. Force entropy:
   `<HELD_OUT_TASKS-PATH>`.
 - DO NOT modify `<HARNESS-PATH>`. The harness is finished.
   If you find something wrong with it, **stop and report**,
-  do not silently patch it. Modifying the harness from
-  inside the loop defeats the held-out grader.
+  do not silently patch it.
 - The only `<AGENT>` invocation is via `<WRAPPER>`.
 - After EACH design-set run, append a one-line entry to
   `<LOG-PATH>` with cycle number, hypothesis, expected
   failure, and pass_rate.
 - DO NOT load the `meta-loss-function-development` skill.
-  That skill is what *built* the harness. If it's loaded
-  in this session, the held-out cheats-itself guarantee is
-  void. The only skills you should have are
-  `loss-function-design`, `harness-engineering`,
-  `cline-orchestration` (or your runtime equivalent), and
-  the contents of this prompt.
+  Allowed skills: `loss-function-design`,
+  `harness-engineering`, `cline-orchestration` (or runtime
+  equivalent), and the contents of this prompt.
 
 ## Practical hints
 

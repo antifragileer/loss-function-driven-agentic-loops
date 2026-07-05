@@ -120,18 +120,12 @@ if [[ ! -x "$DESIGN_SET" ]]; then
   exit 2
 fi
 
-# ----- reject incomplete harnesses (meta-skill must finish before /goal runs) -----
+# ----- reject incomplete harnesses -----
 #
-# The v1.1 meta-skill invariant: the harness is finished before
-# the /goal prompt is emitted. A loop session that finds stub
-# graders, TODO markers, or empty held-out directories must
-# refuse to run. The user (or meta-skill) must finish the
-# harness first.
-#
-# This check is the loop's last line of defense against the
-# "minimal harness = minimal candidate" failure mode. The
-# primary defense is the meta-skill's
-# harness-completeness-checklist.md.
+# The harness must be complete (every grade.sh a real grader,
+# every held-out task populated) before the /goal prompt is
+# emitted. If we find stub markers or empty held-out dirs,
+# refuse to run -- the user must finish the harness first.
 
 STUB_HITS=0
 STUB_FILES=()

@@ -38,24 +38,16 @@ the harness tree. Output is a runnable project: `verifiers/`,
 tasks with deterministic graders, and the held-out grader
 directory (off-limits to the agent).
 
-**This skill runs in the meta-session, not the loop session.**
-The meta-skill (`meta-loss-function-development`) drives this
-skill during rounds 0-6 of the harness build, *before* the
-/goal prompt is emitted. The loop session that runs the
-outer loop never calls this skill — the harness is already
-finished by the time the loop session sees it. This is the
-core invariant of the v1.1 meta-skill: the harness is
-finished before the /goal prompt exists.
+**This skill runs in the meta-session, not the loop
+session.** The loop session never calls this skill — the
+harness is already finished by the time the loop session
+sees it.
 
-**This skill writes stubs. The meta-skill is responsible for
-filling them in before the /goal prompt is emitted.** The
-stubs the scaffold produces are explicit `// TODO: meta-fill
-before emitting /goal prompt` markers, not silent
-placeholders. The completeness checklist
-(`meta-loss-function-development/references/harness-completeness-checklist.md`)
-is what the meta-skill walks through to ensure every stub
-becomes a real implementation before the /goal prompt
-leaves the meta-session.
+**Stubs the scaffold produces are forbidden in the finished
+harness.** The meta-skill (or the user, working with the
+meta-skill) fills them in before the /goal prompt is
+emitted. See
+`meta-loss-function-development/references/harness-completeness-checklist.md`.
 
 The scaffold is **driven entirely by the /goal prompt** —
 nothing is hard-coded. The skill parses the prompt for the
@@ -136,18 +128,14 @@ After this skill runs, the project root has:
 
 ## What this skill does NOT do
 
-- **Does not run in the loop session.** This skill is a
-  meta-session tool. The loop session reads the harness this
-  skill scaffolded; it does not scaffold or modify the
-  harness itself. See the v1.1 meta-skill for the
-  harness-first /goal-prompt-later invariant.
-- **Does not implement the design task graders.** The meta-skill
-  (or the user, working with the meta-skill) writes the
-  actual `grade.sh` scripts based on the per-task
-  description. The scaffold writes *stubs* that exit 1 with
-  a `// TODO: meta-fill before emitting /goal prompt`
-  marker. The completeness checklist enforces that no stubs
-  remain when the /goal prompt is emitted.
+- **Does not run in the loop session.** The loop session
+  reads the harness this skill scaffolded; it does not
+  scaffold or modify the harness.
+- **Does not implement the design task graders.** The
+  meta-skill (or the user, working with the meta-skill)
+  writes the actual `grade.sh` scripts. The scaffold writes
+  stubs that must be filled in before the /goal prompt is
+  emitted.
 - **Does not implement the held-out tasks.** Same reason —
   the meta-skill (or the user) provides them. The scaffold
   creates empty directories with a `README.md` placeholder.

@@ -56,51 +56,11 @@ already exists.
 
 ## The core invariant: harness first, then prompt
 
-**The harness is finished before the /goal prompt is emitted.**
-Not "partially scaffolded with stubs to be filled later." Not
-"skeleton the meta-session writes, then the loop session
-fills in." *Finished*: every `grade.sh` is a real grader,
-every held-out task has real task content, every
-instrument script actually measures what it claims to
-measure.
-
-Why this invariant matters:
-
-- **HITL happens during this session, not later.** The user
-  and the meta-skill iterate on the harness in real time —
-  the user reviews each piece, says "the design tasks don't
-  cover error cases, add three more," the meta-skill updates
-  the tree, the user reviews again. This is the only place
-  HITL can actually work, because the meta-session is alive
-  and the user is typing.
-- **The held-out cheats-itself problem disappears.** The
-  meta-session that synthesizes the held-out tasks is a
-  *different session* from the one that runs the loop. By
-  the time the /goal prompt is pasted into the loop session,
-  the meta-session is gone. The loop session has never seen
-  the held-out contents — they only exist as files on disk
-  in `chmod 700` directories, which the loop session is
-  told not to read. No context-window leak, because there's
-  no shared context window.
-- **The harness is never minimal.** The user sees the
-  complete tree before any loop starts. If the design set
-  is too small, the user adds tasks. If the held-out set is
-  trivially guessable, the user adds cases. If the
-  instruments are fake, the user replaces them. None of this
-  requires a separate "review phase" — it happens
-  conversationally, mid-build.
-- **The /goal prompt becomes simple.** It points at a
-  finished harness. Its first action is "establish baseline
-  and begin cycle 1." It does NOT say "fill in the stub
-  graders before doing anything else," because they're not
-  stubs.
-
-The previous design had this inverted: the meta-skill
-emitted a /goal prompt immediately, the user pasted it into
-a fresh session, the fresh session scaffolded a minimal
-harness, and the user had no chance to expand it before
-cycle 1 began. The fix is to swap the order: build the
-harness first, then emit the prompt.
+**Build the complete harness before emitting the /goal prompt.**
+Every `grade.sh` is a real grader, every held-out task has
+real task content, every instrument script actually measures
+what it claims to measure. The /goal prompt is the *last*
+thing this skill does, not the first.
 
 ## What the output is
 
@@ -158,16 +118,11 @@ The block's first line after the title is `PROJECT_DIR:
    harness-engineering, cline-orchestration) and the goal
    prompt itself. It reads the complete harness on disk,
    establishes baseline, runs cycle 1.
-6. The fresh session does *not* have the meta-skill loaded.
-   It does *not* build or modify the harness. The harness
-   is the meta-skill's deliverable, already finished.
 
 ## How the meta-skill drives the iteration
 
-The meta-skill is the harness factory. It does NOT emit a
-/goal prompt on the first turn. It builds the harness piece
-by piece, in order of dependency, with the user reviewing
-each piece. The general order:
+The meta-skill builds the harness piece by piece, in order of
+dependency, with the user reviewing each piece:
 
 ### Round 0: project root + scaffold
 
@@ -409,9 +364,6 @@ short name for the project.
   is built iteratively with the user. Stubs that get filled
   in later are forbidden — every piece must be finished
   before the next round starts.
-- **Not the loop session.** The meta-session exits. The
-  loop session is a separate, fresh chat. Don't try to
-  run the loop in this session.
 
 ## Pitfalls when using this skill
 
@@ -419,19 +371,13 @@ short name for the project.
   complete.** If `grade.sh` is still a stub, the harness is
   not complete. The user must sign off via the
   completeness checklist.
-- **Don't try to "save time" by skipping the
-  completeness check.** The completeness check is the HITL
-  gate. Skipping it produces a minimal harness, which
-  produces minimal candidates, which is exactly the bug
-  this skill exists to prevent.
-- **Don't load this skill in the loop session.** The
-  meta-skill's presence in the loop session is a verifier
-  failure: it means the loop session has access to the
-  meta-skill's context (held-out synthesis, the user's
-  private notes, etc.). The loop session should have only
-  the three inner skills (loss-function-design,
-  harness-engineering, cline-orchestration) plus the goal
-  prompt.
+- **Don't skip the completeness check.** It is the HITL
+  gate. Skipping it produces a minimal harness.
+- **Don't load this skill in the loop session.** The loop
+  session should have only the three inner skills
+  (`loss-function-design`, `harness-engineering`,
+  `cline-orchestration`) plus the goal prompt. Loading the
+  meta-skill voids the held-out guarantee.
 - **Don't ask 5+ questions per round.** The user wants the
   harness to converge, not to be interviewed. Ask the top
   1-3 per round, build the piece, iterate.
@@ -505,10 +451,6 @@ When invoked, this skill produces:
    assumes, what it doesn't, what the user should change.
 4. **The completeness-checklist sign-off** as the final
    confirmation that HITL has happened.
-
-The harness is the artifact. The block is the entry point.
-The summary and checklist are how the user verifies
-completeness.
 
 ## Related skills (install separately if not present)
 
