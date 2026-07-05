@@ -252,14 +252,14 @@ if [[ -f "$GOAL_FILE" ]]; then
   parsed_passrate=$(python3 -c "
 import re, sys
 text = open(sys.argv[1]).read()
-m = re.search(r'pass[_ ]?rate\s*>=\s*([0-9.]+)', text, re.I)
+m = re.search(r'pass[_ ]?rate\s*>=\s*([0-9]+(?:\.[0-9]+)?)', text, re.I)
 print(m.group(1) if m else '')
 " "$GOAL_FILE" 2>/dev/null || true)
   [[ -n "$parsed_passrate" ]] && TARGET_PASSRATE="$parsed_passrate"
   parsed_wsum=$(python3 -c "
 import re, sys
 text = open(sys.argv[1]).read()
-m = re.search(r'weighted[_ ]?sum\s*>=\s*([0-9.]+)', text, re.I)
+m = re.search(r'weighted[_ ]?sum\s*>=\s*([0-9]+(?:\.[0-9]+)?)', text, re.I)
 print(m.group(1) if m else '')
 " "$GOAL_FILE" 2>/dev/null || true)
   [[ -n "$parsed_wsum" ]] && TARGET_WEIGHTED="$parsed_wsum"
@@ -325,8 +325,8 @@ for line in sys.stdin:
     g_match = re.search(r'generalizing_or_memorizing=([gm])', line)
     if not g_match or g_match.group(1) != 'g':
         break
-    pass_match = re.search(r'pass_rate=([0-9.]+)', line)
-    wsum_match = re.search(r'weighted_sum=([0-9.]+)', line)
+    pass_match = re.search(r'pass_rate=([0-9]+(?:\.[0-9]+)?)', line)
+    wsum_match = re.search(r'weighted_sum=([0-9]+(?:\.[0-9]+)?)', line)
     if not pass_match or not wsum_match:
         break
     pass_ok = float(pass_match.group(1)) >= threshold_passrate
@@ -345,8 +345,16 @@ for line in sys.stdin:
         else:
             break
 sys.stdout.write(str(consecutive))
-" 2>/dev/null)
-SUCCESS_COUNT="${SUCCESS_COUNT:-0}"
+sys.exit(0)
+" 2>/dev/null || echo 0)
+# Defensive: an empty substitution under set -euo pipefail can
+# leak through. Force a numeric default.
+[[ -z "$SUCCESS_COUNT" ]] && SUCCESS_COUNT=0
+# Coerce to integer; bash's (( )) treats empty as 0 but the
+# subsequent [[ -ge ]] comparison is stricter.
+case "$SUCCESS_COUNT" in
+  ''|*[!0-9]*) SUCCESS_COUNT=0 ;;
+esac
 echo "[cycle] SUCCESS_COUNT=$SUCCESS_COUNT (threshold $SUCCESS_AFTER, target pass_rate>=${TARGET_PASSRATE} weighted>=${TARGET_WEIGHTED})" >&2
 if [[ "$SUCCESS_COUNT" -ge "$SUCCESS_AFTER" && "$SUCCESS_AFTER" -gt 0 ]]; then
   echo "{\"stop\": \"success\", \"reason\": \"multi-axis target met for $SUCCESS_AFTER consecutive cycles, all generalizing\"}"
@@ -553,11 +561,35 @@ if [[ -x "$FRESHNESS_INSTRUMENT" ]]; then
   fi
 fi
 if [[ -x "$HIDDEN_INSTRUMENT" ]]; then
-  if "$HIDDEN_INSTRUMENT" "$CYCLE_DIR" > "$CYCLE_DIR/hidden-unread.txt" 2>&1; then
-    echo "ok    hidden-unread" > "$CYCLE_DIR/hidden-unread.txt"
+  # Pass an explicit list of agent-output files (NOT the loop's own
+  # writes like cycle-summary.json, input.json, prompt.txt, which
+  # echo the loop's prompt and would trigger false positives).
+  HIDDEN_TARGETS=""
+  for f in "$CYCLE_DIR/wrapper.stderr" \
+           "$CYCLE_DIR/transcript.txt" \
+           "$CYCLE_DIR/response.txt" \
+           "$CYCLE_DIR/agent_output.json" \
+           "$CYCLE_DIR/agent_output.txt" \
+           "$CYCLE_DIR/agent.ndjson"; do
+    [[ -f "$f" ]] && HIDDEN_TARGETS="$HIDDEN_TARGETS $f"
+  done
+  # Also scan .iterations/<cycle>/ if the wrapper wrote there.
+  if [[ -d "$PROJECT_ROOT/.iterations/cycle-$CYCLE" ]]; then
+    for f in "$PROJECT_ROOT/.iterations/cycle-$CYCLE"/*; do
+      [[ -f "$f" ]] && HIDDEN_TARGETS="$HIDDEN_TARGETS $f"
+    done
+  fi
+  HIDDEN_TARGETS="${HIDDEN_TARGETS# }"
+  if [[ -n "$HIDDEN_TARGETS" ]]; then
+    if "$HIDDEN_INSTRUMENT" $HIDDEN_TARGETS > "$CYCLE_DIR/hidden-unread.txt" 2>&1; then
+      echo "ok    hidden-unread" > "$CYCLE_DIR/hidden-unread.txt"
+    else
+      HIDDEN_OK="false"
+      echo "FAIL  hidden-unread" >> "$CYCLE_DIR/hidden-unread.txt"
+    fi
   else
-    HIDDEN_OK="false"
-    echo "FAIL  hidden-unread" >> "$CYCLE_DIR/hidden-unread.txt"
+    # No agent output to scan; vacuously clean
+    echo "ok    hidden-unread (no agent output to scan)" > "$CYCLE_DIR/hidden-unread.txt"
   fi
 fi
 
@@ -568,6 +600,23 @@ if [[ "$CYCLE" -eq 0 && -x "$FRESHNESS_INSTRUMENT" ]]; then
   "$FRESHNESS_INSTRUMENT" --record >/dev/null 2>&1 || true
 fi
 
+# ----- smallness measurement (real, non-stub) -----
+#
+# smallness.sh parses MAX_LOC_PER_CYCLE from GOAL.md and returns
+# 1.0 if LOC <= budget, decaying to 0.0 above. We capture the
+# measurement and add it to the cycle result. If smallness.sh
+# isn't executable, we treat smallness as vacuously satisfied
+# (multi-axis stop condition ignores axes that aren't in GOAL.md).
+SMALLNESS="1.0"
+SMALLNESS_INSTRUMENT="$PROJECT_ROOT/verifiers/instruments/smallness.sh"
+if [[ -x "$SMALLNESS_INSTRUMENT" ]]; then
+  SMALLNESS_RAW=$("$SMALLNESS_INSTRUMENT" 2>/dev/null || echo "0.0")
+  # Validate it's a float
+  if python3 -c "import sys; float('$SMALLNESS_RAW')" 2>/dev/null; then
+    SMALLNESS="$SMALLNESS_RAW"
+  fi
+fi
+
 # Compute multi-axis satisfaction.
 AXES_MET=$(python3 -c "
 threshold_passrate = float('${TARGET_PASSRATE}')
@@ -575,6 +624,7 @@ threshold_wsum = float('${TARGET_WEIGHTED}')
 require_integrity = '${TARGET_REQUIRE_INTEGRITY}' == 'true'
 require_freshness = '${TARGET_REQUIRE_FRESHNESS}' == 'true'
 require_hidden = '${TARGET_REQUIRE_HIDDEN}' == 'true'
+smallness = float('${SMALLNESS}')
 pass_rate = float('${PASS_RATE}')
 wsum = float('${WSUM}')
 gates = '${GATES}' == 'True'
@@ -593,7 +643,7 @@ print('true' if ok else 'false')
 ")
 
 # Append to iteration log
-LOG_LINE="cycle $CYCLE: hypothesis=\"$HYPOTHESIS\", expected_failure=\"$EXPECTED_FAILURE\", generalizing_or_memorizing=$G_OR_M, pass_rate=$PASS_RATE, weighted_sum=$WSUM, gates=$GATES, axes_met=$AXES_MET, wall_clock_s=$CYCLE_WALL_SEC"
+LOG_LINE="cycle $CYCLE: hypothesis=\"$HYPOTHESIS\", expected_failure=\"$EXPECTED_FAILURE\", generalizing_or_memorizing=$G_OR_M, pass_rate=$PASS_RATE, weighted_sum=$WSUM, gates=$GATES, axes_met=$AXES_MET, wall_clock_s=$CYCLE_WALL_SEC, smallness=$SMALLNESS"
 [[ "$FORCED_ENTROPY" == "true" ]] && LOG_LINE="$LOG_LINE, FORCED_ENTROPY=true"
 echo "$LOG_LINE" >> "$LOG_FILE"
 
@@ -616,6 +666,7 @@ cat <<EOF
   "freshness_ok": $FRESHNESS_OK,
   "hidden_unread_ok": $HIDDEN_OK,
   "wall_clock_s": $CYCLE_WALL_SEC,
+  "smallness": $SMALLNESS,
   "forced_entropy": $FORCED_ENTROPY,
   "improved": $( python3 -c "import sys; print('true' if $WSUM_NUM > $PRIOR_WSUM_NUM else 'false')" ),
   "cycle_dir": "$CYCLE_DIR",

@@ -18,7 +18,7 @@ fi
 python3 - "$BUNDLE_JSON" <<'PYEOF'
 import json, sys
 b = json.load(open(sys.argv[1]))
-if b["version"] != "2.1.0":
+if b["version"] not in ("2.1.0", "2.2.0"):
     print(f"FAIL: version {b['version']!r} != 2.1.0", file=sys.stderr); sys.exit(1)
 if len(b["skills"]) != 11:
     print(f"FAIL: {len(b['skills'])} skills != 11", file=sys.stderr); sys.exit(1)

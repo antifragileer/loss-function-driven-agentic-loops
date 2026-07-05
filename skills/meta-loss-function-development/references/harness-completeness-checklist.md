@@ -238,7 +238,7 @@ emit the prompt"). Write:
 - user: <user-identifier if available>
 - session: <session-id>
 - harness root: <absolute path>
-- sections checked: 1-9 all green
+- sections checked: 1-10 all green
 - notes: <any final user notes>
 ```
 
@@ -291,3 +291,47 @@ asking.
   multi-axis target. "Pass `pass_rate == 1.0`" alone
   is not a sufficient stop condition; the loop also
   requires gates, integrity-pass, and held-out delta.
+
+## Section 10: V0->V1 production harness (HITL-stubs for any project)
+
+The scaffold emits a comprehensive harness with 33+ instruments
+and a multi-axis target shape. The user fills in the HITL-stubs.
+This section verifies the V0->V1 shape is present, not that
+every project-specific value is filled in.
+
+- [ ] `verifiers/integrity.sh` exists and runs the default
+  4 anti-cheat guards. The user may add project-specific
+  guards inside the same file.
+- [ ] `verifiers/instruments/smallness.sh` exists and
+  parses `MAX_LOC_PER_CYCLE` from `GOAL.md` (default 200).
+  The user may lower or raise the budget.
+- [ ] `verifiers/instruments/test-freshness.sh` exists
+  and records the design-set SHA on first run.
+- [ ] `verifiers/instruments/hidden-unread.sh` exists
+  and scans agent-output files for held-out or private
+  references.
+- [ ] `verifiers/instruments/per-cycle-wall-clock.sh`
+  exists and records per-cycle wall-clock.
+- [ ] At least 4 instrument stubs (linter, type-check,
+  unit-tests, secret-scan) exist as stubs with HITL
+  sections. The user wires each in 3-5 lines.
+- [ ] `GOAL.md` lists which axes apply to this project
+  (in the multi-axis Target section). Axes not listed
+  are ignored by the loop's stop condition.
+- [ ] `AGENTS.md` has the V0->V1 hard rules block
+  (no reading private, integrity pre-check, etc.).
+- [ ] `AGENTS.md` is in the user's voice (not the
+  scaffold's default). The default scaffold emits a
+  placeholder; the user rewrites it before emitting
+  the /goal prompt.
+- [ ] `README.md` documents the multi-axis target and
+  the instrument HITL-stubs.
+- [ ] The meta-skill (Round 0) emits all 27 new
+  instrument stubs. Verify by `ls verifiers/instruments/`
+  showing 30+ files.
+
+What is NEVER acceptable: shipping a harness with
+fewer than 33 instruments, missing the integrity
+script, missing the smallness reward, or skipping
+the DONE/NOT-DONE block. These are V0->V1 baseline
+requirements.

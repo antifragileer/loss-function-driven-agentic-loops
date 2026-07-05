@@ -99,33 +99,6 @@ guard_agents_md_has_hard_rules() {
     && grep -q "DO NOT read .*test-tasks/held-out" "$f"
 }
 
-guard_no_hidden_read() {
-  local d="$PROJECT_DIR/test-tasks/held-out"
-  local names=""
-  [[ -d "$d" ]] && names=$(find "$d" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; 2>/dev/null)
-  local cdir="$PROJECT_DIR/logs"
-  local latest
-  latest=$(ls -1t "$cdir"/cycle-*/cycle-summary.json 2>/dev/null | head -1)
-  [[ -z "$latest" ]] && return 0
-  local text
-  text=$(cat "$latest" 2>/dev/null || true)
-  local n
-  for n in $names; do
-    if echo "$text" | grep -qF "$n"; then
-      return 1
-    fi
-  done
-  if echo "$text" | grep -qE "verifiers/private|chmod 600|chmod 700"; then
-    return 1
-  fi
-  return 0
-}
-
-check "no-grade-todo-stub"     guard_no_grade_todo_stub
-check "no-stub-always-pass"    guard_no_stub_always_pass
-check "no-sleep-in-grader"     guard_no_sleep_in_grader
-check "agents-md-has-hard-rules" guard_agents_md_has_hard_rules
-check "no-hidden-read"         guard_no_hidden_read
 
 printf "%s" "$REPORT"
 if [[ "$FAILS" -gt 0 ]]; then

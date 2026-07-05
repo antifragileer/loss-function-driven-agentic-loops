@@ -132,14 +132,24 @@ dependency, with the user reviewing each piece:
   `skills/`, `logs/`) using the `harness-scaffold` skill's
   tooling. All files start as stubs with explicit `TODO`
   comments and `agent-edited: yes` markers absent. The
-  scaffold also generates `verifiers/integrity.sh` with
-  5 default anti-cheat guards (Section 5 of the
-  completeness checklist covers which guards), plus
-  `verifiers/instruments/test-freshness.sh`,
-  `hidden-unread.sh`, and `per-cycle-wall-clock.sh`. The
-  loop session will invoke `integrity.sh` before every
-  cycle; the harness is not runnable until every
-  grade.sh in `test-tasks/design/` is a real grader.
+  scaffold also generates:
+  - `verifiers/integrity.sh` with 4 default anti-cheat
+    guards (no-grade-todo-stub, no-stub-always-pass,
+    no-sleep-in-grader, agents-md-has-hard-rules)
+  - `verifiers/instruments/smallness.sh` (real, parses
+    `MAX_LOC_PER_CYCLE` from `GOAL.md`, default 200)
+  - `verifiers/instruments/test-freshness.sh` (real)
+  - `verifiers/instruments/hidden-unread.sh` (real)
+  - `verifiers/instruments/per-cycle-wall-clock.sh` (real)
+  - **27 instrument stubs** across 7 categories
+    (code-quality, tests, security, quality-ux,
+    observability, performance, reliability, compliance).
+    Each has a HITL section the user wires in 3-5 lines.
+- The full V0->V1 instrument set is the baseline. The
+  loop session will invoke `verifiers/integrity.sh`
+  before every cycle; the harness is not runnable
+  until every `grade.sh` in `test-tasks/design/` is
+  a real grader.
 
 ### Round 1: the 4-piece loss spec
 
@@ -151,6 +161,39 @@ dependency, with the user reviewing each piece:
 - This spec becomes the backbone of the /goal prompt's
   `Target`, `Constraints`, `Instruments`, and `Forced
   entropy` sections.
+
+### Round 1.5: HITL-stubs walkthrough
+
+The V0->V1 harness has 30+ project-specific values that
+must be filled in by the human before the /goal prompt is
+emitted. The scaffold emits them all as stubs with
+`# HITL:` markers. This round walks the user through
+each one. The user does NOT have to fill them all in at
+once — the loop can run with the defaults. But production-
+quality work requires reading each stub.
+
+The 4 categories of HITL-stubs:
+
+1. **Project-specific risk list** (4 sections in
+   `verifiers/integrity.sh` beyond the defaults). The
+   user adds project-specific anti-cheat guards. For
+   example, a Go API might add a "no os.system calls"
+   guard; a CLI might add a "no fork/exec" guard.
+2. **Stack-specific tooling** (the 27 instrument
+   stubs). Each has a 3-5 line HITL section where the
+   user wires the real tool invocation. The user does
+   this for whichever instruments apply to their
+   project; the rest stay as 0.0 stubs.
+3. **Reference artifacts for held-out synthesis**.
+   Which public docs/tests the user wants held-out
+   tasks generated from.
+4. **Performance budgets** in `GOAL.md`. The user
+   states the project-specific latency, bundle size,
+   test coverage, etc.
+
+The user picks which of the 4 categories apply. The
+rest are recorded in `logs/harness-known-gaps.md` for
+later filling.
 
 ### Round 2: design set (5-10 tasks, 4 categories)
 

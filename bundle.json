@@ -9,7 +9,8 @@
       "role": "vocabulary",
       "required": true,
       "summary": "The 4-piece loss anatomy (target / constraints / instruments / forced entropy). The other 10 skills reference this vocabulary.",
-      "load_trigger": "user says 'loss function', 'reward hacking', 'verifier', 'gate sub-loss', or describes a stuck loop"
+      "load_trigger": "user says 'loss function', 'reward hacking', 'verifier', 'gate sub-loss', or describes a stuck loop",
+      "description": "How to design, implement, validate, and iterate loss functions for agentic development loops. The loss function is the objective the loop is optimizing against \u2014 without a good one, the loop spirals o"
     },
     {
       "name": "harness-engineering",
@@ -17,7 +18,8 @@
       "role": "theory",
       "required": true,
       "summary": "What the agent sees: context, tools, scaffolding, observability. The agent-facing half of the LFD pattern.",
-      "load_trigger": "user says 'harness', 'agent context', 'AGENTS.md layout', or designs a new project's repo structure"
+      "load_trigger": "user says 'harness', 'agent context', 'AGENTS.md layout', or designs a new project's repo structure",
+      "description": "The \"harness engineering\" playbook, distilled from Ryan Lopopolo's OpenAI post (\"Harness engineering: leveraging Codex in an agent-first world\", 2026-02-11) and from the @elvissun X post + diagram abo"
     },
     {
       "name": "cline-orchestration",
@@ -26,7 +28,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (claude-code, codex, hermes-agent, opencode, fake-agent) if not using Cline",
       "summary": "Cline v3 CLI surface, NDJSON parser, wrapper contract, per-iteration isolation.",
-      "load_trigger": "user says 'Cline', 'Cline version', 'wrapper script', 'Cline flags', or the wrapper errors out"
+      "load_trigger": "user says 'Cline', 'Cline version', 'wrapper script', 'Cline flags', or the wrapper errors out",
+      "description": "How to drive the Cline CLI as the coding agent inside a loss-function-driven loop. Cline is the *tool surface* the agent uses inside the loop. The driver (Hermes or any other orchestrator) owns the lo"
     },
     {
       "name": "claude-code-orchestration",
@@ -35,7 +38,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (cline, codex, hermes-agent, opencode, fake-agent) if not using Claude Code",
       "summary": "Claude Code CLI (Anthropic) print-mode surface, --output-format json parser, wrapper contract, per-iteration isolation.",
-      "load_trigger": "user says 'Claude Code', 'claude -p', 'Claude Code wrapper', or the Claude Code wrapper errors out"
+      "load_trigger": "user says 'Claude Code', 'claude -p', 'Claude Code wrapper', or the Claude Code wrapper errors out",
+      "description": "How to drive the Claude Code CLI (Anthropic) as the coding agent inside a loss-function-driven loop. The driver (Hermes or any orchestrator) owns the loop, the loss function, and the verifier runs. Cl"
     },
     {
       "name": "codex-orchestration",
@@ -44,7 +48,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, hermes-agent, opencode, fake-agent) if not using Codex",
       "summary": "OpenAI Codex CLI exec-mode surface, --json NDJSON parser, wrapper contract, git-init per-iteration isolation.",
-      "load_trigger": "user says 'Codex', 'codex exec', 'Codex wrapper', or the Codex wrapper errors out"
+      "load_trigger": "user says 'Codex', 'codex exec', 'Codex wrapper', or the Codex wrapper errors out",
+      "description": "How to drive the OpenAI Codex CLI as the coding agent inside a loss-function-driven loop. The driver (Hermes or any orchestrator) owns the loop, the loss function, and the verifier runs. Codex owns th"
     },
     {
       "name": "hermes-agent-orchestration",
@@ -53,7 +58,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, opencode, fake-agent) if not using Hermes Agent",
       "summary": "Hermes Agent CLI chat-mode surface, --output-format json parser, wrapper contract, profile-based per-iteration isolation.",
-      "load_trigger": "user says 'Hermes', 'hermes chat', 'Hermes wrapper', or wants a provider-agnostic inner agent"
+      "load_trigger": "user says 'Hermes', 'hermes chat', 'Hermes wrapper', or wants a provider-agnostic inner agent",
+      "description": "How to drive the Hermes Agent CLI (Nous Research) as the coding agent inside a loss-function-driven loop. The driver (Hermes or any orchestrator) owns the outer loop, the loss function, and the verifi"
     },
     {
       "name": "opencode-orchestration",
@@ -62,7 +68,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent, fake-agent) if not using OpenCode",
       "summary": "OpenCode CLI run-mode surface, --format json parser, wrapper contract, --workdir per-iteration isolation.",
-      "load_trigger": "user says 'OpenCode', 'opencode run', 'OpenCode wrapper', or the OpenCode wrapper errors out"
+      "load_trigger": "user says 'OpenCode', 'opencode run', 'OpenCode wrapper', or the OpenCode wrapper errors out",
+      "description": "How to drive the OpenCode CLI (opencode.ai) as the coding agent inside a loss-function-driven loop. The driver (Hermes or any orchestrator) owns the loop, the loss function, and the verifier runs. Ope"
     },
     {
       "name": "fake-agent-orchestration",
@@ -71,7 +78,8 @@
       "required": false,
       "substitute": "any other agent-adapter skill in this bundle (cline, claude-code, codex, hermes-agent, opencode) if not using the deterministic fake stub",
       "summary": "Deterministic stub adapter for dogfood testing. No model, no network, bit-exact output. Used by the LFD system verifier.",
-      "load_trigger": "user says 'fake agent', 'deterministic test', 'LFD system verifier', or is building a CI test that runs the LFD loop without a real model"
+      "load_trigger": "user says 'fake agent', 'deterministic test', 'LFD system verifier', or is building a CI test that runs the LFD loop without a real model",
+      "description": "How to drive the **fake-agent** stub as the inner coding agent inside a loss-function-driven loop. The fake agent is a deterministic stub: it echoes the cycle prompt back as the \"candidate text\", writ"
     },
     {
       "name": "meta-loss-function-development",
@@ -79,7 +87,8 @@
       "role": "meta-skill",
       "required": true,
       "summary": "Turns a high-level goal into a complete harness + paste-able /goal prompt. Loads first, emits the spec that the other skills consume.",
-      "load_trigger": "user says 'loss function development', 'LFD', '/goal', 'use the loop pattern on X', or describes a project they want to drive with a loss-function loop"
+      "load_trigger": "user says 'loss function development', 'LFD', '/goal', 'use the loop pattern on X', or describes a project they want to drive with a loss-function loop",
+      "description": "Turn a high-level goal (\"build X in Y using loss-function development\") into a COMPLETE, on-disk harness project, then emit a paste-able /goal prompt that runs the outer loop against it. The harness i"
     },
     {
       "name": "harness-scaffold",
@@ -87,7 +96,8 @@
       "role": "build-tool",
       "required": true,
       "summary": "Scaffolds the project tree (verifiers/, instruments/, AGENTS.md, GOAL.md, design + held-out task stubs) from a /goal prompt. Stubs carry a 'TODO: meta-fill before emitting /goal prompt' marker that loop-driver refuses to run on.",
-      "load_trigger": "user pastes a /goal prompt and says 'scaffold', 'set up the harness', or describes a fresh project root"
+      "load_trigger": "user pastes a /goal prompt and says 'scaffold', 'set up the harness', or describes a fresh project root",
+      "description": "Given a /goal prompt (from meta-loss-function-development) and a project root, scaffold the harness tree: verifiers/, instruments/, design tasks with deterministic graders, AGENTS.md, GOAL.md, README."
     },
     {
       "name": "loop-driver",
@@ -95,7 +105,8 @@
       "role": "runtime",
       "required": true,
       "summary": "Runs the outer loop. Reads the iteration log, forms a hypothesis, invokes the inner agent via the wrapper, runs the design set, scores, applies forced entropy, stops on plateau/budget. Refuses to run on incomplete harnesses (stub markers or empty held-out dirs).",
-      "load_trigger": "user has a scaffolded project and says 'run the loop', 'drive the cycle', 'iterate on the skill'"
+      "load_trigger": "user has a scaffolded project and says 'run the loop', 'drive the cycle', 'iterate on the skill'",
+      "description": "Run the outer loop of a loss-function-driven agentic cycle: read iteration log, write candidate artifact, install it for the agent, run design set, score, log iteration, apply forced entropy on stall,"
     }
   ],
   "install_order": [
@@ -133,12 +144,12 @@
     "fake-agent-orchestration": "deterministic stub; no version target, no real CLI"
   },
   "agent_adapters": {
-    "cline": "cline-orchestration (v2.0.0, included) — Cline v3.0.34+",
-    "claude-code": "claude-code-orchestration (v1.0.0, included) — Claude Code v2.x (Anthropic-only)",
-    "codex": "codex-orchestration (v1.0.0, included) — Codex CLI v1.x (OpenAI-only, requires git)",
-    "hermes-agent": "hermes-agent-orchestration (v1.0.0, included) — Hermes Agent v2.x (provider-agnostic)",
-    "opencode": "opencode-orchestration (v1.0.0, included) — OpenCode v1.x (provider-agnostic)",
-    "fake": "fake-agent-orchestration (v1.0.0, included) — deterministic stub for dogfood testing, no model, no network"
+    "cline": "cline-orchestration (v2.0.0, included) \u2014 Cline v3.0.34+",
+    "claude-code": "claude-code-orchestration (v1.0.0, included) \u2014 Claude Code v2.x (Anthropic-only)",
+    "codex": "codex-orchestration (v1.0.0, included) \u2014 Codex CLI v1.x (OpenAI-only, requires git)",
+    "hermes-agent": "hermes-agent-orchestration (v1.0.0, included) \u2014 Hermes Agent v2.x (provider-agnostic)",
+    "opencode": "opencode-orchestration (v1.0.0, included) \u2014 OpenCode v1.x (provider-agnostic)",
+    "fake": "fake-agent-orchestration (v1.0.0, included) \u2014 deterministic stub for dogfood testing, no model, no network"
   },
   "license": "MIT",
   "repository": "https://github.com/antifragileer/loss-function-driven-agentic-loops",

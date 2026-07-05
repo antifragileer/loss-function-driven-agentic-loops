@@ -12,7 +12,9 @@
 # script produce byte-identical verification-report.md and
 # verification-report.json (modulo the run timestamp).
 #
-# Time budget: <5 minutes for the full verifier.
+# Time budget: the verifier's wall-clock budget is whatever the
+# project sets in GOAL.md. There is no hard 5-minute cap from the
+# verifier itself; we report wall-clock in the verification report.
 #
 # Usage:
 #   ./run-verification.sh [REPO_ROOT] [PROFILE_DIR]
