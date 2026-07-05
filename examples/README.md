@@ -17,8 +17,15 @@ to [`lfd-system-verifier/`](./lfd-system-verifier/). It's a
 real, runnable project: `GOAL.md` + `AGENTS.md` + `verifiers/`
 + `test-tasks/` + `skills/` + the orchestrator. Run
 `./run-verification.sh` (deterministic, ~15s) and
-`./run-verification-real.sh` (real agent, ~3-5 min). Both
-must pass for the LFD system to be considered verified.
+`./run-verification-real.sh` (real agent, default 5 min
+budget — raise `LFD_REAL_BUDGET=900` for 15 min if your
+agent is slow). Both must pass for the LFD system to be
+considered verified. The harness exercises the V0→V1
+surface: an anti-cheat firewall (`verifiers/integrity.sh`,
+4 default guards), a smallness reward that keeps the
+agent from over-engineering, 33 instruments across 7
+categories, and a multi-axis target. See the V0→V1
+section in the dogfood README for the full picture.
 
 **Path 2 — "I want to see what `/goal` looks like before I
 write one."** Read the three prompts in

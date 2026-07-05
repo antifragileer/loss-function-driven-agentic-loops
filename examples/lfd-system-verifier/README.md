@@ -104,6 +104,76 @@ vary. Wall-clock budget is 5 min by default; configurable
 via `LFD_REAL_BUDGET` (e.g. `LFD_REAL_BUDGET=900` for
 15 min).
 
+The default budget is tight. The orchestrator runs the
+real wrapper once per design task, with a 120 s per-task
+timeout (`LFD_WRAPPER_TIMEOUT`). Five tasks × 120 s = 600 s
+of wrapper time alone, plus install (~1 s), grading, and
+report writing. If you see "wall-clock budget exhausted",
+the agent is slow (likely a slow model or large context)
+— raise the budget:
+
+```bash
+# 15 minutes, plenty of headroom for a real agent
+LFD_REAL_BUDGET=900 ./run-verification-real.sh
+
+# Or just the per-task timeout
+LFD_REAL_WRAPPER_TIMEOUT=180 ./run-verification-real.sh
+```
+
+## V0→V1 surface
+
+The verifier exercises the same harness surface a
+production user would get from `harness-scaffold`. The
+key V0→V1 components:
+
+**Anti-cheat firewall** (`verifiers/integrity.sh`).
+Runs before the design set on every cycle. The 4 default
+guards (no-grade-todo-stub, no-stub-always-pass,
+no-sleep-in-grader, agents-md-has-hard-rules) must all
+pass or the run aborts. The user can add
+project-specific guards inside the same file.
+
+**Smallness reward** (`verifiers/instruments/smallness.sh`).
+A real (non-stub) measurement that parses
+`MAX_LOC_PER_CYCLE` from `GOAL.md` (default 200) and
+returns 1.0 if `skills/ + test-tasks/` LOC is within the
+budget, decaying to 0.0 above. Wired into
+`cycle.sh` so the smallness appears in the iteration log
+and cycle result JSON. The anti-slop signal the loop
+uses to keep the agent from over-engineering.
+
+**Multi-axis target** in `GOAL.md`. The default
+`verification-report.json` includes `pass_rate`,
+`weighted_sum`, `gates_passed`, and `axes_met`. A
+single-axis pass (e.g. `pass_rate == 1.0`) is not a
+sufficient stop condition; all configured axes
+(integrity, test-freshness, hidden-unread, smallness)
+must hold for `SUCCESS_AFTER` consecutive cycles.
+
+**Instrument taxonomy** (33 scripts in
+`verifiers/instruments/`):
+
+- **5 real, non-stub:** `time-remaining.sh`,
+  `tokens-remaining.sh`, `tokens-this-iter.sh`,
+  `per-cycle-wall-clock.sh`, `test-freshness.sh`,
+  `hidden-unread.sh`, `smallness.sh` (the loop depends
+  on these; they must work end-to-end).
+- **27 stubs:** linter, type-check, complexity,
+  unit-tests, integration-tests, test-coverage,
+  mutation-tests, e2e-tests, regression-tests,
+  contract-tests, secret-scan, sast, dependency-audit,
+  sbom, a11y, i18n, docs-coverage, observability,
+  trace-coverage, perf-budget, bundle-size,
+  startup-time, hermeticity, determinism, flakiness,
+  license-audit, supply-chain. Each has a 3-5 line
+  `# HITL:` section the user wires for their stack. By
+  default they return 0.0 (vacuous pass); the loop's
+  stop condition only requires axes the user explicitly
+  configures in `GOAL.md`.
+
+See [`verifiers/README.md`](./verifiers/README.md) for
+the per-file contract.
+
 ## What the verifier proves
 
 The verifier exercises every bundle skill end-to-end. The
@@ -122,6 +192,7 @@ component:
 | Adapter parsers (5 of them) | design task `d1-parse-cline-output`; held-out `h1-shared-parser-shape` |
 | Per-cycle sub-loss scorer | design task `d4-compute-sub-losses`; held-out `h3-drift-opt-in` |
 | Loop driver (`cycle.sh`) | design task `d5-loop-driver-smoke`; held-out `h4-force-entropy-trigger` |
+| Anti-cheat firewall (`integrity.sh`) | `run-verification.sh` invokes `verifiers/integrity.sh` before the design set; the 4 default guards (no-grade-todo-stub, no-stub-always-pass, no-sleep-in-grader, agents-md-has-hard-rules) must all pass or the run aborts |
 | Method test (3 cycles) | method task `method-drives-improvement` (improvement tracking + forced-entropy rule) |
 
 > **Caveat:** the d1-d4 graders mostly check **the
@@ -201,21 +272,34 @@ semantics.
 ```
 lfd-system-verifier/
 ├── README.md                            # this file
+├── README files per directory:
+│   ├── verifiers/README.md              # wrappers, integrity.sh, instruments taxonomy
+│   └── test-tasks/README.md             # design/held-out/method contract
 ├── GOAL.md                              # the /goal prompt
 ├── AGENTS.md                            # the loop's hard rules
-├── run-verification.sh                  # the orchestrator
+├── run-verification.sh                  # the orchestrator (fake-agent gate)
+├── run-verification-real.sh             # the real-agent gate
 ├── verification-report.md               # produced by run-verification.sh
 ├── verification-report.json             # produced by run-verification.sh
 ├── verifiers/
-│   ├── fake-wrapper.sh            # the deterministic stub
+│   ├── fake-wrapper.sh                  # the deterministic stub
+│   ├── fake-method-wrapper.sh           # 3-cycle stub for the method test
+│   ├── cline-wrapper.sh                 # the real-agent wrapper (Cline)
+│   ├── integrity.sh                     # anti-cheat firewall (4 default guards)
 │   ├── run-design-set.sh                # per-task driver
 │   ├── compute_sub_losses.py            # per-cycle sub-loss scorer
-│   ├── instruments/
-│   │   ├── fake-agent-skills-dir.sh     # the agent's skills dir
-│   │   ├── time-remaining.sh            # wall-clock budget tracker
-│   │   ├── tokens-remaining.sh          # token budget tracker
-│   │   ├── tokens-this-iter.sh          # per-cycle tokens
-│   │   └── sub-loss-readout.sh          # per-cycle sub-loss reader
+│   ├── instruments/                     # 33 instruments (5 real, 27 stubs + smallness)
+│   │   ├── time-remaining.sh, tokens-remaining.sh, tokens-this-iter.sh
+│   │   ├── per-cycle-wall-clock.sh, test-freshness.sh, hidden-unread.sh
+│   │   ├── smallness.sh                 # real: parses MAX_LOC_PER_CYCLE
+│   │   ├── cline-version.sh, cline-skills-dir.sh, fake-agent-skills-dir.sh
+│   │   ├── sub-loss-readout.sh
+│   │   └── 27 stubs (linter, type-check, unit-tests, test-coverage,
+│   │       secret-scan, sast, dependency-audit, sbom, a11y, perf-budget,
+│   │       contract-tests, mutation-tests, e2e-tests, regression-tests,
+│   │       bundle-size, startup-time, hermeticity, determinism, flakiness,
+│   │       docs-coverage, i18n, observability, trace-coverage, complexity,
+│   │       integration-tests, license-audit, supply-chain)
 │   └── private/
 │       └── grader.sh                    # the held-out grader
 ├── test-tasks/
@@ -225,20 +309,22 @@ lfd-system-verifier/
 │   │   ├── d3-verify-install-script/{prompt.txt, grade.sh}
 │   │   ├── d4-compute-sub-losses/{prompt.txt, grade.sh}
 │   │   └── d5-loop-driver-smoke/{prompt.txt, grade.sh}
-│   └── held-out/                        # 5 held-out tasks (agent never sees these)
-│       ├── h1-shared-parser-shape/{prompt.txt, grade.sh}
-│       ├── h2-install-determinism/{prompt.txt, grade.sh}
-│       ├── h3-drift-opt-in/{prompt.txt, grade.sh}
-│       ├── h4-force-entropy-trigger/{prompt.txt, grade.sh}
-│       └── h5-compatibility-matrix-consistency/{prompt.txt, grade.sh}
+│   ├── held-out/                        # 5 held-out tasks (agent never sees these)
+│   │   ├── h1-shared-parser-shape/{prompt.txt, grade.sh}
+│   │   ├── h2-install-determinism/{prompt.txt, grade.sh}
+│   │   ├── h3-drift-opt-in/{prompt.txt, grade.sh}
+│   │   ├── h4-force-entropy-trigger/{prompt.txt, grade.sh}
+│   │   └── h5-compatibility-matrix-consistency/{prompt.txt, grade.sh}
+│   └── method/                          # 1 method task (3 cycles, plateau detection)
+│       └── method-drives-improvement/{prompt.txt, grade.sh}
 ├── skills/
 │   └── lfd-system-driver/SKILL.md       # the candidate skill the agent produces
 └── logs/                                # populated by run-verification.sh
-    ├── iteration-log.md
-    ├── best-cycle.json
-    ├── held-out.log
-    ├── held-out-score.json
-    └── <task>.log
+    ├── iteration-log.md                 # one line per cycle
+    ├── best-cycle.json                  # best sub-losses per cycle
+    ├── held-out.log, held-out-score.json
+    ├── <task>.log                       # per-design-task / per-held-out-task log
+    └── .test-freshness.sha256, .per-cycle-wall-clock.tsv  # instrument state
 ```
 
 ## Extending the verifier
