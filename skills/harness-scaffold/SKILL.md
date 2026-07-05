@@ -38,6 +38,25 @@ the harness tree. Output is a runnable project: `verifiers/`,
 tasks with deterministic graders, and the held-out grader
 directory (off-limits to the agent).
 
+**This skill runs in the meta-session, not the loop session.**
+The meta-skill (`meta-loss-function-development`) drives this
+skill during rounds 0-6 of the harness build, *before* the
+/goal prompt is emitted. The loop session that runs the
+outer loop never calls this skill — the harness is already
+finished by the time the loop session sees it. This is the
+core invariant of the v1.1 meta-skill: the harness is
+finished before the /goal prompt exists.
+
+**This skill writes stubs. The meta-skill is responsible for
+filling them in before the /goal prompt is emitted.** The
+stubs the scaffold produces are explicit `// TODO: meta-fill
+before emitting /goal prompt` markers, not silent
+placeholders. The completeness checklist
+(`meta-loss-function-development/references/harness-completeness-checklist.md`)
+is what the meta-skill walks through to ensure every stub
+becomes a real implementation before the /goal prompt
+leaves the meta-session.
+
 The scaffold is **driven entirely by the /goal prompt** —
 nothing is hard-coded. The skill parses the prompt for the
 target, constraints, runtime, design tasks, and held-out
@@ -117,14 +136,21 @@ After this skill runs, the project root has:
 
 ## What this skill does NOT do
 
-- **Does not implement the design task graders.** The user
-  (or the fresh session running the loop) writes the
+- **Does not run in the loop session.** This skill is a
+  meta-session tool. The loop session reads the harness this
+  skill scaffolded; it does not scaffold or modify the
+  harness itself. See the v1.1 meta-skill for the
+  harness-first /goal-prompt-later invariant.
+- **Does not implement the design task graders.** The meta-skill
+  (or the user, working with the meta-skill) writes the
   actual `grade.sh` scripts based on the per-task
   description. The scaffold writes *stubs* that exit 1 with
-  a TODO.
+  a `// TODO: meta-fill before emitting /goal prompt`
+  marker. The completeness checklist enforces that no stubs
+  remain when the /goal prompt is emitted.
 - **Does not implement the held-out tasks.** Same reason —
-  the user provides them. The scaffold creates empty
-  directories with a `README.md` placeholder.
+  the meta-skill (or the user) provides them. The scaffold
+  creates empty directories with a `README.md` placeholder.
 - **Does not write the candidate skill.** That's the
   agent's job during the loop.
 - **Does not run the loop.** That's a separate skill
@@ -214,20 +240,24 @@ won't clobber the agent's tuning).
 ## Pitfalls when using this skill
 
 - **The scaffold is a starting point, not a finished
-  project.** The graders are stubs. The user (or the loop
-  driver) writes the real graders based on the task
-  descriptions.
+  project.** The graders are stubs. The meta-skill is
+  responsible for filling them in via the
+  `harness-completeness-checklist.md` before the /goal
+  prompt is emitted. A loop session that finds stub
+  graders must stop and report — it must not fill them
+  in itself.
 - **The /goal prompt must follow the template.** Free-form
   prompts won't parse cleanly. If parsing fails, the
   scaffold emits a default and a TODO. Use the
   `meta-loss-function-development` skill to emit a
   well-formed prompt.
 - **The held-out tasks are user-provided.** The scaffold
-  creates empty directories. The user (or a research skill)
-  fills in the actual task files. The agent must not be
-  able to read these directories; the scaffold sets
-  permissions accordingly (`chmod 700` on `private/`,
-  `chmod 600` on `grader.sh`).
+  creates empty directories. The meta-skill (or the user
+  working with the meta-skill) fills in the actual task
+  files. The agent must not be able to read these
+  directories; the scaffold sets permissions accordingly
+  (`chmod 700` on `private/`, `chmod 600` on
+  `grader.sh`).
 - **The wrapper script depends on the runtime.** The
   scaffold generates the Cline wrapper by default. For
   Codex or Aider, the user (or the loop driver) replaces

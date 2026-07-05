@@ -12,9 +12,23 @@ description: |
   load when "the loop isn't converging" and the failure
   is in cycle selection (not the goal prompt or harness).
 
-  The third of three LFD skills: meta-loss-function-
-  development produces the /goal prompt, harness-scaffold
-  produces the harness tree, this skill runs the cycles.
+  The third of three LFD skills. The pipeline is now:
+
+  1. `meta-loss-function-development` — runs in the
+     meta-session, builds the COMPLETE harness with the
+     user (rounds 0-6), walks through the
+     `harness-completeness-checklist.md`, then emits the
+     /goal prompt.
+  2. `harness-scaffold` — used by the meta-skill during
+     round 0 to write the directory tree. Stubs are
+     filled by the meta-skill (or the user) before the
+     /goal prompt is emitted. This skill does NOT run
+     in the loop session.
+  3. **`loop-driver` (this skill)** — runs the cycles
+     against the already-finished harness.
+
+  The harness is finished before this skill ever loads. The
+  loop session reads a complete harness, never builds one.
 
   Companion skills (install separately if not present):
   - meta-loss-function-development: produces the /goal prompt
@@ -73,8 +87,10 @@ the harness-scaffold generated. The loop driver is the
 
 ## How the user invokes this
 
-The user has a scaffolded project (from `harness-scaffold`)
-and wants the loop to run. They say:
+The user has a finished harness (built by the meta-skill
+in the meta-session, signed off via
+`harness-completeness-checklist.md`) and wants the loop to
+run. They say:
 
 > "Run the loop until pass_rate=1.0 or the budget is gone."
 
@@ -179,8 +195,8 @@ The model is the inner agent's variable, not the driver's.
 
 ## When to load this skill
 
-- The user has a scaffolded project (from `harness-scaffold`)
-  and wants the loop to run.
+- The user has a finished harness (built by the meta-skill
+  in a prior session) and wants the loop to run.
 - The user says "drive the cycle", "iterate on the skill",
   "run the loss", "start the loop", "kick off the cycle".
 - The user wants to resume a previously-paused loop (read

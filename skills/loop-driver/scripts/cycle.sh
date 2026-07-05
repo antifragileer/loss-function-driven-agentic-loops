@@ -120,6 +120,62 @@ if [[ ! -x "$DESIGN_SET" ]]; then
   exit 2
 fi
 
+# ----- reject incomplete harnesses (meta-skill must finish before /goal runs) -----
+#
+# The v1.1 meta-skill invariant: the harness is finished before
+# the /goal prompt is emitted. A loop session that finds stub
+# graders, TODO markers, or empty held-out directories must
+# refuse to run. The user (or meta-skill) must finish the
+# harness first.
+#
+# This check is the loop's last line of defense against the
+# "minimal harness = minimal candidate" failure mode. The
+# primary defense is the meta-skill's
+# harness-completeness-checklist.md.
+
+STUB_HITS=0
+STUB_FILES=()
+# 1. Look for "TODO" / "stub" markers in design-task grade.sh files.
+if [[ -d "$PROJECT_ROOT/test-tasks/design" ]]; then
+  while IFS= read -r -d '' g; do
+    # Anything that says "TODO" or has an `exit 1` with a comment
+    # that doesn't actually check anything is a stub. We grep for
+    # the explicit stub marker the meta-skill uses, plus a
+    # defensive "exit 1" + "TODO" co-occurrence.
+    if grep -qE '(TODO.*grade|TODO.*meta-fill|exit 1[[:space:]]*#.*TODO)' "$g" 2>/dev/null; then
+      STUB_HITS=$((STUB_HITS + 1))
+      STUB_FILES+=("$g")
+    fi
+  done < <(find "$PROJECT_ROOT/test-tasks/design" -name 'grade.sh' -print0 2>/dev/null || true)
+fi
+# 2. Look for empty held-out task directories (placeholder README
+#    is fine; missing task content is not).
+if [[ -d "$PROJECT_ROOT/test-tasks/held-out" ]]; then
+  while IFS= read -r -d '' d; do
+    # Each held-out task dir should have at least a prompt.txt
+    # AND a starting file AND a grade.sh. The scaffold places a
+    # README.md placeholder; we want real task content.
+    if [[ ! -f "$d/prompt.txt" || ! -f "$d/grade.sh" ]]; then
+      STUB_HITS=$((STUB_HITS + 1))
+      STUB_FILES+=("$d")
+    fi
+  done < <(find "$PROJECT_ROOT/test-tasks/held-out" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null || true)
+fi
+
+if [[ "$STUB_HITS" -gt 0 ]]; then
+  echo "error: harness is incomplete — found $STUB_HITS stub/missing files:" >&2
+  for f in "${STUB_FILES[@]}"; do
+    echo "  - $f" >&2
+  done
+  echo "" >&2
+  echo "The /goal prompt was emitted against a harness that did not" >&2
+  echo "pass the harness-completeness-checklist. Re-run the" >&2
+  echo "meta-loss-function-development skill, complete the" >&2
+  echo "checklist (fill stub graders, populate held-out tasks)," >&2
+  echo "and re-emit the /goal prompt." >&2
+  exit 2
+fi
+
 # ----- ensure logs dir -----
 
 mkdir -p "$PROJECT_ROOT/logs"
