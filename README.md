@@ -11,11 +11,76 @@ loop works against Cline, Claude Code, Codex, Hermes Agent,
 OpenCode, or the deterministic `fake-agent` stub used for
 dogfood testing (see `examples/lfd-system-verifier/`).
 
+<p align="left">
+  <a href="./LICENSE"><img src="https://img.shields.io/github/license/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="License: MIT" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/releases"><img src="https://img.shields.io/github/v/release/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Latest release" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/stargazers"><img src="https://img.shields.io/github/stars/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Stars" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/network/members"><img src="https://img.shields.io/github/forks/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Forks" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/commits/main"><img src="https://img.shields.io/github/last-commit/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Last commit" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/issues"><img src="https://img.shields.io/github/issues/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Open issues" /></a>
+  <a href="https://github.com/antifragileer/loss-function-driven-agentic-loops/pulls"><img src="https://img.shields.io/github/issues-pr/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="Open PRs" /></a>
+</p>
+
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
 - **Bundle version:** 2.1.0
 - **Install (Hermes, per-profile):** `./install.sh ~/.hermes/profiles/<name>`
 - **Install (universal / non-Hermes agents):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
+
+---
+
+## What is Loss Function Driven Development?
+
+Imagine you are trying to throw a paper ball into a trash can. If you miss,
+you learn *how* you missed — too far left, too short, too much spin — and
+you adjust your next throw. **Loss Function Driven Development (LFD)** is the
+same idea, but for building software.
+
+A "loss function" is just a fancy score that says, "How far away from the
+goal is this attempt?" The lower the score, the better. In LFD, we write
+down the goal, the rules, and a clear way to measure each try. Then we
+loop:
+
+1. **Try** — let the coding agent attempt the task.
+2. **Score** — check how close it got.
+3. **Adjust** — use the score to guide the next attempt.
+4. **Repeat** until the score is good enough.
+
+If the agent gets stuck, we add a little "forced entropy" — a small, random
+nudge, like shaking the paper ball — to break out of a rut. The whole point
+is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
+
+---
+
+## What's in the box
+
+| Skill | Version | Role | Required? |
+|---|---|---|---|
+| [`loss-function-design`](./skills/loss-function-design) | 2.0.0 | The 4-piece loss anatomy (target / constraints / instruments / forced entropy) | yes |
+| [`harness-engineering`](./skills/harness-engineering) | 2.0.0 | What the agent sees: context, tools, scaffolding, observability | yes |
+| [`cline-orchestration`](./skills/cline-orchestration) | 2.0.0 | **Agent adapter** — Cline v3.0.34+ | optional |
+| [`claude-code-orchestration`](./skills/claude-code-orchestration) | 1.0.0 | **Agent adapter** — Claude Code v2.x (Anthropic) | optional |
+| [`codex-orchestration`](./skills/codex-orchestration) | 1.0.0 | **Agent adapter** — Codex CLI v1.x (OpenAI) | optional |
+| [`hermes-agent-orchestration`](./skills/hermes-agent-orchestration) | 1.0.0 | **Agent adapter** — Hermes Agent v2.x (provider-agnostic) | optional |
+| [`opencode-orchestration`](./skills/opencode-orchestration) | 1.0.0 | **Agent adapter** — OpenCode v1.x (provider-agnostic) | optional |
+| [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
+| [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.1.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
+| [`harness-scaffold`](./skills/harness-scaffold) | 1.1.0 | Build tool — scaffolds the directory tree (used by the meta-skill, not the loop) | yes |
+| [`loop-driver`](./skills/loop-driver) | 1.1.0 | Runtime — runs the outer loop against a finished harness until a stop condition fires | yes |
+
+The 6 required skills (3 core: `loss-function-design`,
+`harness-engineering`, `meta-loss-function-development`; 2
+runtime: `harness-scaffold`, `loop-driver`) implement
+the LFD pattern. The 6 agent-adapter skills are
+siblings — pick one when you scaffold a project, and the
+loop runs against it. The `harness-scaffold` and
+`loop-driver` skills are runtime-agnostic; they call
+whatever wrapper `verifiers/<runtime>-wrapper.sh`
+points to.
+
+See [`compatibility.md`](./compatibility.md) for the
+version matrix and the adapter contract for new coding
+agents.
 
 ---
 
@@ -115,84 +180,6 @@ A skill page also appears on
 
 ---
 
-## What is Loss Function Driven Development?
-
-Imagine you are trying to throw a paper ball into a trash can. If you miss,
-you learn *how* you missed — too far left, too short, too much spin — and
-you adjust your next throw. **Loss Function Driven Development (LFD)** is the
-same idea, but for building software.
-
-A "loss function" is just a fancy score that says, "How far away from the
-goal is this attempt?" The lower the score, the better. In LFD, we write
-down the goal, the rules, and a clear way to measure each try. Then we
-loop:
-
-1. **Try** — let the coding agent attempt the task.
-2. **Score** — check how close it got.
-3. **Adjust** — use the score to guide the next attempt.
-4. **Repeat** until the score is good enough.
-
-If the agent gets stuck, we add a little "forced entropy" — a small, random
-nudge, like shaking the paper ball — to break out of a rut. The whole point
-is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
-
----
-
-## What's in the box
-
-| Skill | Version | Role | Required? |
-|---|---|---|---|
-| [`loss-function-design`](./skills/loss-function-design) | 2.0.0 | The 4-piece loss anatomy (target / constraints / instruments / forced entropy) | yes |
-| [`harness-engineering`](./skills/harness-engineering) | 2.0.0 | What the agent sees: context, tools, scaffolding, observability | yes |
-| [`cline-orchestration`](./skills/cline-orchestration) | 2.0.0 | **Agent adapter** — Cline v3.0.34+ | optional |
-| [`claude-code-orchestration`](./skills/claude-code-orchestration) | 1.0.0 | **Agent adapter** — Claude Code v2.x (Anthropic) | optional |
-| [`codex-orchestration`](./skills/codex-orchestration) | 1.0.0 | **Agent adapter** — Codex CLI v1.x (OpenAI) | optional |
-| [`hermes-agent-orchestration`](./skills/hermes-agent-orchestration) | 1.0.0 | **Agent adapter** — Hermes Agent v2.x (provider-agnostic) | optional |
-| [`opencode-orchestration`](./skills/opencode-orchestration) | 1.0.0 | **Agent adapter** — OpenCode v1.x (provider-agnostic) | optional |
-| [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
-| [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.1.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
-| [`harness-scaffold`](./skills/harness-scaffold) | 1.1.0 | Build tool — scaffolds the directory tree (used by the meta-skill, not the loop) | yes |
-| [`loop-driver`](./skills/loop-driver) | 1.1.0 | Runtime — runs the outer loop against a finished harness until a stop condition fires | yes |
-
-The 6 required skills (3 core: `loss-function-design`,
-`harness-engineering`, `meta-loss-function-development`; 2
-runtime: `harness-scaffold`, `loop-driver`) implement
-the LFD pattern. The 6 agent-adapter skills are
-siblings — pick one when you scaffold a project, and the
-loop runs against it. The `harness-scaffold` and
-`loop-driver` skills are runtime-agnostic; they call
-whatever wrapper `verifiers/<runtime>-wrapper.sh`
-points to.
-
-See [`compatibility.md`](./compatibility.md) for the
-version matrix and the adapter contract for new coding
-agents.
-
----
-
-## New here? Read this first
-
-Before installing, decide what you want out of the bundle:
-
-- **"Show me what a working LFD project looks like."** →
-  [`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
-  is a complete scaffolded project. Run its
-  `run-verification.sh` (15s, deterministic) and
-  `run-verification-real.sh` (3-5 min, real agent) to see
-  the LFD loop in action.
-- **"Show me a `/goal` prompt the meta-skill would emit."**
-  → [`examples/goal-prompts/`](./examples/goal-prompts/)
-  has three worked examples (slack clone in Go, Python-to-
-  Rust port, FlashAttention-2 from the paper) plus the
-  prompt anatomy so you can write your own.
-- **"Just install it, I'll figure it out."** → skip to
-  [Quick start](#quick-start) below.
-
-The full on-ramp (all three reading paths) is at
-[`examples/README.md`](./examples/README.md).
-
----
-
 ## Quick start
 
 ```bash
@@ -240,6 +227,29 @@ To uninstall:
 ```bash
 ./uninstall.sh ~/.hermes/profiles/default
 ```
+
+---
+
+## New here? Read this first
+
+Before installing, decide what you want out of the bundle:
+
+- **"Show me what a working LFD project looks like."** →
+  [`examples/lfd-system-verifier/`](./examples/lfd-system-verifier/)
+  is a complete scaffolded project. Run its
+  `run-verification.sh` (15s, deterministic) and
+  `run-verification-real.sh` (3-5 min, real agent) to see
+  the LFD loop in action.
+- **"Show me a `/goal` prompt the meta-skill would emit."**
+  → [`examples/goal-prompts/`](./examples/goal-prompts/)
+  has three worked examples (slack clone in Go, Python-to-
+  Rust port, FlashAttention-2 from the paper) plus the
+  prompt anatomy so you can write your own.
+- **"Just install it, I'll figure it out."** → skip to
+  [Quick start](#quick-start) below.
+
+The full on-ramp (all three reading paths) is at
+[`examples/README.md`](./examples/README.md).
 
 ---
 
@@ -302,6 +312,8 @@ The 4-piece loss anatomy — **target / constraints /
 instruments / forced entropy** — is the design contract.
 Every project you scaffold has the same shape, so the
 loop is reusable across them.
+
+---
 
 ## Verifying the LFD system (dogfood)
 
