@@ -4,6 +4,82 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-07-05
+
+### Added
+
+- **`BUILDING-A-GREAT-HARNESS.md`** — the HITL manual for
+  the LFD system. Walks a new user from "what is a
+  harness" through V0→V1 expansion and V1→V2+ iteration,
+  in plain language. Includes the 4-part loss anatomy,
+  the 3-cheats story, an 8-item V0 expansion checklist,
+  three stuck-pattern playbooks, and a 20-tactic ideas
+  bank. Linked from the README in three places.
+- **`skills/loop-driver/scripts/cycle.sh`** — new
+  harness-completeness check at the top of every cycle.
+  Refuses to run with exit 2 if it finds stub markers
+  in `test-tasks/design/*/grade.sh` (matches
+  `TODO.*grade` / `TODO.*meta-fill` / `exit 1`+`TODO`)
+  or empty held-out task directories. The check is
+  gated on `STUB_HITS=0` so a real harness proceeds
+  normally. This is the loop's last line of defense;
+  the primary defense is the meta-skill's
+  `harness-completeness-checklist.md`.
+- **`skills/harness-scaffold/scripts/scaffold.py`** —
+  the emitted `AGENTS.md` template now distinguishes
+  the held-out target (off-limits:
+  `verifiers/private/`, `test-tasks/held-out/`) from
+  the rest of the harness (fair game: design tasks,
+  instruments, `AGENTS.md`, the wrapper). Self-
+  improvement of the harness is the loop's job, not a
+  violation.
+- **`skills/meta-loss-function-development/references/harness-completeness-checklist.md`** —
+  new 8-section checklist (project root, 4-piece spec,
+  design set, held-out set, instruments, AGENTS.md,
+  runtime, session discipline). The meta-skill walks
+  through this with the user *before* emitting the
+  `/goal` prompt. Every item must be checked.
+
+### Changed
+
+- **Harness-first flow.** The meta-skill now builds the
+  complete harness (every `grade.sh` a real grader,
+  every held-out task populated, every instrument
+  real) during the meta-session, with the user
+  reviewing each round. The `/goal` prompt is the
+  *last* thing the meta-skill does, not the first.
+  This replaces the prior flow where the meta-skill
+  emitted a minimal `/goal` prompt and the loop
+  session filled stubs on its own. (The loop session
+  still has authority over the rest of the harness —
+  see `cycle.sh`'s hard-rules block.)
+- **Held-out rule relaxed.** The previous "DO NOT
+  modify `verifiers/`" rule was over-strict and broke
+  the LFD self-improvement loop. The new rule is "DO
+  NOT modify `verifiers/private/` or
+  `test-tasks/held-out/`" — the held-out target is
+  off-limits (reading or modifying it voids the
+  held-out score), everything else in the harness is
+  the loop's to improve. Log the patch in the
+  iteration log.
+- **Meta-commentary trim across all touched files.**
+  Removed version-history narration ("the previous
+  design had this inverted", "unchanged from v1.0",
+  "v1.1 fixes this"), philosophical-justification
+  bullets ("why this matters", "the bug this exists
+  to prevent"), and subject-restatement patterns
+  ("the meta-skill does X" when addressing the
+  meta-skill). Future agent reading the file has no
+  prior version to compare against, so the prose was
+  pure noise. Git log is the source of truth for
+  change history; file bodies describe only current
+  operational rules.
+- **`skills/loop-driver/scripts/cycle.sh`** — the
+  prompt the agent sees at cycle time now names
+  the held-out target explicitly and allows
+  modifying the rest of the harness. Same
+  content as the templates and example.
+
 ## [2.1.0] - 2026-07-03
 
 ### Added

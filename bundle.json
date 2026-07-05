@@ -1,6 +1,6 @@
 {
   "bundle": "loss-function-driven-agentic-loops",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Eleven cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with six agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode, fake-agent) so the same loop works across coding agents and across deterministic dogfood testing.",
   "skills": [
     {
@@ -75,26 +75,26 @@
     },
     {
       "name": "meta-loss-function-development",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "role": "meta-skill",
       "required": true,
-      "summary": "Turns a high-level goal into a paste-able /goal prompt. Loads first, emits the spec that the other skills consume.",
+      "summary": "Turns a high-level goal into a complete harness + paste-able /goal prompt. Loads first, emits the spec that the other skills consume.",
       "load_trigger": "user says 'loss function development', 'LFD', '/goal', 'use the loop pattern on X', or describes a project they want to drive with a loss-function loop"
     },
     {
       "name": "harness-scaffold",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "role": "build-tool",
       "required": true,
-      "summary": "Scaffolds the project tree (verifiers/, instruments/, AGENTS.md, GOAL.md, design + held-out task stubs) from a /goal prompt.",
+      "summary": "Scaffolds the project tree (verifiers/, instruments/, AGENTS.md, GOAL.md, design + held-out task stubs) from a /goal prompt. Stubs carry a 'TODO: meta-fill before emitting /goal prompt' marker that loop-driver refuses to run on.",
       "load_trigger": "user pastes a /goal prompt and says 'scaffold', 'set up the harness', or describes a fresh project root"
     },
     {
       "name": "loop-driver",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "role": "runtime",
       "required": true,
-      "summary": "Runs the outer loop. Reads the iteration log, forms a hypothesis, invokes the inner agent via the wrapper, runs the design set, scores, applies forced entropy, stops on plateau/budget.",
+      "summary": "Runs the outer loop. Reads the iteration log, forms a hypothesis, invokes the inner agent via the wrapper, runs the design set, scores, applies forced entropy, stops on plateau/budget. Refuses to run on incomplete harnesses (stub markers or empty held-out dirs).",
       "load_trigger": "user has a scaffolded project and says 'run the loop', 'drive the cycle', 'iterate on the skill'"
     }
   ],
