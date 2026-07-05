@@ -84,15 +84,17 @@ broken):
 
 **Stub instruments** (return 0.0; user wires each in
 3-5 lines for their stack): see
-[`../../BUILDING-A-GREAT-HARNESS.md#ideas-bank`](../../BUILDING-A-GREAT-HARNESS.md)
-for the full taxonomy. The 27 stubs in this directory
-cover: linter, type-check, complexity, unit-tests,
+[`./instruments/EXAMPLE-IMPLEMENTATIONS.md`](./instruments/EXAMPLE-IMPLEMENTATIONS.md)
+for opinionated example implementations of all 27
+stubs (linter, type-check, complexity, unit-tests,
 integration-tests, test-coverage, mutation-tests,
 e2e-tests, regression-tests, contract-tests, secret-scan,
 sast, dependency-audit, sbom, a11y, i18n, docs-coverage,
 observability, trace-coverage, perf-budget, bundle-size,
 startup-time, hermeticity, determinism, flakiness,
-license-audit, supply-chain.
+license-audit, supply-chain), with anti-cheat defenses,
+exit-code contracts, and the partial-credit gradient
+shape from `loss-function-design`.
 
 **Per-runtime stubs** (only used by one orchestrator):
 
