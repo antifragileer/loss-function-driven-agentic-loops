@@ -239,8 +239,7 @@ Project-root pinning protocol:
   third / fourth preference.
 
 If none of the checks find the root, the agent stops and
-reports the failure. Silently guessing the project root is
-the bug this design prevents.
+reports the failure. Silent guessing is not allowed.
 
 ## How to write the goal prompt (for the skill itself)
 

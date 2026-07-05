@@ -384,9 +384,9 @@ integrations — are **supported by the adapter contract**
 (the same parser shape, the same wrapper invocation, the
 same per-iteration file layout; see
 [`compatibility.md`](./compatibility.md)) but have **not
-been run end-to-end** as of bundle v2.1.0. They are
-expected to work because the contract is uniform across
-adapters, but "expected to work" is not "verified."
+been run end-to-end**. They are expected to work because
+the contract is uniform across adapters, but "expected
+to work" is not "verified."
 
 **Contributions are welcome.** If you run the integration
 gate with another adapter and want to add a row to the
