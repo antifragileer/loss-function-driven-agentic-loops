@@ -46,14 +46,7 @@ logs/tokens_last_cycle.txt
 
 # ----- per-task scratch logs (regenerated every run) -----
 
-logs/d*-*.log
-logs/d*.log
-logs/h1-shared-parser-shape.log
-logs/h2-install-determinism.log
-logs/h3-drift-opt-in.log
-logs/h4-force-entropy-trigger.log
-logs/h5-compatibility-matrix-consistency.log
-logs/method-*.log
+logs/*
 
 # ----- per-iteration workspace -----
 
