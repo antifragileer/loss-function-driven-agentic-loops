@@ -158,13 +158,8 @@ pass. The fact that the fake-agent verifier
 produces `overall: PASS` is the proof that
 `h6` itself is honest — a held-out grader that
 always returns 1.0 would be caught by the
-*intentionally-broken-harness* test. The recipe
-itself is in the LFD repo at
-`BUILDING-A-GREAT-HARNESS.md` (the
-"intentionally-broken-harness" section under "How
-to test the strength of your held-out defense").
-If you don't have the repo doc, the pattern is
-in `references/frameworks.md` §7 of this skill
+*intentionally-broken-harness* test. The pattern
+is in `references/frameworks.md` §7 of this skill
 ("Anti-cheat guard template").
 
 To run the intentionally-broken-harness test on

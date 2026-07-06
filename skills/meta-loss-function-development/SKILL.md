@@ -277,7 +277,8 @@ later filling.
   files.
 - The held-out set must be **categorically different**
   from the design set, not just "10 more examples of the
-  same shape" (BUILDING-A-GREAT-HARNESS.md V0-2). At
+  categorically different from the design set, not
+  just "10 more examples of the same shape." At
   least one held-out task must exercise a property the
   public docs *mention but don't fully explain* — rate
   limits, retry behavior, auth edge cases, error-format
@@ -354,12 +355,12 @@ later filling.
   task list (names only), the harness layout, the runtime
   instructions.
 - Open `GOAL.md` with a 2-3 line `DONE WHEN` /
-  `NOT DONE WHEN` block (BUILDING-A-GREAT-HARNESS.md
-  V0-8). `DONE WHEN` is the single testable criterion
-  for success; `NOT DONE WHEN` lists the most common
-  ways the agent will mistakenly claim to be done. The
-  loop, the agent, and the user all read these two
-  lines first.
+  `NOT DONE WHEN` block. `DONE WHEN` is the single
+  testable criterion for success; `NOT DONE WHEN`
+  lists the most common ways the agent will
+  mistakenly claim to be done. The loop, the
+  agent, and the user all read these two lines
+  first.
 - The Target section is **multi-axis** (BUILDING-A-
   GREAT-HARNESS.md ideas-bank #19): a list of
   conditions, not a single number. At least 2 of

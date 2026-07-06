@@ -148,7 +148,7 @@ INTEGRITY_SH = (
     + "# design-set cycle. Exits 0 if the harness is intact, non-zero\n"
     + "# if any guard fires.\n"
     + "#\n"
-    + "# Default guards cover the 5 cheats from BUILDING-A-GREAT-HARNESS.md\n"
+    + "# Default guards cover the 5 known scaffold cheats:\n"
     + "# V0-7: test deletion, stub-always-passes, sleep-to-pass, rules-file\n"
     + "# modification, hidden-dir read. Replace with project-specific guards\n"
     + "# before the /goal prompt is emitted.\n"

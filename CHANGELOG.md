@@ -4,6 +4,29 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.1] - 2026-07-06
+
+### Changed
+
+- Stripped dead `BUILDING-A-GREAT-HARNESS.md` and
+  `WHAT-YOU-WANT.md` citations from skill files.
+  The agent reading an installed skill has zero
+  access to those files (they live in the LFD repo,
+  not in the per-skill directory). Citations like
+  "per `BUILDING-A-GREAT-HARNESS.md` line 482" or
+  "verbatim from `WHAT-YOU-WANT.md` lines 286-291"
+  were noise — they cited content the reader cannot
+  reach. Replaced with self-contained statements
+  and pointers to the in-skill `references/frameworks.md`
+  (where the relevant content is inlined).
+- 4 affected files: `templates/gates.md` (24
+  citations), `examples/lfd-system-verifier-integration.md`
+  (1 citation), `harness-scaffold/scripts/scaffold.py`
+  (1 emitted-string citation), `meta-loss-function-development/SKILL.md`
+  (3 design-source comments),
+  `meta-loss-function-development/examples/slack-clone-golang.md`
+  (1 example-file citation).
+
 ## [2.4.0] - 2026-07-06
 
 ### Added
@@ -339,6 +362,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.4.1]: #241-2026-07-06
 [2.4.0]: #240-2026-07-06
 [2.3.2]: #232-2026-07-06
 [2.3.1]: #231-2026-07-06

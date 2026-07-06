@@ -5,24 +5,13 @@ inline. The skill writes the answer to
 `$PROJECT_DIR/handoffs/NN-<gate-name>.md` and the
 meta-skill's next round reads that file.
 
-The frameworks cited in each gate (the 2x2, the
+The frameworks each gate references (the 2x2, the
 Socratic 5-Q, the 4-piece anatomy, the 20/80 rule,
 the wiggle-room and right-generalization patterns,
 the 4-layer anti-cheat defense, the stuck-loop
-playbook) are defined in `references/frameworks.md`
-in this skill. The canonical source-of-truth lives
-in `WHAT-YOU-WANT.md` and `BUILDING-A-GREAT-HARNESS.md`
-in the LFD repo
-(https://github.com/antifragileer/loss-function-driven-agentic-loops).
-If you have those files, treat them as authoritative.
-If you don't (e.g. installed via `npx skills add`
-without the repo), `references/frameworks.md` is the
-canonical version of the frameworks the gates use.
-Line-number citations in the gate templates below
-(e.g. "per `BUILDING-A-GREAT-HARNESS.md` line 482")
-are enrichment — they point at the source-of-truth
-line in the repo doc and are not required to use
-the gate.
+playbook) are inlined in `references/frameworks.md`
+in this skill. Each gate's "Source framework" line
+points at the relevant section.
 
 ---
 
@@ -31,8 +20,8 @@ the gate.
 **Handoff file:** `handoffs/01-target.md`
 **Read by:** meta-skill Round 1, loop-driver
   stop-conditions parser, `verifiers/integrity.sh`.
-**Source framework:** `WHAT-YOU-WANT.md` §2 (the 2x2
-  of preferences) and §4 (the 5-Q Socratic
+**Source framework:** `references/frameworks.md` §1
+  (the 2x2 of preferences) and §3 (the 5-Q Socratic
   template).
 
 ### What the user is committing to
@@ -119,9 +108,10 @@ AND
   This is the meta-skill's Round-1 default per
   `meta-loss-function-development/SKILL.md` lines
   165-167 and `loop-driver/SKILL.md` lines 113-115.
-- Firm-level assumptions: 1-3 anti-cheat guards
-  beyond the 4 default scaffold guards
-  (`BUILDING-A-GREAT-HARNESS.md` line 482).
+ - Firm-level assumptions: 1-3 anti-cheat guards
+ beyond the 4 default scaffold guards (the 4
+ defaults are listed in the section "Default
+ guard set" of this gate's body).
 
 ---
 
@@ -232,10 +222,10 @@ stop conditions. Default 0.85.
   Layer-1 guards, the held-out grader.
 **Source framework:**
   `loss-function-design/SKILL.md` lines 178-205 (the
-  7-hack × 7-defense table);
-  `BUILDING-A-GREAT-HARNESS.md` lines 250-270 (the
-  "3 cheats" story); the 4 default anti-cheat guards
-  in `verifiers/integrity.sh`.
+  7-hack × 7-defense table); `references/frameworks.md`
+  §7 (the 4-layer defense and 3-cheats story);
+  the 4 default anti-cheat guards in
+  `verifiers/integrity.sh`.
 
 ### What the user is committing to
 
@@ -302,7 +292,8 @@ For each design task, a `grade.sh` that:
   `examples/lfd-system-verifier/` is the
   worked example: `grep -qE
   'eval.*input|exec.*input|subprocess.call.*shell=True'`
-  (verbatim from `WHAT-YOU-WANT.md` line 118-120).
+  (the same pattern is in `references/frameworks.md`
+  §1's worked example).
 - Determinism: `deterministic` for the design set.
   Held-out tasks may use `stochastic(seed=42)` if
   the test genuinely requires randomness; this is
@@ -317,10 +308,8 @@ For each design task, a `grade.sh` that:
 **Read by:** the inner agent (every cycle), the
   loop driver, the user.
 **Source framework:** `harness-engineering/SKILL.md`
-  lines 130-141 (AGENTS.md as a TOC, verbatim OpenAI
-  post quote: "Context is a scarce resource…");
-  `WHAT-YOU-WANT.md` §5.1 (wiggle room) and §5.2
-  (right generalization).
+  (AGENTS.md as a TOC); `references/frameworks.md` §4
+  (wiggle room) and §5 (right generalization).
 
 ### What the user is committing to
 
@@ -360,7 +349,8 @@ For each prompt.txt, list any phrase that references
 a future project or a specific implementation that
 the agent is not yet allowed to consider. Replace
 with the general shape of the connection per
-`WHAT-YOU-WANT.md` §5.2.
+`references/frameworks.md` §5 (right
+generalization).
 ```
 
 ### What "complete" looks like
@@ -368,7 +358,8 @@ with the general shape of the connection per
 - `AGENTS.md` is < 100 lines.
 - `AGENTS.md` has at least 3 hard rules in
   imperative strategic voice (per
-  `WHAT-YOU-WANT.md` §2).
+  `references/frameworks.md` §1, the 2x2 of
+  preferences).
 - Every per-task `prompt.txt` has at least one
   wiggle-room clause.
 - The anti-pollution check has at least 1 entry per
@@ -388,7 +379,8 @@ with the general shape of the connection per
   than <approach A>, raise it as an option in your
   iteration-log.md entry before proceeding. Do not
   implement the alternative without surfacing it."
-  (verbatim `WHAT-YOU-WANT.md` lines 286-291).
+  (the pattern is in `references/frameworks.md` §4,
+  wiggle room).
 
 ---
 
@@ -430,8 +422,8 @@ For each constraint in Gate 2, a CLI command
 ## Default guard set (4 anti-cheat guards)
 
 The 4 default guards in `verifiers/integrity.sh` are
-non-negotiable per
-`BUILDING-A-GREAT-HARNESS.md` lines 376-396:
+non-negotiable. They are listed in
+`references/frameworks.md` §7 (4-layer defense):
 
 1. `no-grade-todo-stub`
 2. `no-stub-always-pass`
@@ -449,9 +441,9 @@ For each project-specific reward hack, add a guard:
 3. <cheat>: <guard name>
    check_<guard>() { <3-5 line bash> }
 
-Reference: `BUILDING-A-GREAT-HARNESS.md` lines
-422-440 (the cheat-to-layer mapping). The
-common project-specific guards are
+Reference: `references/frameworks.md` §7 (the
+cheat-to-layer mapping). The common project-specific
+guards are:
 `no-secret-ignore-edit`, `no-deps-lockfile-removed`,
 `perf-endpoint-real`, `parser-shape-across-adapters`.
 
@@ -492,18 +484,18 @@ does not fill stay as 0.0 (not configured).
   for every constraint in Gate 2.
 - The project-specific guards list has at least 1
   entry (the 4 defaults plus 1 project-specific is
-  the minimum per `BUILDING-A-GREAT-HARNESS.md` line
-  481).
+  the minimum; see the "Default guard set" section
+  in this gate's body for the rationale).
 - Every instrument path listed actually exists in
   `verifiers/instruments/` and is runnable.
 
 ### Common defaults
 
-- 4 default guards: as listed in
-  `BUILDING-A-GREAT-HARNESS.md` line 481.
+- 4 default guards: as listed in the "Default
+  guard set" section of this gate's body.
 - 1-3 project-specific guards: pick from the
-  cheat-to-layer mapping at
-  `BUILDING-A-GREAT-HARNESS.md` lines 434-438.
+  cheat-to-layer mapping in
+  `references/frameworks.md` §7.
 - The 27 stubs stay as 0.0 unless the user wants
   the corresponding sub-loss to be a real signal.
   This is the meta-skill's Round-4 default.
@@ -600,9 +592,9 @@ lines 153-160:
   `verifiers/integrity.sh`.
 **Read by:** `verifiers/integrity.sh` (every cycle,
   before scoring); the held-out grader.
-**Source framework:** `BUILDING-A-GREAT-HARNESS.md`
-  lines 374-440 (the 4-layer defense model and the
-  cheat-to-layer mapping); the 4 default guards in
+**Source framework:** `references/frameworks.md`
+  §7 (the 4-layer defense model and the cheat-to-layer
+  mapping); the 4 default anti-cheat guards in
   `verifiers/integrity.sh`.
 
 ### What the user is committing to
@@ -639,8 +631,7 @@ guards are added to `verifiers/integrity.sh`.
 
 ## Project-specific guards to add to integrity.sh
 
-Per `BUILDING-A-GREAT-HARNESS.md` lines 434-438, the
-default scaffold does not cover:
+The default scaffold does not cover:
 
 - AI edits `.gitleaksignore` to suppress secrets
 - AI removes `package-lock.json` / `go.sum`
@@ -673,11 +664,11 @@ check_<short_name>() {
 
 ### Common defaults
 
-- 4 default guards: as listed in
-  `BUILDING-A-GREAT-HARNESS.md` line 481.
+- 4 default guards: as listed in the "Default
+  guard set" section of this gate's body.
 - 1-3 project-specific guards: pick from the
-  cheat-to-layer mapping at
-  `BUILDING-A-GREAT-HARNESS.md` lines 434-438.
+  cheat-to-layer mapping in
+  `references/frameworks.md` §7.
 - Layer 2 (held-out) tasks: 5, at
   `test-tasks/held-out/h01..h05/`. The LFD system
   verifier's held-out set is the worked example:
@@ -796,14 +787,11 @@ signal? (per `loss-function-design/SKILL.md` lines
   the `DONE WHEN` / `NOT DONE WHEN` block at the top
   of `GOAL.md`.
 **Read by:** the loop driver (stop-conditions
-  parser), the inner agent (reads `GOAL.md` first
-  per `meta-loss-function-development/templates/goal-prompt.md`
-  line 33), the user.
-**Source framework:** `BUILDING-A-GREAT-HARNESS.md`
-  lines 569-597 (the V0-8 expansion item, the
-  declarative strategic quadrant of the 2x2);
-  `meta-loss-function-development/SKILL.md` lines
-  317-323 (the round-7 emit).
+  parser), the inner agent (reads `GOAL.md`
+  first; the `DONE WHEN` / `NOT DONE WHEN` block
+  is the first lines of `GOAL.md`), the user.
+**Source framework:** `references/frameworks.md`
+  §9 (DONE/NOT DONE block + multi-axis target).
 
 ### What the user is committing to
 
@@ -891,10 +879,10 @@ SUCCESS_AFTER: <N consecutive cycles, default 2>
   `scripts/cycle.sh` `FORCED_ENTROPY` section.
 **Read by:** `cycle.sh` (every cycle), the held-out
   `h4-force-entropy-trigger` task.
-**Source framework:** `loop-driver/SKILL.md` lines
-  127-149 (the 3 forced-entropy rules);
-  `BUILDING-A-GREAT-HARNESS.md` lines 703-732 (the
-  stuck-loop playbook, the 3 stuck patterns).
+**Source framework:** `loop-driver/SKILL.md`
+  (the 3 forced-entropy rules);
+  `references/frameworks.md` §8 (the stuck-loop
+  playbook).
 
 ### What the user is committing to
 
@@ -944,12 +932,15 @@ rejected and re-prompted.
 
 The total wall-clock budget is the loop's hard cap.
 The per-cycle budget is a soft cap that contributes
-to the score (per `BUILDING-A-GREAT-HARNESS.md`
+to the score (a per-cycle budget is one of the
+axes in `references/frameworks.md` §6, the 4-piece
+loss anatomy).
 ideas-bank #18).
 
 ## Stuck-pattern playbook (read this when the loop stalls)
 
-Per `BUILDING-A-GREAT-HARNESS.md` lines 705-732,
+Per the 3 stuck-loop patterns in
+`references/frameworks.md` §8:
 three patterns, three responses:
 
 1. **Last 5 changes are minor variations** → on a

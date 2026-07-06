@@ -65,8 +65,7 @@ tasks. Generalize, do not memorize.
 
 ### Design-set tasks you DO see (the development signal)
 
-The 5 design tasks are split across 4 categories (per
-BUILDING-A-GREAT-HARNESS.md V0-1):
+The 5 design tasks are split across 4 categories:
 
 Happy-path (basic shape works):
 1. `test-tasks/design/01-send-message/` — implement a function
