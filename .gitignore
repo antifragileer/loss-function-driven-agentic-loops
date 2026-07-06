@@ -144,3 +144,4 @@ vendor/
 *.tmp
 *.swp
 *.swo
+logs/*.tsv

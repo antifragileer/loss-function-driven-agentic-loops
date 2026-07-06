@@ -5,11 +5,15 @@ agentic loops** — turn a high-level goal into a
 paste-able `/goal` prompt, scaffold a harness, and run the
 outer loop until the inner agent's skill converges.
 
-The bundle ships **11 cooperating skills** that implement
+The bundle ships **12 cooperating skills** that implement
 the LFD pattern, with **6 agent-adapter skills** so the same
 loop works against Cline, Claude Code, Codex, Hermes Agent,
 OpenCode, or the deterministic `fake-agent` stub used for
-dogfood testing (see `examples/lfd-system-verifier/`).
+dogfood testing (see `examples/lfd-system-verifier/`). One
+additional skill — `lfd-thinking-protocols` — is an optional
+meta-session helper that gates the meta-skill's 8 rounds
+with 10 thinking-protocol templates; it is not loaded by
+the loop session.
 
 <p align="left">
   <a href="./LICENSE"><img src="https://img.shields.io/github/license/antifragileer/loss-function-driven-agentic-loops?style=flat-square" alt="License: MIT" /></a>
@@ -23,7 +27,7 @@ dogfood testing (see `examples/lfd-system-verifier/`).
 
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
-- **Bundle version:** 2.2.0
+- **Bundle version:** 2.3.0
 - **Install (Hermes, per-profile):** `./install.sh ~/.hermes/profiles/<name>`
 - **Install (universal / non-Hermes agents):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
 
@@ -66,6 +70,7 @@ is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
 | [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
 | [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.1.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
 | [`harness-scaffold`](./skills/harness-scaffold) | 1.1.0 | Build tool — scaffolds the directory tree (used by the meta-skill, not the loop) | yes |
+| [`lfd-thinking-protocols`](./skills/lfd-thinking-protocols) | 0.1.0 | Gate — 10 thinking protocols the meta-skill invokes between Rounds 0-7 (meta-session helper, not loaded by the loop) | optional |
 | [`loop-driver`](./skills/loop-driver) | 1.1.0 | Runtime — runs the outer loop against a finished harness until a stop condition fires | yes |
 
 The 6 required skills (3 core: `loss-function-design`,
@@ -118,7 +123,7 @@ held-out grader format, the verifier scripts), see the
 ### Option B: universal store via `npx skills` (for single-profile or non-Hermes agents)
 
 The bundle is also published to **[skills.sh](https://skills.sh/)**.
-The `npx skills` CLI installs all 11 skills into the
+The `npx skills` CLI installs all 12 skills into the
 universal store, which Hermes reads *in addition* to
 the per-profile `skills/` directory (Hermes walks both
 paths at load time), and which Claude Code, Cline,
@@ -128,7 +133,7 @@ OpenCode all read natively. The universal store is
 more than one, every profile will see these skills.
 
 ```bash
-# One-shot install of all 11 skills
+# One-shot install of all 12 skills
 npx skills add antifragileer/loss-function-driven-agentic-loops -y -g
 
 # Install only specific skills (repeat -s for each)
@@ -171,7 +176,7 @@ A skill page also appears on
   distinguish between profiles.
 - **You want to bump to a new bundle version
   surgically** → Option A. `./install.sh --force`
-  overwrites the 11 skills in one profile; the
+  overwrites the 12 skills in one profile; the
   universal store update happens on the next
   `npx skills add` with `--upgrade`.
 - **CI / headless** → Option A. `install.sh` is

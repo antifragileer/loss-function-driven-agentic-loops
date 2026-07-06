@@ -10,8 +10,8 @@ bar is high: portable, agent-legible, and verified.
 - [Security policy](./SECURITY.md)
 - [Compatibility matrix](./compatibility.md) — version
   rules + adapter contract
-- [Bundle manifest](./bundle.json) — single source of
-  truth for the 11-skill inventory
+| [Bundle manifest](./bundle.json) — single source of
+  truth for the 12-skill inventory
 
 ## What we accept
 
@@ -21,7 +21,7 @@ We welcome:
   `continue-orchestration`, `goose-orchestration`) — see
   the [adapter contract](#the-agent-adapter-contract)
   below.
-- **Bug fixes** to any of the 11 skills, the installer,
+- **Bug fixes** to any of the 12 skills, the installer,
   the parser scripts, or the wrapper contracts.
 - **Documentation improvements** — clearer
   troubleshooting recipes, more examples, sharper

@@ -4,6 +4,40 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-07-06
+
+### Added
+
+- **`skills/lfd-thinking-protocols/`** (v0.1.0) — 10
+  thinking-protocol gates the `meta-loss-function-development`
+  skill invokes between Rounds 0-7. Each gate forces a
+  written commitment the next round reads as a handoff
+  file (`$PROJECT_DIR/handoffs/NN-<name>.md`). The skill
+  does not run in the loop session; it is a meta-session
+  helper. Bundle is now 12 skills.
+- **`examples/lfd-system-verifier/test-tasks/held-out/h6-thinking-protocols-wired/`**
+  — held-out task (4 checks) that verifies the new skill
+  is installed, the 10 handoff files exist, the 4 default
+  anti-cheat guards still fire, and the cycle driver
+  parses the multi-axis target.
+
+### Changed
+
+- `bundle.json`: 11 → 12 skills; `install_order` updated.
+- `compatibility.md`: new row in the versions table for
+  `lfd-thinking-protocols` 0.1.0.
+- `examples/lfd-system-verifier/test-tasks/design/d2-verify-bundle-manifest/grade.sh`:
+  allow 12 skills (was 11).
+- `examples/lfd-system-verifier/test-tasks/design/d3-verify-install-script/grade.sh`:
+  allow 12 skills (was 11).
+- `examples/lfd-system-verifier/verifiers/private/grader.sh`:
+  allow 5-10 held-out tasks (was exactly 5).
+- `examples/lfd-system-verifier/run-verification-real.sh`:
+  two pre-existing bugs fixed — missing `cd "$SCRIPT_DIR"`
+  before the relative-path design-set call, and uninitialized
+  `$MODEL` / `$PROVIDER` that crashed `set -u` on an empty
+  per-task loop.
+
 ## [2.2.0] - 2026-07-05
 
 ### Added
@@ -231,6 +265,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.3.0]: #230-2026-07-06
 [2.1.0]: #210-2026-07-03
 [2.0.0]: #200-2026-07-03
 [1.0.0]: #100-2026-07-03
