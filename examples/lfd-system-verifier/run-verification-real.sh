@@ -151,7 +151,9 @@ export PROJECT_DIR="$SCRIPT_DIR"
 # run-design-set.sh emits the aggregate design-set-score.json
 # on stdout. We capture it to a file (NOT just a variable)
 # so the report phase can read it after cleanup wipes
-# logs/cycle-1/.
+# logs/cycle-1/. (cd to $SCRIPT_DIR first; the script uses
+# a relative path to verifiers/run-design-set.sh.)
+cd "$SCRIPT_DIR"
 CYCLE_OUT=$(./verifiers/run-design-set.sh 2>&1) || CYCLE_RC=$?
 CYCLE_RC=${CYCLE_RC:-0}
 
@@ -235,6 +237,11 @@ fi
 TOTAL_TOKENS=0
 TOTAL_DURATION_MS=0
 TASK_COUNT=0
+MODEL=""
+PROVIDER=""
+# (MODEL and PROVIDER are also assigned inside the loop below;
+# initializing them here avoids "unbound variable" under `set -u`
+# when the loop has zero iterations.)
 for task_dir in "$SCRIPT_DIR/logs/cycle-1"/d*-*/; do
   [[ -f "$task_dir/cycle-summary.json" ]] || continue
   CS=$(python3 -c "
