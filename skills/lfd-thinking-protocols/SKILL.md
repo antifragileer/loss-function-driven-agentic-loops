@@ -44,7 +44,7 @@ description: |
   in a one-page template, the skill writes the answer into
   the harness, the meta-skill picks up at the next round.
   Without the handoff, the next round does not start.
-version: 0.2.0
+version: 0.3.0
 author: open source
 license: MIT
 metadata:

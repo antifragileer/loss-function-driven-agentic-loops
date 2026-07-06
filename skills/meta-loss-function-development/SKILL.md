@@ -19,6 +19,15 @@ description: |
   "this loop isn't converging" and the failure is in the goal
   spec rather than in the harness.
 
+  **First action on load: load `lfd-thinking-protocols` and
+  run Gate 1 (`clarify-target`).** The user fills the
+  template, the skill writes `handoffs/01-target.md`, and
+  the user explicitly says "Gate 1 complete" before this
+  skill scaffolds anything. There is no fast path; "the
+  user gave me enough context" is not a valid reason to
+  skip the gate. See the Round 0 section below for the
+  full prohibition.
+
   This skill is the *meta-loop*: it produces the artifacts
   that the loss-function-design skill describes. It does not
   run the loop itself. The output is consumed by a new
@@ -126,15 +135,36 @@ dependency, with the user reviewing each piece:
 
 ### Round 0: project root + scaffold
 
-- **Before anything else: load `lfd-thinking-protocols`
-  and run Gate 1 (`clarify-target`).** The user fills in
-  the gate template, the skill writes the answer to
-  `$PROJECT_DIR/handoffs/01-target.md`, and Round 0 reads
-  that file as the committed target. Without the handoff,
-  the rest of Round 0 does not start. (This is the
-  entry-point gate — when the user says "build X in Y"
-  or "create a /goal prompt for X", this gate fires
-  before any scaffolding.)
+- **MUST: load `lfd-thinking-protocols` and run Gate 1
+  (`clarify-target`) BEFORE doing anything else in Round 0.**
+  This is a hard precondition, not a recommendation:
+  - DO NOT confirm the project root until Gate 1 is done.
+  - DO NOT run `harness-scaffold` until Gate 1 is done.
+  - DO NOT read templates/goal-prompt.md until Gate 1 is done.
+  - DO NOT commit, write, or `terminal` any files until
+    Gate 1 is done.
+  - The user fills in the gate template (2x2 placement +
+    Socratic 5-Q + multi-axis threshold), the skill writes
+    the answer to `$PROJECT_DIR/handoffs/01-target.md`,
+    and the user explicitly says "Gate 1 complete" (or
+    equivalent) before Round 0 proceeds.
+  - "The user gave me enough context to skip the gate"
+    is **not** a valid justification. The gate's job is
+    to produce a *committed* target, not to extract
+    information — the user can supply a goal without
+    committing to a 2x2 placement or a multi-axis threshold.
+  - The user asking for "a /goal prompt" does not mean
+    "skip the harness build." The meta-skill's job when
+    that trigger phrase fires is to build the full
+    harness (per the core invariant in the section
+    "The core invariant: harness first, then prompt"
+    above) and the gate is the *first* round of that
+    build.
+  - If the user objects to filling the gate template
+    ("just go"), explain in one sentence that the gate
+    is what makes the loss function measurable; the user
+    can then choose to fill the template or to abort.
+    DO NOT abort on the user's behalf.
 - Confirm the absolute project root path. (Refuse to
   proceed without it.)
 - Create the directory tree (`verifiers/`, `test-tasks/`,

@@ -4,6 +4,23 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2026-07-06
+
+### Changed
+
+- `meta-loss-function-development` Round 0 prose hardened:
+  the gate is now framed as a hard precondition (MUST,
+  DO NOT scaffold until Gate 1 is done) rather than a
+  descriptive note. Explicitly addresses the failure
+  shape seen in session 20260706_165151_feee03: the
+  assistant loaded the gate skill, acknowledged the
+  gate, then "fast-pathed" past it. Round 0 prose now
+  bans that path.
+- `meta-loss-function-development` frontmatter
+  description now calls out the gate as the **first
+  action on load** so it shows up in the skill's
+  load-time summary, not just inside the body.
+
 ## [2.3.1] - 2026-07-06
 
 ### Changed
@@ -281,6 +298,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.3.2]: #232-2026-07-06
 [2.3.1]: #231-2026-07-06
 [2.3.0]: #230-2026-07-06
 [2.1.0]: #210-2026-07-03
