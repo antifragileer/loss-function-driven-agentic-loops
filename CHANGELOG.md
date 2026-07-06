@@ -39,6 +39,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   runtime, session discipline). The meta-skill walks
   through this with the user *before* emitting the
   `/goal` prompt. Every item must be checked.
+- **`examples/lfd-system-verifier/verifiers/instruments/EXAMPLE-IMPLEMENTATIONS.md`** —
+  opinionated example implementations for all 27 stub
+  instruments. Each example shows the real tool
+  invocation (eslint, tsc, mypy, ruff, pytest, jest,
+  go test, gitleaks, semgrep, npm audit, axe-core,
+  pa11y, k6, size-limit, lizard, etc.), the partial-
+  credit gradient shape, and tool-specific anti-cheat
+  defenses. The `verifiers/README.md` "Stub
+  instruments" section now points at this doc.
+- **`BUILDING-A-GREAT-HARNESS.md` (section 7)** —
+  the anti-cheat cheat list now continues with a
+  full 4-layer defense explainer (Integrity, Held-out
+  grader, Hidden-unread, Test-freshness), a
+  cheat→defense mapping (14 cheats × which layer
+  catches it), the honest gaps (6 known limits
+  including "held-out is also finite" and "no
+  git-status snapshot"), the intentionally-broken-
+  harness test recipe, and a bash guard template.
+  Cross-linked from `verifiers/README.md` and
+  `test-tasks/README.md` so the held-out-grader
+  documentation no longer implies the held-out is the
+  whole defense.
 
 ### Changed
 
@@ -122,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   method test, which needs to run a fixed number of
   cycles to demonstrate the forced-entropy rule).
   `skills/loop-driver/references/stop-conditions.md` was
-  not updated to reflect the flag — TODO.
+  updated in 2.2.0 to document the flag.
 - **`examples/lfd-system-verifier/verifiers/run-design-set.sh`**
   — added `LFD_WRAPPER` and `LFD_WRAPPER_TIMEOUT` env vars
   so the design set can be run with any adapter wrapper,
@@ -209,8 +231,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
-[2.1.0]: #210---2026-07-03
-[2.0.0]: #200---2026-07-03
-[1.0.0]: #100---2026-07-03
+[2.1.0]: #210-2026-07-03
+[2.0.0]: #200-2026-07-03
+[1.0.0]: #100-2026-07-03
 [Keep a Changelog]: https://keepachangelog.com/en/1.1.0/
 [Semantic Versioning]: https://semver.org/spec/v2.0.0.html

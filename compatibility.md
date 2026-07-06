@@ -16,9 +16,9 @@ which works with which." When you upgrade, read this first.
 | `hermes-agent-orchestration` | 1.0.0 | agent adapter (Hermes Agent v2) | optional — substitute for non-Hermes agents |
 | `opencode-orchestration` | 1.0.0 | agent adapter (OpenCode v1) | optional — substitute for non-OpenCode agents |
 | `fake-agent-orchestration` | 1.0.0 | agent adapter (deterministic stub) | optional — dogfood testing only |
-| `meta-loss-function-development` | 1.0.0 | meta-skill (emits /goal prompt) | yes |
-| `harness-scaffold` | 1.0.0 | build-tool (scaffolds project tree) | yes |
-| `loop-driver` | 1.0.0 | runtime (runs the outer loop) | yes |
+| `meta-loss-function-development` | 1.1.0 | meta-skill (emits /goal prompt) | yes |
+| `harness-scaffold` | 1.1.0 | build-tool (scaffolds project tree) | yes |
+| `loop-driver` | 1.1.0 | runtime (runs the outer loop) | yes |
 
 ## The version matrix
 
@@ -96,11 +96,12 @@ Rules:
   to dogfood the loop end-to-end.
 - **meta-loss-function-development 1.x**: first release.
 - **harness-scaffold 1.x**: first release.
-- **loop-driver 1.x**: first release. **1.x → 1.1.x
-  (planned)**: add `--success-after` documented in
-  `references/stop-conditions.md`; the flag is already
-  implemented in `cycle.sh` but the reference doc is
-  stale.
+- **loop-driver 1.x**: first release. **1.0.x → 1.1.x
+  (shipped in 2.2.0)**: `--success-after` flag is
+  implemented in `cycle.sh` and documented in
+  `references/stop-conditions.md` (default 2, pass 0
+  to disable the early-success stop — used by the
+  verifier's method test).
 
 ## When the inner agent changes (drop-in substitution)
 
@@ -249,7 +250,7 @@ The other five adapter combinations
 etc.) are **supported by the adapter contract** — every
 adapter must ship the same parser shape, the same wrapper
 invocation, the same per-iteration file layout. They are
-*expected* to work but are *not verified* as of v2.1.0.
+*expected* to work but are *not verified* as of v2.2.0.
 
 To add a row to this table: run
 `./run-verification-real.sh "" "" <runtime>` from
