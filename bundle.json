@@ -107,6 +107,15 @@
       "summary": "Runs the outer loop. Reads the iteration log, forms a hypothesis, invokes the inner agent via the wrapper, runs the design set, scores, applies forced entropy, stops on plateau/budget. Refuses to run on incomplete harnesses (stub markers or empty held-out dirs).",
       "load_trigger": "user has a scaffolded project and says 'run the loop', 'drive the cycle', 'iterate on the skill'",
       "description": "Run the outer loop of a loss-function-driven agentic cycle: read iteration log, write candidate artifact, install it for the agent, run design set, score, log iteration, apply forced entropy on stall,"
+    },
+    {
+      "name": "lfd-thinking-protocols",
+      "version": "0.1.0",
+      "role": "gate",
+      "required": false,
+      "summary": "10 thinking-protocol gates the meta-skill invokes between Rounds 0-7. Each gate forces a written commitment the next round reads as a handoff file. The skill does not run in the loop session; it is a meta-session helper.",
+      "load_trigger": "user is mid-harness-build, says 'I don't know what I want', 'help me think through this', 'what should the harness measure', or the meta-skill is about to scaffold the next piece without a committed answer",
+      "description": "Use when the user is mid-harness-build (between Rounds 0-7 of meta-loss-function-development) and needs to make a first-principle decision before the next round can start. This skill enforces 10 thinking protocols \u2014 one per harness part \u2014 that force a written commitment the next round reads as a handoff. Each protocol writes a handoff file into the project root the meta-skill is building, not a separate artifact the loop ignores."
     }
   ],
   "install_order": [
@@ -120,6 +129,7 @@
     "fake-agent-orchestration",
     "meta-loss-function-development",
     "harness-scaffold",
+    "lfd-thinking-protocols",
     "loop-driver"
   ],
   "user_flow": [

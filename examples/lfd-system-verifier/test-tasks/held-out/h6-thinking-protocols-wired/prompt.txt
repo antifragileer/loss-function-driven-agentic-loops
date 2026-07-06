@@ -1,0 +1,16 @@
+---
+name: h6-thinking-protocols-wired
+description: |
+  The 10 thinking-protocol gates (in
+  `skills/lfd-thinking-protocols/`) must be wired into
+  the meta-skill, the loop driver, and the integrity
+  script. This held-out task verifies that:
+  1. The skill is installed and discoverable
+  2. The 10 handoff files exist in the example project's
+     handoffs/ dir
+  3. The integrity script's default guards still fire
+     (the V0→V1 baseline is preserved)
+  4. The cycle driver still reads the multi-axis target
+     from GOAL.md (the V2+ flow still parses)
+  5. The fake-agent run still produces a PASS report
+     (end-to-end the system is functional)

@@ -39,18 +39,19 @@ if ! "$INSTALL_SH" --check "$TEST_PROFILE" > "$CHECK_LOG" 2>&1; then
   exit 1
 fi
 
-# Verify the report
-if ! grep -q "11 LFD bundle skills" "$CHECK_LOG"; then
-  echo "FAIL: check report does not mention 11 skills" >&2
+# Verify the report mentions the right number of skills
+# (11 in 2.1.0; 12 in 2.2.0+ with lfd-thinking-protocols added)
+if ! grep -qE "(11|12) LFD bundle skills" "$CHECK_LOG"; then
+  echo "FAIL: check report does not mention 11 or 12 skills" >&2
   cat "$CHECK_LOG" >&2
   echo "score=$score"
   exit 1
 fi
 
-# Count actual skill dirs
+# Count actual skill dirs (must be 11 or 12)
 n_skills=$(ls -1 "$TEST_PROFILE/skills" 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$n_skills" -ne 11 ]]; then
-  echo "FAIL: profile has $n_skills skill dirs, expected 11" >&2
+if [[ "$n_skills" -ne 11 && "$n_skills" -ne 12 ]]; then
+  echo "FAIL: profile has $n_skills skill dirs, expected 11 or 12" >&2
   echo "score=$score"
   exit 1
 fi

@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 # grader.sh — held-out grader for the LFD system verifier.
 #
-# This grader runs the 5 held-out tasks (test-tasks/held-out/h1..h5)
-# and emits an aggregate score. The agent never reads this file
-# or the held-out tasks; only run-verification.sh invokes it.
+# This grader runs the held-out tasks (test-tasks/held-out/hNN).
+# The number of held-out tasks is configurable in the project's
+# harness; the default for the LFD system verifier is 6 (5 baseline
+# + 1 lfd-thinking-protocols-wired).
+#
+# The agent never reads this file or the held-out tasks; only
+# run-verification.sh invokes it.
 #
 # Output: writes the held-out score to
 # $PROJECT_DIR/logs/held-out-score.json and prints each task's
 # result to stdout.
 #
 # Exit codes:
-#   0: all 5 held-out tasks passed (score == 1.0)
+#   0: all held-out tasks passed (score == 1.0)
 #   1: at least one task failed
-#   2: setup error
+#   2: setup error (e.g., wrong number of held-out tasks)
 
 set -uo pipefail
 
@@ -39,8 +43,8 @@ for d in "$TASKS_DIR"/*/; do
   fi
 done
 
-if [[ ${#TASKS[@]} -ne 5 ]]; then
-  echo "error: expected 5 held-out tasks, found ${#TASKS[@]}" >&2
+if [[ ${#TASKS[@]} -lt 5 || ${#TASKS[@]} -gt 10 ]]; then
+  echo "error: expected 5-10 held-out tasks, found ${#TASKS[@]}" >&2
   exit 2
 fi
 
