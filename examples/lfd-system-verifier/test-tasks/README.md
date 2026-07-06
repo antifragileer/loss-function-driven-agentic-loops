@@ -84,15 +84,56 @@ the categorical-difference rule for held-out tasks.
 
 ## Held-out task categories
 
-The 5 held-out tasks target harder properties:
+The 5 held-out tasks target harder properties — but
+the held-out is **layer 2 of 4** in the anti-cheat
+defense, not the whole thing. The other layers
+(integrity.sh, hidden-unread.sh, test-freshness.sh)
+catch different cheats. For the full mapping see
+[`../../../BUILDING-A-GREAT-HARNESS.md`](../../../BUILDING-A-GREAT-HARNESS.md)
+section 7 — "The 4 layers of anti-cheat defense."
 
-| Task | What it tests |
-|---|---|
-| `h1-shared-parser-shape` | All 5 adapter parsers produce the same 8-key shape on identical input |
-| `h2-install-determinism` | `install.sh` is deterministic: same input → same output |
-| `h3-drift-opt-in` | The `drift` sub-loss correctly handles the `expected_model=""` opt-in |
-| `h4-force-entropy-trigger` | The loop's force-entropy rule fires on consecutive stalls |
-| `h5-compatibility-matrix-consistency` | The `compatibility.md` matrix is internally consistent |
+| Task | What it tests | What cheat it catches |
+|---|---|---|
+| `h1-shared-parser-shape` | All 5 adapter parsers produce the same 8-key shape on identical input | AI fakes a parser to match its preferred adapter |
+| `h2-install-determinism` | `install.sh` is deterministic: same input → same output | AI embeds a timestamp in install to make cycles non-reproducible |
+| `h3-drift-opt-in` | The `drift` sub-loss correctly handles the `expected_model=""` opt-in | AI hand-types a model name to bypass the drift sub-loss |
+| `h4-force-entropy-trigger` | The loop's force-entropy rule fires on consecutive stalls | AI removes the forced-entropy rule from `cycle.sh` |
+| `h5-compatibility-matrix-consistency` | The `compatibility.md` matrix is internally consistent | AI claims a skill version that doesn't exist in `bundle.json` |
+
+**What the held-out grader does NOT catch** (the
+honest gaps):
+
+- The AI editing the harness (Layer 1 catches this)
+- The AI reading the held-out surface during the run
+  (Layer 3 catches this)
+- The AI editing a `grade.sh` to make a design task
+  pass (Layer 4 catches this)
+- The AI shipping a different version than it tested
+  (no layer catches this — known gap)
+- Project-specific cheats the 5 default tasks don't
+  cover (you add a held-out task or integrity guard
+  for these)
+
+**How to test that the held-out defense is actually
+working** (the "intentionally broken" recipe):
+
+1. Pick one held-out task (e.g. h4). Break the
+   behavior it tests (e.g. remove the forced-entropy
+   logic from `cycle.sh`).
+2. Run `./run-verification.sh`. Confirm the held-out
+   task fails (e.g. `h4-force-entropy-trigger`
+   returns `score=0.0`).
+3. Restore the harness. Re-run. Confirm the task
+   passes again.
+
+If the broken harness still passes the held-out
+task, the held-out defense is broken. Common causes:
+the held-out `grade.sh` is a stub-always-pass (Layer
+1 should catch this), the held-out `prompt.txt`
+doesn't exercise the broken behavior, or the grader
+is reading the wrong path. See
+`../../../BUILDING-A-GREAT-HARNESS.md` section 7 for
+the full diagnostic recipe.
 
 ## Adding new tasks
 
@@ -132,5 +173,8 @@ changes to the orchestrator.
 
 - [`../verifiers/README.md`](../verifiers/README.md) — the
   harness the loop runs against
+- [`../../../BUILDING-A-GREAT-HARNESS.md`](../../../BUILDING-A-GREAT-HARNESS.md)
+  section 7 — "The 4 layers of anti-cheat defense,"
+  the cheat-to-layer mapping, and the honest gaps
 - [`../../skills/meta-loss-function-development/references/harness-completeness-checklist.md`](../../skills/meta-loss-function-development/references/harness-completeness-checklist.md)
   — the gate these tasks must pass before the loop runs

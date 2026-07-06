@@ -117,6 +117,14 @@ The directory is `chmod 700` and the grader is `chmod 600`.
 The loop's `AGENTS.md` says: "DO NOT read
 `verifiers/private/`."
 
+The held-out grader is **layer 2 of 4** in the
+anti-cheat defense. Layer 1 (integrity.sh), layer 3
+(hidden-unread.sh), and layer 4 (test-freshness.sh)
+catch different cheats. For the full mapping and the
+honest gaps (e.g. no git-status snapshot), see
+[`../../BUILDING-A-GREAT-HARNESS.md`](../../BUILDING-A-GREAT-HARNESS.md)
+section 7 — "The 4 layers of anti-cheat defense."
+
 ## Per-file exit-code contract
 
 | File | Exit 0 | Exit 1 | Exit 2 |

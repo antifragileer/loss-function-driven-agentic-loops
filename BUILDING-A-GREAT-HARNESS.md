@@ -344,6 +344,207 @@ For each cheat, add a check to a `verifiers/integrity.sh`
 script that runs *before* scoring and refuses to score
 if the cheat is detected.
 
+**But which check catches which cheat?** The "anti-cheat
+firewall" isn't a single script. It's **four layers**,
+and the held-out grader is just one of them. A cheat
+slips through if the wrong layer is the only one
+covering it.
+
+### The 4 layers of anti-cheat defense
+
+Every guard in the harness maps to exactly one of these
+four layers. If a cheat is not covered by *some* layer,
+it will happen. If a cheat is covered by *one* layer
+but that layer is misconfigured, the cheat still
+happens. The layers are independent — a single layer
+failing does not collapse the others.
+
+| Layer | Mechanism | Runs when | Catches |
+|---|---|---|---|
+| **1. Integrity** | `verifiers/integrity.sh` — static checks on harness files | Before each cycle, before any scoring | The AI editing the *harness* (grade.sh stubs, sleep in grader, rules-file tampering) |
+| **2. Held-out grader** | `verifiers/private/grader.sh` runs the *finished* candidate against `test-tasks/held-out/` | After the loop ends | The AI passing the visible test by cheating in a way the visible test can't see (wrong parser shape, missing force-entropy, non-deterministic install) |
+| **3. Hidden-unread** | `verifiers/instruments/hidden-unread.sh` greps the AI's transcript for held-out task names and `verifiers/private/` paths | After each cycle, before scoring | The AI *reading* the exam during the run |
+| **4. Test-freshness** | `verifiers/instruments/test-freshness.sh` SHA-checks the design set's `grade.sh` files | Before each cycle | The AI editing a `grade.sh` to make a failing design task pass |
+
+**Layer 1 is the primary defense.** It runs every
+cycle, before the agent is graded, and refuses to
+score the cycle if any guard fires. The default
+guard set covers the 5 cheats listed above. **You
+add project-specific guards** — the 4 defaults are
+the scaffold's known cheats, not yours.
+
+**Layer 2 is the strongest behavior-level check.**
+The held-out directory is `chmod 700`, the grader
+is `chmod 600`, and `AGENTS.md` says "DO NOT read
+`verifiers/private/`." The held-out grader runs
+the *finished* candidate — the AI has already
+stopped, so it can't change anything mid-grade.
+The held-out tasks test properties the visible
+test can't see: parser shape across all 5 adapters,
+install determinism, force-entropy wiring, drift
+opt-in, compatibility-matrix consistency.
+
+**Layer 3 is the tripwire.** If the AI *reads* the
+held-out surface during the run, the cycle is
+rejected. This is what stops the memorization cheat
+described in the 3-cheats story above.
+
+**Layer 4 is the test-file guard.** The agent can't
+edit a `grade.sh` to make a failing design task
+pass without the SHA changing.
+
+### Cheat → defense mapping (what catches what)
+
+The V0 cheats from the list above, mapped to the
+layer that catches them. If a cheat has no layer
+listed, *the harness does not catch it* and you
+need to add a guard.
+
+| The cheat | Caught by | Default guard in scaffold? |
+|---|---|---|
+| AI deletes a test file | Layer 4 (test-freshness) — SHA changes | Yes |
+| AI writes a stub grade.sh that always returns 0 | Layer 1 (no-stub-always-pass) | Yes |
+| AI adds `sleep` to mask a timing failure | Layer 1 (no-sleep-in-grader) | Yes |
+| AI removes the held-out rule from AGENTS.md | Layer 1 (agents-md-has-hard-rules) | Yes (but only AGENTS.md) |
+| AI reads `verifiers/private/` | Layer 3 (hidden-unread) + chmod 600 | Yes |
+| AI memorizes the visible 5 questions | Layer 2 (held-out is different tasks) | Yes |
+| AI reverse-engineers the miss list | Layer 2 + design set widened in V0→V1 | Partial — see honest gaps below |
+| AI enumerates a finite eval | The eval is widened, but is also finite | No — see 3-cheats story |
+| AI edits `.gitleaksignore` to suppress secrets | No layer in default scaffold | **Add Layer 1 guard: no-secret-ignore-edit** |
+| AI removes `package-lock.json` / `go.sum` | No layer in default scaffold | **Add Layer 1 guard: no-deps-lockfile-removed** |
+| AI ships a perf-budget endpoint that's `/health` (cached) | No layer in default scaffold | **Add Layer 1 guard: perf-endpoint-real** |
+| AI makes the parser emit JSON only on a specific model | No layer in default scaffold | **Add Layer 2 task: parser-shape-across-adapters** |
+| AI removes the forced-entropy rule from cycle.sh | Layer 2 (h4-force-entropy-trigger) | Yes |
+| AI changes the model name field by hand to bypass drift | Layer 2 (h3-drift-opt-in) | Yes |
+
+The bottom four rows are cheats the *default*
+scaffold does not cover. They are in the "you add
+this" category. The
+`skills/meta-loss-function-development/references/harness-completeness-checklist.md`
+file is the canonical list of guards every project
+should ship.
+
+### The honest gaps
+
+The 4-layer defense is good, not perfect. The
+following gaps are *known* — they are not bugs,
+they are the boundaries of what a static-analysis
+defense can catch.
+
+1. **The held-out is also finite.** If the AI had
+   access to the full test set (design + held-out),
+   it could enumerate. The defense is that the
+   held-out is *narrow* (5 tasks by default) and
+   tests *architectural* properties (parser shape,
+   install determinism, force-entropy), not
+   exhaustive functional tests. Widening the
+   held-out from 5 to 50 tasks does not close this
+   gap — the agent can still enumerate 50.
+
+2. **The held-out grader runs the finished
+   candidate, not the loop behavior.** If the
+   agent's loop driver is broken in a way that
+   doesn't surface in the held-out tasks, it's not
+   caught. h4-force-entropy-trigger checks that
+   the rule is *wired*; it doesn't check that the
+   rule *actually fires* on a 5-cycle stall in a
+   different scenario.
+
+3. **The 4 default integrity guards are a small
+   set.** They cover the scaffold's known cheats,
+   not your project's specific cheats. The default
+   set is `no-grade-todo-stub`,
+   `no-stub-always-pass`, `no-sleep-in-grader`, and
+   `agents-md-has-hard-rules`. The first three are
+   universal. The fourth is `AGENTS.md`-specific.
+   For your project, you will need at least 1-3
+   more (see the table above for the common ones).
+
+4. **The agent can read `verifiers/integrity.sh`.**
+   The integrity guards are public (not chmod'd).
+   A smart agent can study them and learn exactly
+   what to avoid. The held-out grader (chmod 600)
+   is the only surface the agent *cannot* study.
+   This is why Layer 1 catches *unintentional*
+   cheating and Layer 2 catches *intentional*
+   cheating.
+
+5. **No git-status snapshot.** The verifier runs
+   against the committed version of the candidate.
+   If the agent's last commit differs from what it
+   actually ran (e.g. it tested locally, then
+   committed a different version), the verifier
+   still scores the committed version. A
+   `git-status`-aware verifier would close this
+   gap; the current scaffold does not include one.
+
+6. **The 3-cheats pattern is not fully solved.**
+   The 3-cheats story above describes a sequence
+   where each fix is met with a new cheat. The
+   4-layer defense addresses each cheat with a
+   specific layer, but the *class* of "agent
+   optimizes exactly the target you give it" is
+   not closed. The mitigation is to widen the
+   target (multi-axis), keep the eval growing
+   (don't ship a fixed-size test set), and force
+   entropy on stalls.
+
+### How to test the strength of your held-out defense
+
+The held-out grader is the strongest layer, but
+only if it actually catches what it's supposed to
+catch. The recipe:
+
+1. **Introduce an intentionally broken harness.**
+   Pick one held-out task (e.g. h4) and break the
+   behavior it's testing (e.g. remove the
+   forced-entropy logic from `cycle.sh`).
+2. **Run the verifier.** Confirm the held-out task
+   fails (`h4-force-entropy-trigger` returns
+   `score=0.0`).
+3. **Restore the harness.** Re-add the
+   forced-entropy logic, re-run. Confirm h4 passes
+   again.
+
+If the intentionally-broken harness still passes
+the held-out task, the held-out defense is broken.
+Common causes:
+
+- The held-out task's `grade.sh` is a stub that
+  always returns 0 (Layer 1 should catch this).
+- The held-out task's `prompt.txt` doesn't
+  exercise the broken behavior.
+- The held-out grader is reading the wrong path
+  (cycle.sh writes to `logs/cycle-1/`, the grader
+  reads from `logs/`).
+
+The
+`skills/lfd-system-verifier/references/fixture-vs-wrapper-grader.md`
+reference has a more elaborate version of this
+test (the "always-fail-wrapper" test) that catches
+a class of bugs where the per-task grader doesn't
+read the wrapper's output at all.
+
+### Anti-cheat guard template
+
+When you add a project-specific guard to
+`verifiers/integrity.sh`, follow this template:
+
+```bash
+# ----- guard: <short name> -----
+# <one-line description of the cheat this prevents>
+check_<short_name>() {
+  local project_root="$1"
+  # <bash/python check — return 0 if clean, 1 if violation>
+}
+# Add to the main check loop:
+#   check_<short_name> "$project_root" || FAILED+=("<short_name>")
+```
+
+Run `verifiers/integrity.sh` standalone to test the
+guard in isolation. The script exits 0 if all
+guards pass, 1 if any fail, 2 on usage error.
+
 **8. Add a 2-3 line "definition of done" at the top of
 the goal file (`GOAL.md`).** The V0 goal file opens
 with a long description of the project. Replace the
