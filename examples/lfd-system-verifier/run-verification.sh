@@ -80,7 +80,7 @@ if ! "$REPO_ROOT/install.sh" --check "$PROFILE_DIR" >/dev/null 2>&1; then
   echo "FAIL: install.sh --check failed after install" >&2
   exit 2
 fi
-echo "  PASS: 11 skills installed and verified"
+echo "  PASS: 11-12 skills installed and verified"
 echo
 
 # ----- phase 2: install the loop driver into the verifier-project -----
@@ -354,8 +354,8 @@ is in \`logs/held-out.log\`.
 
 This verifier proves the following about the LFD system:
 
-1. The \`install.sh\` script installs all 11 skills into a
-   fresh profile and \`install.sh --check\` passes.
+1. The `install.sh` script installs all 11-12 skills into a
+   fresh profile and `install.sh --check` passes.
 2. The 5 Python parsers (cline, claude-code, codex,
    hermes-agent, opencode) all compile and produce the
    shared 8-key JSON shape on empty input.

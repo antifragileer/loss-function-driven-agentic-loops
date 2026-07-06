@@ -115,7 +115,7 @@ if ! "$REPO_ROOT/install.sh" --check "$PROFILE_DIR" >/dev/null 2>&1; then
   echo "FAIL: install.sh --check failed after install" >&2
   exit 2
 fi
-echo "  PASS: 11 skills installed and verified"
+echo "  PASS: 11-12 skills installed and verified"
 echo
 
 # ----- phase 2: run the design set with the real agent -----
