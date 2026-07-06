@@ -1,101 +1,117 @@
 # What You Want
 
 A companion to `BUILDING-A-GREAT-HARNESS.md`. That
-document answers the question "given a target, how do
-I build a harness that measures it well?" This
-document answers the prior question: "do I actually
-know what my target is?"
+document answers the question: "given a target,
+how do I build a harness that measures it well?"
+This document answers the question that comes
+*before* that one: "do I actually know what my
+target is?"
 
-Implementation is solved by current models. The
-bottleneck is the human. The leverage sits in three
-places: the **vocabulary** to name what kind of
-preference each harness rule expresses, the **taste**
-to choose where on the imperative↔declarative dial
-each rule belongs, and the **two prompt patterns**
-(wiggle room, right generalization) that prevent
-over-specification from leaking.
+The models are good enough to write the code.
+The hard part is the human. Three things matter:
 
-## 1. The bottleneck moved
+1. A **vocabulary** to name what kind of rule
+   each line in the harness is.
+2. A **sense of taste** to decide how strict
+   each rule should be.
+3. Two **prompt patterns** that keep you from
+   telling the agent too much or too little.
 
-When models were less capable, you had to specify
-the work in ironclad prompts and supply few-shot
-examples so the model would get the shape right.
+This document is the working vocabulary for
+all three.
+
+## 1. The hard part moved
+
+A few years ago, the model was not as strong.
+You had to give it ironclad prompts and a few
+examples before it would get the shape of the
+work right.
+
 Today, the model can read `AGENTS.md`, skim
-`docs/`, look at the public surface, and produce
-something close to what you want without your hand
-holding every line.
+`docs/`, look at the public surface of your
+project, and produce something close to what
+you want. You do not have to hold its hand
+line by line.
 
-This shifts the work. When implementation is
-solved, what separates a 10x agentic engineer from
-a 100x one is no longer prompt phrasing — it is the
-clarity of the **target**. The agent is searching
-over a solution space; the only thing that constrains
-the search is what you told it to optimize. Vague
-preferences produce vague solutions. Specific
-preferences produce specific solutions. The
-harness is the contract that turns those
-preferences into something measurable.
+This changes the work. When the model can do
+the coding, what makes a 100x agentic engineer
+is no longer prompt phrasing. It is the
+clarity of the **target**. The agent is
+searching for a good answer. The only thing
+that shapes the search is what you told it to
+look for. A vague target gives a vague answer.
+A specific target gives a specific answer. The
+harness is the contract that turns your target
+into something the loop can measure.
 
-The rest of this document is the working vocabulary
-for getting those preferences specific enough that
-the harness can be built.
+The rest of this document is the working
+vocabulary for getting your target specific
+enough that the harness can be built.
 
 ## 2. The 2×2 of preferences
 
-Two axes:
+Two questions. The answers put every rule in
+the harness into one of four boxes.
 
-- **Imperative vs declarative.** Imperative: I
-  know the *path*. Declarative: I know the
-  *outcome*, the path is yours.
-- **Strategic vs tactical.** Strategic: firm-level,
-  holds across every project. Tactical:
-  project-level, holds for this one.
+**Question 1: Imperative or declarative?**
 
-That gives four quadrants. Each one has a *home*
-in this repo, a *form* the rule takes, and a
-*default* about whether the agent can override it.
+- **Imperative.** I know the path. I am
+  telling the agent exactly how to do it.
+- **Declarative.** I know the outcome. The
+  agent picks the path.
+
+**Question 2: Strategic or tactical?**
+
+- **Strategic.** True for every project in
+  the firm. A firm-level rule.
+- **Tactical.** True for this one project.
+  A project-level rule.
+
+That gives four boxes. Each one has a *home*
+in the repo, a *shape* the rule takes, and a
+*default* about whether the agent can change
+it.
 
 | | **Strategic** (firm) | **Tactical** (project) |
 |---|---|---|
-| **Imperative** (the path) | `AGENTS.md` hard rules; the 4 `verifiers/integrity.sh` guards; the `chmod 600` held-out grader. The agent **cannot** override these. Mechanical, exit-coded. | `test-tasks/<id>/grade.sh` negative checks (the "do NOT call `time.Sleep`" line, the "parser must not contain `eval`" check). Project-level, but the specific failure mode is non-negotiable. |
-| **Declarative** (the outcome) | The `docs/loss-functions/<name>.md` rubric, the firm-wide success criteria in `GOAL.md`'s `DONE WHEN`, the golden-principle linters. Agent **may** override *if* it raises the override and the override is reviewed. | `test-tasks/<id>/prompt.txt` happy-path description; the visible test set's positive questions; the legibility rubric. Project-level; the agent chooses how. |
+| **Imperative** (the path) | `AGENTS.md` hard rules; the 4 `verifiers/integrity.sh` guards; the `chmod 600` held-out grader. The agent **cannot** change these. They are mechanical, exit-coded. | `test-tasks/<id>/grade.sh` negative checks (the "do NOT call `time.Sleep`" line, the "parser must not contain `eval`" check). Project-level, but the specific failure mode is not up for debate. |
+| **Declarative** (the outcome) | The `docs/loss-functions/<name>.md` rubric, the firm-wide success line in `GOAL.md`'s `DONE WHEN`, the golden-principle linters. The agent **may** change these *if* it raises the change and the change is reviewed. | `test-tasks/<id>/prompt.txt` happy-path description; the visible test set's positive questions; the legibility rubric. Project-level; the agent picks the how. |
 
-The matrix isn't descriptive — it's a design
-tool. When you add a rule and don't know which
-quadrant it belongs in, the four questions are:
+The 2×2 is a design tool, not just a picture.
+When you add a rule and you do not know which
+box it goes in, ask:
 
-1. Is this true across every project in the firm,
-   or only this one? (strategic vs tactical)
-2. Do I know the *exact path* the agent must take,
-   or just the *outcome* I need? (imperative vs
-   declarative)
+1. Is this true across every project, or only
+   this one? (strategic vs tactical)
+2. Do I know the exact path, or just the
+   outcome? (imperative vs declarative)
 
-If the answer to (1) is "every project" and (2)
-is "exact path," the rule belongs in `AGENTS.md`
-or `verifiers/integrity.sh` and is enforced
-mechanically. If "every project" and "outcome,"
-it belongs in the rubric. If "this project" and
-"exact path," it belongs in the per-task
-`grade.sh` as a negative check. If "this project"
-and "outcome," it belongs in the per-task
-`prompt.txt`.
+- "Every project" + "exact path" → put it in
+  `AGENTS.md` or `verifiers/integrity.sh`. The
+  rule is enforced mechanically.
+- "Every project" + "outcome" → put it in the
+  rubric.
+- "This project" + "exact path" → put it in
+  the per-task `grade.sh` as a negative check.
+- "This project" + "outcome" → put it in the
+  per-task `prompt.txt`.
 
-## 3. Taste: the 20/80 rule applied to the harness
+## 3. Taste: the 20/80 rule
 
-Good agentic engineering is knowing how far along
-the imperative↔declarative axis to tilt each rule.
-A common rule of thumb: **20% of the harness is
-imperative, 80% is declarative.** The 20% is the
-non-negotiable path; the 80% is the outcome you're
-delegating.
+Good agentic engineering is knowing how strict
+each rule should be. A good rule of thumb:
+**20% of the harness is imperative, 80% is
+declarative.** The 20% is the part you are not
+willing to negotiate. The 80% is the part you
+are handing over.
 
 Worked example. The 5 design tasks in
-`test-tasks/design/` are the harness's visible
-training signal. Of those 5:
+`test-tasks/design/` are the loop's training
+signal. Of those 5:
 
 - **Imperative (20%, ~1 task).** The negative
-  checks inside each `grade.sh` — the things the
-  agent is *forbidden* from doing. In
+  checks inside each `grade.sh` — the things
+  the agent is *forbidden* from doing. In
   `d1-parse-cline-output/grade.sh`:
 
   ```bash
@@ -105,113 +121,118 @@ training signal. Of those 5:
   ```
 
   This is imperative. There is no acceptable
-  solution that includes `eval`-of-input. The
-  agent cannot override.
+  answer that includes `eval`-of-input. The
+  agent cannot change it.
 
 - **Declarative (80%, ~4 tasks).** The positive
-  assertions — the 8 shared keys, the integer
+  checks — the 8 shared keys, the integer
   type, the non-empty string, the exact
-  `tokens=3900`. The agent gets to choose *how*
-  to produce a parser that satisfies them. It
-  could be hand-written, regex-based, or
-  library-driven; the task does not specify.
+  `tokens=3900`. The agent picks *how* to
+  build a parser that satisfies them. It can
+  be hand-written, regex-based, or
+  library-driven. The task does not say.
 
 The 4 `verifiers/integrity.sh` guards sit
-*entirely* in the imperative strategic quadrant.
-The rubric and the positive questions sit in the
-declarative quadrants. The mix is the design
+*entirely* in the imperative strategic box.
+The rubric and the positive questions sit in
+the declarative boxes. The mix is the design
 choice.
 
-Concretely, when you write a new `grade.sh`, ask
-of each line: is this telling the agent the
-*outcome* (declarative) or the *forbidden path*
-(imperative)? If the line says "the output must
-include key X," that's declarative — the agent
-can satisfy it any way it likes. If the line says
-"the source must not contain Y," that's
-imperative — the agent cannot override.
+When you write a new `grade.sh`, ask of each
+line: is this telling the agent the *outcome*
+(declarative) or the *forbidden path*
+(imperative)? A line that says "the output
+must include key X" is declarative — the
+agent can satisfy it any way it likes. A line
+that says "the source must not contain Y" is
+imperative — the agent cannot change it.
 
-The 4 default integrity guards are a good audit
-template:
+The 4 default integrity guards are a good
+audit template:
 
-| Guard | Quadrant | What it forbids |
+| Guard | Box | What it forbids |
 |---|---|---|
 | `no-grade-todo-stub` | Imperative strategic | The agent leaving a `TODO` in a grader |
 | `no-stub-always-pass` | Imperative strategic | A grader with no real assertion |
-| `no-sleep-in-grader` | Imperative strategic | Masking timing failures with `sleep` |
+| `no-sleep-in-grader` | Imperative strategic | Hiding timing failures with `sleep` |
 | `agents-md-has-hard-rules` | Imperative strategic | Removing the held-out / private rules from `AGENTS.md` |
 
 All four are firm-level ("we will not ship a
 harness that does X") and path-specific ("the
-agent may not produce a grader that does Y"). None
-of them say what the grader *should* do — that's
-the design task's declarative prompt.
+agent may not produce a grader that does Y").
+None of them say what the grader *should* do
+— that is the design task's declarative
+prompt.
 
 ## 4. Socratic discovery with the agent
 
 The `BUILDING-A-GREAT-HARNESS.md` sample
-V0→V1 conversation (the HITL asking "add three
-questions where the function has to handle a
-broken input and return an error") *is* the
-discovery process. It doesn't have a name in that
-doc. Here it is named and packaged as a
-5-question template you can run with the agent
-before you paste the `/goal` prompt.
+V0→V1 conversation (the human asking "add
+three questions where the function has to
+handle a broken input and return an error")
+*is* the discovery process. It does not have
+a name in that document. Here it is named and
+packed up as a 5-question template. You can
+run it with the agent before you paste the
+`/goal` prompt.
 
-For each design task in `test-tasks/design/<id>/`:
+For each design task in
+`test-tasks/design/<id>/`, ask:
 
-1. **What are the 3 assumptions in this harness
-   that, if wrong, would invalidate the visible
-   test?** Examples: "the parser is a Python
-   script" / "the agent has network access during
-   grading" / "the wrapper emits the 8 shared
-   keys in this order."
-2. **For each, what's the cheapest negative check
-   I can add to the `grade.sh`?** (The `d1` parser
-   check is the pattern: a `grep -qE` over the
-   parser source for forbidden constructs.)
+1. **What are the 3 assumptions in this
+   harness that, if wrong, would break the
+   visible test?** Examples: "the parser is
+   a Python script" / "the agent has network
+   access during grading" / "the wrapper emits
+   the 8 shared keys in this order."
+2. **For each, what is the cheapest negative
+   check I can add to the `grade.sh`?** The
+   `d1` parser check is the pattern: a
+   `grep -qE` over the parser source for
+   forbidden code.
 3. **Which of those assumptions are firm-level
    (true for every project) and which are
    project-level (true only here)?** Firm-level
-   assumptions become `integrity.sh` guards;
-   project-level assumptions become per-task
+   assumptions become `integrity.sh` guards.
+   Project-level assumptions become per-task
    negative checks.
 4. **Of the firm-level ones, which deserve a
    held-out task?** Held-out tasks are
-   expensive — they take time to write, the
+   expensive. They take time to write, the
    agent will never see them, and the grader
    is `chmod 600`. Spend them on assumptions
-   whose violation would be *invisible* to the
-   visible test. `h4-force-entropy-trigger` is
-   the model: the visible test cannot see
+   the visible test cannot see. The
+   `h4-force-entropy-trigger` held-out task is
+   the model: the visible test cannot tell
    whether the force-entropy rule fires, so a
    held-out task runs `cycle.sh` for 2 cycles
-   and asserts the log contains a
+   and checks the log contains a
    `FORCED_ENTROPY=true` entry.
-5. **Of the project-level ones, which belong in
-   `AGENTS.md` as a hard rule (imperative
+5. **Of the project-level ones, which belong
+   in `AGENTS.md` as a hard rule (imperative
    strategic) vs in the per-task `prompt.txt`
    as a description (declarative tactical)?**
-   Rule of thumb: if the project-level
-   assumption affects multiple design tasks, it
-   belongs in `AGENTS.md`. If it affects only
-   one, it belongs in that task's `prompt.txt`.
+   Rule of thumb: if a project-level
+   assumption affects more than one design
+   task, it belongs in `AGENTS.md`. If it
+   affects only one, it belongs in that
+   task's `prompt.txt`.
 
 Worked example, applied to
 `test-tasks/design/d1-parse-cline-output/`:
 
-1. Three assumptions: (a) the parser is a Python
-   script (not a binary), (b) the parser
-   doesn't `eval` its input, (c) the parser
-   source is committed (not regenerated at
-   runtime).
-2. Cheapest negative checks: (a) no
-   `#!/usr/bin/env python3` shebang check is
-   cheap; (b) the `grep -qE 'eval.*input'`
-   check in the existing grader; (c) a
-   `test -f "$PARSER"` check.
+1. Three assumptions: (a) the parser is a
+   Python script (not a binary), (b) the
+   parser does not `eval` its input, (c) the
+   parser source is committed (not regenerated
+   at runtime).
+2. Cheapest negative checks: (a) check the
+   `#!/usr/bin/env python3` shebang is there;
+   (b) the `grep -qE 'eval.*input'` check in
+   the existing grader; (c) a `test -f
+   "$PARSER"` check.
 3. (a) is a project-level fact about the LFD
-   bundle (parsers are Python, that's a
+   bundle (parsers are Python, that is a
    bundle-level choice). (b) is a firm-level
    rule (no `eval` on untrusted input is
    non-negotiable across the firm). (c) is
@@ -224,16 +245,15 @@ Worked example, applied to
 5. The project-level (a) is encoded in
    `prompt.txt` ("Parse a sample Cline NDJSON
    transcript…") — the agent knows what kind
-   of artifact it's producing. (c) is encoded
-   in the `grade.sh` itself (the `[[ ! -f
-   "$PARSER" ]]` check).
+   of artifact it is producing. (c) is
+   encoded in the `grade.sh` itself (the
+   `[[ ! -f "$PARSER" ]]` check).
 
-The discovery is not free — the V0→V1
-expansion typically takes 30-60 minutes of
-HITL time. The payoff is a harness whose
-negative checks are not a guess list but
-arise from named assumptions, each of which
-has a clear owner.
+The discovery is not free. The V0→V1
+expansion usually takes 30 to 60 minutes of
+human time. The payoff is a harness whose
+negative checks come from named assumptions,
+each of which has a clear owner.
 
 ## 5. Two prompt patterns
 
@@ -254,10 +274,10 @@ Implement <X>. Use <specific approach A>.
 ```
 
 This locks the agent into approach A. If the
-agent sees a better design — say, a design that
-hits the p99 budget the rubric requires — it
-will not raise it, because the prompt told it
-to use approach A.
+agent sees a better design — say, a design
+that hits the p99 budget the rubric requires
+— it will not raise it, because the prompt
+told it to use approach A.
 
 **Good**:
 
@@ -271,27 +291,29 @@ entry before proceeding. Do not implement the
 alternative without surfacing it.
 ```
 
-The imperative ("use A") stays. The declarative
-addendum ("if you find something better, raise
-it") gives the agent one specific, bounded
-permission to override. The cost of being wrong
-is small: the agent has to write one log entry.
-The cost of being right is real: the loop finds
-a design the human didn't anticipate.
+The imperative ("use A") stays. The
+declarative addendum ("if you find something
+better, raise it") gives the agent one small,
+bounded permission to change the path. The
+cost of being wrong is small: the agent has
+to write one log entry. The cost of being
+right is real: the loop finds a design the
+human did not think of.
 
 Wiggle room belongs in the declarative
-*tactical* quadrant. It is per-task. The
-firm-level rule is "every task prompt has a
-wiggle-room clause" — that rule itself
-*belongs in `AGENTS.md` as a hard rule.*
+*tactical* box. It is per-task. The firm-level
+rule is "every task prompt has a wiggle-room
+clause" — that rule itself *belongs in
+`AGENTS.md` as a hard rule.*
 
 ### 5.2 Right generalization
 
 The pattern: when you would otherwise leak
-future-project context, abstract the
-interaction to its general form.
+context about a future project, write the
+general shape of the connection instead.
 
-**Bad** (`GOAL.md` or `test-tasks/<id>/prompt.txt`):
+**Bad** (`GOAL.md` or
+`test-tasks/<id>/prompt.txt`):
 
 ```
 Implement <X>. Later, <X> will need to
@@ -299,12 +321,12 @@ integrate with project B by passing <some
 specific data shape> to it.
 ```
 
-The "later, project B" clause is a
+The "later, project B" line is a
 context-pollutant. Every cycle the agent
-re-reads this prompt; every cycle the agent
-has to ignore or partially attend to
-information about a project that does not yet
-exist. The cost compounds.
+re-reads this prompt. Every cycle the agent
+has to ignore or partly attend to information
+about a project that does not exist yet. The
+cost adds up.
 
 **Good**:
 
@@ -317,43 +339,40 @@ output.
 ```
 
 The right generalization — the shape of the
-interaction, not the name of the future
+connection, not the name of the future
 project — gives the agent the same
 information without the context leak. The
 agent now has a *contract* (Y, indexed by
 dimension 1, columned by dimension 2) and
-not a *dependency* (B, which doesn't exist
+not a *dependency* (B, which does not exist
 yet).
 
 Right generalization belongs in the
-*imperative tactical* quadrant. The shape of
-the output is non-negotiable; the choice of
+*imperative tactical* box. The shape of the
+output is not up for debate. The choice of
 how to produce that shape is the agent's.
 
 ## 6. Preferences build objectives, objectives build loops
 
-The closing line of the source essay is a
-bridge, not a flourish. The 2×2 of preferences
-*is* the 4-piece loss anatomy in
-`BUILDING-A-GREAT-HARNESS.md`, viewed from
-upstream:
+The 2×2 of preferences is the 4-piece loss
+anatomy in `BUILDING-A-GREAT-HARNESS.md`,
+viewed from upstream:
 
 - **Target.** Built from declarative
   preferences (the outcomes you want,
   firm-level and project-level). The target's
   *shape* comes from your firm-level
   declarative preferences (you will not
-  accept X); the target's *content* comes
+  accept X). The target's *content* comes
   from project-level declarative preferences
   (for this project, success looks like Y).
 - **Constraints.** Built from imperative
   preferences. The firm-level ones go in
   `AGENTS.md` and `integrity.sh`. The
-  project-level ones go in `grade.sh` and
-  the per-task `prompt.txt`. A constraint
-  without an instrument is a wish; an
-  imperative preference without a `grade.sh`
-  line is exactly that.
+  project-level ones go in `grade.sh` and the
+  per-task `prompt.txt`. A constraint without
+  a check is a wish. An imperative preference
+  without a `grade.sh` line is exactly that.
 - **Instruments.** Determined by the
   preference type. Declarative preferences get
   *soft* instruments (a linter, a legibility
@@ -367,24 +386,23 @@ upstream:
   as the loop runs. A rule that started as
   imperative (a `grep -qE` negative check in
   `d1/grade.sh`) might migrate to a
-  declarative preference (a legibility
-  rubric in `docs/`) once the loop has
-  established the negative check is stable
-  enough. The `cycle.sh` `FORCED_ENTROPY`
-  rule and the `consecutive_no_improvement`
-  counter in the `h4-force-entropy-trigger`
-  held-out grader are the wiring.
+  declarative preference (a legibility rubric
+  in `docs/`) once the loop has shown the
+  negative check is stable enough. The
+  `cycle.sh` `FORCED_ENTROPY` rule and the
+  `consecutive_no_improvement` counter in the
+  `h4-force-entropy-trigger` held-out grader
+  are the wiring.
 
 When you start a new harness, walk the four
 questions in §2 for every rule you add. When
-you review a candidate rule, ask which
-quadrant it belongs in and whether the
-instrument matches the quadrant. A
-declarative preference with an exit-coded
-instrument is over-specified; an imperative
-preference with a soft linter is under-
-specified; either will produce a loop that
-spirals.
+you review a candidate rule, ask which box it
+belongs in and whether the instrument matches
+the box. A declarative preference with an
+exit-coded instrument is over-specified. An
+imperative preference with a soft linter is
+under-specified. Either will produce a loop
+that spirals.
 
 ## See also
 
