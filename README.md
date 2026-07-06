@@ -27,7 +27,7 @@ the loop session.
 
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
-- **Bundle version:** 2.2.0
+- **Bundle version:** 2.3.0
 - **Install (Hermes, per-profile):** `./install.sh ~/.hermes/profiles/<name>`
 - **Install (universal / non-Hermes agents):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
 
