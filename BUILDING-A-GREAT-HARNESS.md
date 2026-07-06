@@ -109,6 +109,16 @@ returns the message ID; the test runs the function
 and checks the returned ID matches the message the
 mock server received."
 
+Before you write the target, the prior question is
+*do you actually know what you want?* "Specific
+and measurable" is downstream of having a clear
+preference. See
+[`WHAT-YOU-WANT.md`](./WHAT-YOU-WANT.md) for the
+2×2 of preferences (imperative vs declarative,
+strategic vs tactical) and the 5-question
+Socratic-discovery template that produces a
+target specific enough to be measured.
+
 A good target is also **hard to memorize**. If the
 target is "pass these 5 questions," the AI will
 memorize the 5 questions and pass them without
@@ -260,6 +270,17 @@ The negative questions are the ones the AI will skip by
 default. Insist on them. They catch the largest class
 of AI failures: over-eager implementations that do too
 much.
+
+Negative questions are the **imperative tactical**
+quadrant of the 2×2 in
+[`WHAT-YOU-WANT.md`](./WHAT-YOU-WANT.md) §2 — the
+agent is forbidden from a specific path, not
+encouraged toward a specific outcome. The
+happy-path questions are the **declarative tactical**
+quadrant — the agent chooses how. The 20/80
+rule (20% imperative, 80% declarative) from
+§3 of that doc is the design check for whether
+your question set is balanced.
 
 **2. Make the hidden test set *categorically different*
 from the visible one.** A common V0 mistake: the AI
@@ -560,6 +581,21 @@ mistakenly claim to be done>
 The loop reads this. The AI reads this. You read this.
 Keep it ruthlessly specific.
 
+`DONE WHEN` and `NOT DONE WHEN` are the
+**declarative strategic** quadrant of the
+preference 2×2 — the firm-level outcome
+you're committing to. When the `DONE WHEN`
+line drifts ("we'll know it when we see it"),
+the harness will not save you. See
+[`WHAT-YOU-WANT.md`](./WHAT-YOU-WANT.md) §2 for
+the quadrant classification and §4 for the
+Socratic-discovery template that produces a
+specific-enough `DONE WHEN`. The two prompt
+patterns in §5 (wiggle room, right
+generalization) belong in the per-task
+`prompt.txt` for each design task, not in
+`GOAL.md` itself.
+
 ### A sample conversation: V0 → V1
 
 This is a real exchange from expanding a Slack-clone
@@ -701,6 +737,14 @@ end-to-end. The pattern usually emerges:
   prompt problem, not a harness problem. The AI
   needs a clearer instruction in the per-question
   prompt. Improve the prompt, not the harness.
+  The "dumb mistakes" are usually the agent
+  filling in a missing preference with its own
+  default — your `prompt.txt` left a gap and
+  the agent picked one. See
+  [`WHAT-YOU-WANT.md`](./WHAT-YOU-WANT.md) §2
+  (the 2×2) and §5.1 (wiggle room) for the
+  pattern that closes the gap without
+  over-specifying.
 - **"The AI runs out of tokens"** → the wall-clock /
   tokens-remaining measurement tools are reporting
   wrong, OR the questions are too big (a single
@@ -871,6 +915,16 @@ in this whole system. Build it well.
 
 ## See also
 
+- [`WHAT-YOU-WANT.md`](./WHAT-YOU-WANT.md) — the
+  companion to this document. Read it *first* if
+  you have not yet decided what you want the
+  harness to measure. The 2×2 of preferences
+  (imperative vs declarative, strategic vs
+  tactical), the 20/80 taste rule, the
+  Socratic-discovery template, and the two
+  prompt patterns (wiggle room, right
+  generalization) are the upstream decisions
+  this document assumes you have already made.
 - `skills/meta-loss-function-development/references/harness-completeness-checklist.md`
   — the 8-section checklist the meta-skill walks
   through with you. Run this *before* you paste the
