@@ -40,7 +40,7 @@ if ! "$INSTALL_SH" --check "$TEST_PROFILE" > "$CHECK_LOG" 2>&1; then
 fi
 
 # Verify the report mentions the right number of skills
-# (11 in 2.1.0/2.2.0; 12 in 2.3.0+ with lfd-thinking-protocols added)
+# (11 in 2.1.0/2.2.0; 12 in 2.3.0+ with lfd-thinking-protocols added; 2.3.1 widens the gate trigger)
 if ! grep -qE "(11|12) LFD bundle skills" "$CHECK_LOG"; then
   echo "FAIL: check report does not mention 11 or 12 skills" >&2
   cat "$CHECK_LOG" >&2

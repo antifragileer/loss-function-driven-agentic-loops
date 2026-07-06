@@ -18,7 +18,7 @@ which works with which." When you upgrade, read this first.
 | `fake-agent-orchestration` | 1.0.0 | agent adapter (deterministic stub) | optional — dogfood testing only |
 | `meta-loss-function-development` | 1.1.0 | meta-skill (emits /goal prompt) | yes |
 | `harness-scaffold` | 1.1.0 | build-tool (scaffolds project tree) | yes |
-| `lfd-thinking-protocols` | 0.1.0 | gate (10 thinking protocols the meta-skill invokes between Rounds 0-7) | optional — meta-session helper, not loaded by the loop session |
+| `lfd-thinking-protocols` | 0.2.0 | gate (10 thinking protocols the meta-skill invokes between Rounds 0-7) | optional — meta-session helper, not loaded by the loop session |
 | `loop-driver` | 1.1.0 | runtime (runs the outer loop) | yes |
 
 ## The version matrix
@@ -251,7 +251,7 @@ The other five adapter combinations
 etc.) are **supported by the adapter contract** — every
 adapter must ship the same parser shape, the same wrapper
 invocation, the same per-iteration file layout. They are
-*expected* to work but are *not verified* as of v2.3.0.
+*expected* to work but are *not verified* as of v2.3.1.
 
 To add a row to this table: run
 `./run-verification-real.sh "" "" <runtime>` from

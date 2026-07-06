@@ -1,6 +1,6 @@
 {
   "bundle": "loss-function-driven-agentic-loops",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Twelve cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with six agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode, fake-agent) so the same loop works across coding agents and across deterministic dogfood testing.",
   "skills": [
     {
@@ -110,11 +110,11 @@
     },
     {
       "name": "lfd-thinking-protocols",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "role": "gate",
       "required": false,
       "summary": "10 thinking-protocol gates the meta-skill invokes between Rounds 0-7. Each gate forces a written commitment the next round reads as a handoff file. The skill does not run in the loop session; it is a meta-session helper.",
-      "load_trigger": "user is mid-harness-build, says 'I don't know what I want', 'help me think through this', 'what should the harness measure', or the meta-skill is about to scaffold the next piece without a committed answer",
+      "load_trigger": "user describes a project they want to build with LFD, says 'I don't know what I want', 'help me think through this', or the meta-skill is about to scaffold the next piece without a committed answer",
       "description": "Use when the user is mid-harness-build (between Rounds 0-7 of meta-loss-function-development) and needs to make a first-principle decision before the next round can start. This skill enforces 10 thinking protocols \u2014 one per harness part \u2014 that force a written commitment the next round reads as a handoff. Each protocol writes a handoff file into the project root the meta-skill is building, not a separate artifact the loop ignores."
     }
   ],

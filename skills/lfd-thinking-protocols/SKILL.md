@@ -11,6 +11,11 @@ description: |
   separate artifact the loop ignores.
 
   Load when:
+  - The user describes a project they want to build with
+    LFD, before any meta-skill Round 0 has run. (This is
+    the most common entry point — the user says "build X
+    in Y" or "create a /goal prompt for X" and the gate
+    fires before scaffolding.)
   - The user says "I don't know what I want yet", "help me
     think through this", "what should the harness measure",
     "what's the right target".
@@ -39,7 +44,7 @@ description: |
   in a one-page template, the skill writes the answer into
   the harness, the meta-skill picks up at the next round.
   Without the handoff, the next round does not start.
-version: 0.1.0
+version: 0.2.0
 author: open source
 license: MIT
 metadata:

@@ -4,6 +4,22 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-07-06
+
+### Changed
+
+- `lfd-thinking-protocols`: load trigger widened to fire
+  on the entry-point phrase "user describes a project
+  they want to build with LFD" — covers "build X in Y"
+  and "create a /goal prompt for X" before any meta-skill
+  round has run. Skill version 0.1.0 → 0.2.0.
+- `meta-loss-function-development`: Round 0 prose now
+  instructs the meta-skill to load `lfd-thinking-protocols`
+  and run Gate 1 (`clarify-target`) before any scaffolding,
+  and to refuse to start Round 0 until `handoffs/01-target.md`
+  exists. Patch bump (no breaking change to existing
+  harnesses).
+
 ## [2.3.0] - 2026-07-06
 
 ### Added
@@ -265,6 +281,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.3.1]: #231-2026-07-06
 [2.3.0]: #230-2026-07-06
 [2.1.0]: #210-2026-07-03
 [2.0.0]: #200-2026-07-03

@@ -126,6 +126,15 @@ dependency, with the user reviewing each piece:
 
 ### Round 0: project root + scaffold
 
+- **Before anything else: load `lfd-thinking-protocols`
+  and run Gate 1 (`clarify-target`).** The user fills in
+  the gate template, the skill writes the answer to
+  `$PROJECT_DIR/handoffs/01-target.md`, and Round 0 reads
+  that file as the committed target. Without the handoff,
+  the rest of Round 0 does not start. (This is the
+  entry-point gate — when the user says "build X in Y"
+  or "create a /goal prompt for X", this gate fires
+  before any scaffolding.)
 - Confirm the absolute project root path. (Refuse to
   proceed without it.)
 - Create the directory tree (`verifiers/`, `test-tasks/`,
