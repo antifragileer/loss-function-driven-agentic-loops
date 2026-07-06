@@ -15,7 +15,8 @@ The proof is **two runs**:
    with a real LLM.
 
 Both runs are wrapped by
-`examples/run-full-integration.sh`, which:
+`examples/run-dev-integration.sh` (a developer-only
+tool — see the script header for the path prerequisite), which:
 
 1. Runs the fake-agent verifier and asserts
    `overall == "PASS"`,
@@ -36,7 +37,7 @@ loop.
 From the repo root:
 
 ```bash
-./skills/lfd-thinking-protocols/examples/run-full-integration.sh
+./skills/lfd-thinking-protocols/examples/run-dev-integration.sh (developer-only — requires LFD repo at a known path)
 ```
 
 Or from the verifier-project root:
@@ -157,8 +158,14 @@ pass. The fact that the fake-agent verifier
 produces `overall: PASS` is the proof that
 `h6` itself is honest — a held-out grader that
 always returns 1.0 would be caught by the
-*intentionally-broken-harness* test described in
-`BUILDING-A-GREAT-HARNESS.md` lines 513-547.
+*intentionally-broken-harness* test. The recipe
+itself is in the LFD repo at
+`BUILDING-A-GREAT-HARNESS.md` (the
+"intentionally-broken-harness" section under "How
+to test the strength of your held-out defense").
+If you don't have the repo doc, the pattern is
+in `references/frameworks.md` §7 of this skill
+("Anti-cheat guard template").
 
 To run the intentionally-broken-harness test on
 `h6`:

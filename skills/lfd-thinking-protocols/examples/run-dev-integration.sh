@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
-# run-full-integration.sh — end-to-end proof that the
-# V0->V1->HITL->V2+ flow still works after adding
+# run-dev-integration.sh — developer-only end-to-end proof
+# that the V0->V1->HITL->V2+ flow still works after adding
 # lfd-thinking-protocols. Runs BOTH the fake-agent and
 # the real-agent verifier, in that order. Both must
 # pass for the integration to be considered verified.
 #
-# Usage: ./examples/run-full-integration.sh
-#   (run from the repo root, not from examples/)
+# **Developer-only tool.** This script is NOT shipped to
+# users of the skill — it requires the LFD repo to be
+# at a known relative path (3 levels up from this file:
+# ../../.. lands on the LFD repo root). The script
+# contains hardcoded paths to LFD's own files
+# (examples/lfd-system-verifier/verifiers/, the LFD
+# repo's own bundle.json) that do not ship with the
+# installed skill. If you are a user with this skill
+# installed standalone and want to run the integration
+# test, you need a full LFD repo clone. If you are a
+# maintainer making changes to this skill, run this
+# script from inside the LFD repo.
+#
+# Usage: ./examples/run-dev-integration.sh
+#   (run from the LFD repo root, not from examples/)
 #
 # Exit codes:
 #   0: both verifiers passed

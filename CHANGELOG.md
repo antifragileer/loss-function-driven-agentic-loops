@@ -4,6 +4,47 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-07-06
+
+### Added
+
+- `skills/lfd-thinking-protocols/references/frameworks.md`
+  (new) — inlined versions of the 2x2 of preferences,
+  20/80 taste rule, 5-question Socratic discovery,
+  wiggle-room, right-generalization, 4-piece loss
+  anatomy, 4-layer anti-cheat defense, 3 stuck-loop
+  patterns, and DONE/NOT DONE block. The skill is now
+  self-contained when installed standalone (e.g. via
+  `npx skills add`); the LFD repo's `WHAT-YOU-WANT.md`
+  and `BUILDING-A-GREAT-HARNESS.md` are still
+  authoritative where available but no longer required.
+
+### Changed
+
+- 5 adapter skills (claude-code, codex, hermes-agent,
+  opencode, fake-agent): the "4 invariants from
+  `compatibility.md`" wording now says
+  "(self-contained; canonical copy in
+  `compatibility.md` of the LFD repo)" — the
+  invariants are inlined in the skill body.
+- `skills/cline-orchestration/references/cline-v3-invocation.md`:
+  rewrote the "fix in the LFD reference wrapper" path
+  to be self-contained (the actual fix content was
+  already inlined; only the path pointer was broken).
+- `skills/fake-agent-orchestration/references/fake-agent-wrapper-contract.md`:
+  rewrote the "Implementation reference" path to be
+  self-contained.
+- `skills/lfd-thinking-protocols/examples/run-full-integration.sh`:
+  renamed to `run-dev-integration.sh` and marked as a
+  developer-only tool that requires the LFD repo at a
+  known path. The script was previously runnable only
+  from inside the LFD repo; the new name + header
+  banner makes that explicit.
+- All version refs updated across bundle.json, README,
+  CHANGELOG, compatibility.md,
+  examples/lfd-system-verifier/GOAL.md, and the d2/d3
+  verifier scripts.
+
 ## [2.3.2] - 2026-07-06
 
 ### Changed
@@ -298,6 +339,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.4.0]: #240-2026-07-06
 [2.3.2]: #232-2026-07-06
 [2.3.1]: #231-2026-07-06
 [2.3.0]: #230-2026-07-06

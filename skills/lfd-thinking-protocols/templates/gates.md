@@ -7,9 +7,22 @@ meta-skill's next round reads that file.
 
 The frameworks cited in each gate (the 2x2, the
 Socratic 5-Q, the 4-piece anatomy, the 20/80 rule,
-etc.) are defined in `WHAT-YOU-WANT.md` and
-`BUILDING-A-GREAT-HARNESS.md`. Load those docs
-alongside this one when running the gates.
+the wiggle-room and right-generalization patterns,
+the 4-layer anti-cheat defense, the stuck-loop
+playbook) are defined in `references/frameworks.md`
+in this skill. The canonical source-of-truth lives
+in `WHAT-YOU-WANT.md` and `BUILDING-A-GREAT-HARNESS.md`
+in the LFD repo
+(https://github.com/antifragileer/loss-function-driven-agentic-loops).
+If you have those files, treat them as authoritative.
+If you don't (e.g. installed via `npx skills add`
+without the repo), `references/frameworks.md` is the
+canonical version of the frameworks the gates use.
+Line-number citations in the gate templates below
+(e.g. "per `BUILDING-A-GREAT-HARNESS.md` line 482")
+are enrichment — they point at the source-of-truth
+line in the repo doc and are not required to use
+the gate.
 
 ---
 

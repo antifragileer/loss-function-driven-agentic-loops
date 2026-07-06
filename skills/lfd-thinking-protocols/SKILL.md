@@ -44,7 +44,7 @@ description: |
   in a one-page template, the skill writes the answer into
   the harness, the meta-skill picks up at the next round.
   Without the handoff, the next round does not start.
-version: 0.3.0
+version: 0.4.0
 author: open source
 license: MIT
 metadata:
@@ -158,15 +158,15 @@ will not start.
 
 | Gate | Handoff file | Read by | Source framework |
 |---|---|---|---|
-| 1 clarify-target | `handoffs/01-target.md` | meta-skill Round 1, loop-driver stop-conditions parser | `WHAT-YOU-WANT.md` §2 (2x2), §4 (5-Q Socratic) |
+| 1 clarify-target | `handoffs/01-target.md` | meta-skill Round 1, loop-driver stop-conditions parser | `references/frameworks.md` §1 (2x2), §3 (5-Q Socratic) |
 | 2 shape-loss | `handoffs/02-loss-shape.md` | meta-skill Round 1, `verifiers/compute_sub_losses.py` | `loss-function-design/SKILL.md` lines 50-101 (4-piece anatomy) |
 | 3 design-verifier | `handoffs/03-verifier-spec.md` + per-task `test-tasks/<id>/grade.sh` | meta-skill Round 2, integrity.sh Layer-1 guards | `loss-function-design/SKILL.md` lines 178-205 (reward-hacking table) |
-| 4 shape-context | `handoffs/04-context-shape.md` + `AGENTS.md` + per-task `prompt.txt` | loop driver, inner agent | `harness-engineering/SKILL.md` lines 130-141 (AGENTS.md as TOC); `WHAT-YOU-WANT.md` §5 (wiggle room, right generalization) |
+| 4 shape-context | `handoffs/04-context-shape.md` + `AGENTS.md` + per-task `test-tasks/<id>/prompt.txt` | loop driver, inner agent | `harness-engineering/SKILL.md` (AGENTS.md as TOC); `references/frameworks.md` §4 (wiggle room), §5 (right generalization) |
 | 5 design-tools | `handoffs/05-tools-inventory.md` + `verifiers/instruments/*.sh` | loop driver, integrity.sh | `harness-scaffold/SKILL.md` lines 1-37 (33-instrument taxonomy) |
 | 6 wire-loop | `handoffs/06-loop-shape.md` | loop-driver, cycle.sh | `loop-driver/SKILL.md` lines 27-78 (the 10-step cycle) |
-| 7 set-rails | `handoffs/07-rails.md` + `verifiers/integrity.sh` | integrity.sh (every cycle) | `BUILDING-A-GREAT-HARNESS.md` lines 374-440 (4-layer defense) |
+| 7 set-rails | `handoffs/07-rails.md` + `verifiers/integrity.sh` | integrity.sh (every cycle) | `references/frameworks.md` §7 (4-layer defense) |
 | 8 wire-feedback | `handoffs/08-feedback-format.md` + `verifiers/compute_sub_losses.py` | loop-driver, score-cycle.py | `loss-function-design/SKILL.md` lines 86-94 (sub-loss template) |
-| 9 set-termination | `handoffs/09-termination.md` + `GOAL.md` DONE/NOT DONE | loop-driver stop-conditions parser | `BUILDING-A-GREAT-HARNESS.md` lines 569-597 (V0-8 expansion); `meta-loss-function-development/SKILL.md` lines 317-323 |
+| 9 set-termination | `handoffs/09-termination.md` + `GOAL.md` DONE/NOT DONE | loop-driver stop-conditions parser | `references/frameworks.md` §9 (DONE/NOT DONE); `meta-loss-function-development/SKILL.md` (the Round 7 emit) |
 | 10 tune-search | `handoffs/10-entropy-rules.md` + `scripts/cycle.sh` FORCED_ENTROPY | cycle.sh, held-out h4 task | `loop-driver/SKILL.md` lines 127-149 (3 forced-entropy rules) |
 
 **If the handoff file is empty, the gate has not been
@@ -235,7 +235,8 @@ The protocol for a single gate:
 - The user has a finished harness and wants the loop
   to run — that's `loop-driver`.
 - The user wants to debug a stuck loop — that's
-  `loss-function-design` or `BUILDING-A-GREAT-HARNESS.md`.
+  `loss-function-design` or `references/frameworks.md` in
+  this skill.
 - The user wants to scaffold a project tree — that's
   `harness-scaffold`.
 - The user wants to debug the inner agent — that's

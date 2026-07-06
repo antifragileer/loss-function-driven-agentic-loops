@@ -172,8 +172,8 @@ install the candidate. For fake-agent, that's
 
 ## Drop-in substitution
 
-Same contract as the other 5 adapters (see
-`compatibility.md`):
+Same contract as the other 5 adapters (self-contained;
+canonical copy in `compatibility.md` of the LFD repo):
 
 1. `scripts/parse_fake_output.py` — parser emitting the
    shared 8-key shape.

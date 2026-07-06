@@ -137,7 +137,8 @@ correctness, safety, and invariants.
 `verifiers/integrity.sh` reads the project-specific
 guards from `07-rails.md`. Each guard has a
 verbatim bash function following the template
-in `BUILDING-A-GREAT-HARNESS.md` lines 553-563:
+in `references/frameworks.md` §7 (4-layer defense)
+of this skill:
 
 ```bash
 # ----- guard: <short name> -----

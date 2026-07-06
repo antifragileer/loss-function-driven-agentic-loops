@@ -94,8 +94,9 @@ compares to a golden hash will be exact.
 
 ## Implementation reference
 
-A working implementation lives in
-`examples/lfd-system-verifier/verifiers/fake-agent-wrapper.sh`
-in the same repo. It's the reference for what the
-scaffold should generate when `--runtime fake` is
-passed.
+A working implementation lives in the LFD repo
+(`examples/lfd-system-verifier/verifiers/fake-agent-wrapper.sh`).
+It's the reference for what the scaffold should
+generate when `--runtime fake` is passed. If you have
+the LFD repo checked out, look there; otherwise the
+wrapper contract above is self-contained.

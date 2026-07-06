@@ -1,6 +1,6 @@
 {
   "bundle": "loss-function-driven-agentic-loops",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "description": "Twelve cooperating skills that implement the loss-function-driven (LFD) agentic-loop pattern: turn a high-level goal into a /goal prompt, scaffold a harness, and run the outer loop until the inner agent's skill converges. The bundle ships with six agent-adapter skills (Cline, Claude Code, Codex, Hermes Agent, OpenCode, fake-agent) so the same loop works across coding agents and across deterministic dogfood testing.",
   "skills": [
     {
@@ -110,7 +110,7 @@
     },
     {
       "name": "lfd-thinking-protocols",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "role": "gate",
       "required": false,
       "summary": "10 thinking-protocol gates the meta-skill invokes between Rounds 0-7. Each gate forces a written commitment the next round reads as a handoff file. The skill does not run in the loop session; it is a meta-session helper.",

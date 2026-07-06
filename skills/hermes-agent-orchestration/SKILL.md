@@ -232,7 +232,8 @@ whatever wrapper is at `verifiers/<runtime>-wrapper.sh`.
 The user passes `--runtime {cline,claude-code,codex,hermes-agent,opencode}`
 to `harness-scaffold` to generate the correct wrapper.
 
-The 4 invariants from `compatibility.md` hold here:
+The 4 invariants (self-contained; canonical copy in
+`compatibility.md` of the LFD repo):
 
 1. `parse_hermes_output.py` emits JSON in the same shape
    as `parse_cline_output.py`.

@@ -79,7 +79,7 @@ Cline bug** — it's the documented behavior of Cline's
 mid-invocation. Reproduced in our verifier with 3-5
 back-to-back invocations; mitigated by `CLINE_NO_AUTO_UPDATE=1`.
 
-**The fix in the LFD reference wrapper** (`examples/lfd-system-verifier/verifiers/cline-wrapper.sh`):
+**The fix (also applied in the LFD system's reference wrapper):**
 
 ```bash
 export CLINE_NO_AUTO_UPDATE=1
