@@ -68,7 +68,7 @@ is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
 | [`hermes-agent-orchestration`](./skills/hermes-agent-orchestration) | 1.0.0 | **Agent adapter** — Hermes Agent v2.x (provider-agnostic) | optional |
 | [`opencode-orchestration`](./skills/opencode-orchestration) | 1.0.0 | **Agent adapter** — OpenCode v1.x (provider-agnostic) | optional |
 | [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
-| [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.1.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
+| [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.2.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
 | [`harness-scaffold`](./skills/harness-scaffold) | 1.1.0 | Build tool — scaffolds the directory tree (used by the meta-skill, not the loop) | yes |
 | [`lfd-thinking-protocols`](./skills/lfd-thinking-protocols) | 0.4.2 | Gate — 10 thinking protocols the meta-skill invokes between Rounds 0-7 (meta-session helper, not loaded by the loop) | optional |
 | [`loop-driver`](./skills/loop-driver) | 1.1.0 | Runtime — runs the outer loop against a finished harness until a stop condition fires | yes |
