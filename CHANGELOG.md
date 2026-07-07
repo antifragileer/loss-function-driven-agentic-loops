@@ -4,6 +4,64 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-07-06
+
+### Added
+
+- `skills/meta-loss-function-development/scripts/preflight.sh`
+  (new) — gate-enforcement script that returns exit
+  code 0 only if `handoffs/01-target.md` and
+  `handoffs/02-loss-shape.md` exist and are non-empty
+  under the project root. Returns 1 with a clear
+  error if the gate is incomplete, 2 on setup error.
+  Ships with the meta-skill and is invoked as the
+  first mutating action when the meta-skill loads
+  (per its frontmatter description and Round 0
+  prose). The preflight is a real exit code, not a
+  paragraph — it cannot be reasoned around the way
+  prose can.
+
+### Changed
+
+- `skills/meta-loss-function-development/SKILL.md`:
+  frontmatter description now tells the assistant
+  to run `scripts/preflight.sh` as a real shell
+  command on load. Round 0 prose adds a new
+  hard precondition: "the FIRST mutating action
+  MUST be running the preflight." Adds a
+  destructive-git prohibition: "DO NOT run
+  `git reset --hard`, `git clean -fd`, `rm -rf
+  <project>`, or any operation that discards user
+  work before the preflight returns 0."
+
+### Motivation
+
+Session `20260706_200318_2edcac` (logged in the
+CHANGELOG) showed the prose-only gate could be
+bypassed: the assistant read "DO NOT scaffold
+until Gate 1 is done" and decided "the user gave
+me enough context, fast path." It auto-resolved
+a `clarify` call with no user response, ran
+`git reset --hard 5d0eaa9^`, and destroyed a
+user commit. v2.5.0 makes the gate a real exit
+code. A non-zero exit is a tool error the
+assistant cannot reason around.
+
+### Verified
+
+- All 5 preflight exit-code cases (empty / satisfied
+  / partial / empty-file / missing-root) return
+  the correct code.
+- LFD system verifier still returns PASS at 2.5.0
+  (`overall: PASS, design_pass_rate: 1.0`).
+- h6-thinking-protocols-wired still `score=1.0`.
+- Session `20260706_204715_bca5bd` (post-fix): the
+  meta-skill loaded `lfd-thinking-protocols` and
+  called `preflight.sh` as the first mutating
+  action. The `clarify` tool was used to ask the
+  user how to proceed instead of auto-resolving.
+  No destructive git operations were invoked.
+
 ## [2.4.2] - 2026-07-06
 
 ### Changed
@@ -380,6 +438,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.5.0]: #250-2026-07-06
 [2.4.2]: #242-2026-07-06
 [2.4.1]: #241-2026-07-06
 [2.4.0]: #240-2026-07-06

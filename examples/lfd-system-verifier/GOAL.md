@@ -88,7 +88,7 @@ lives in `test-tasks/design/d<n>-<name>/`:
   the 8 required keys are present and have the
   expected types.
 - `d2-verify-bundle-manifest/` — read `bundle.json`,
-  assert version 2.4.2, 11-12 skills, MIT license, all
+  assert version 2.5.0, 11-12 skills, MIT license, all
   6 adapter names present.
 - `d3-verify-install-script/` — run
   `install.sh --check` against a fresh profile, assert
