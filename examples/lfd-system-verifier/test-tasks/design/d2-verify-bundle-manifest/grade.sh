@@ -18,8 +18,8 @@ fi
 python3 - "$BUNDLE_JSON" <<'PYEOF'
 import json, sys
 b = json.load(open(sys.argv[1]))
-if b["version"] not in ("2.1.0", "2.2.0", "2.3.0", "2.3.1", "2.3.2", "2.4.0", "2.4.1", "2.4.2"):
-    print(f"FAIL: version {b['version']!r} not in (2.1.0, 2.2.0, 2.3.0, 2.3.1, 2.3.2, 2.4.0, 2.4.1, 2.4.2)", file=sys.stderr); sys.exit(1)
+if b["version"] not in ("2.1.0", "2.2.0", "2.3.0", "2.3.1", "2.3.2", "2.4.0", "2.4.1", "2.4.2", "2.5.0"):
+    print(f"FAIL: version {b['version']!r} not in (2.1.0, 2.2.0, 2.3.0, 2.3.1, 2.3.2, 2.4.0, 2.4.1, 2.4.2, 2.5.0)", file=sys.stderr); sys.exit(1)
 if len(b["skills"]) not in (11, 12):
     print(f"FAIL: {len(b['skills'])} skills not in (11, 12)", file=sys.stderr); sys.exit(1)
 if len(b["install_order"]) not in (11, 12):

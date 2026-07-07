@@ -251,7 +251,7 @@ The other five adapter combinations
 etc.) are **supported by the adapter contract** — every
 adapter must ship the same parser shape, the same wrapper
 invocation, the same per-iteration file layout. They are
-*expected* to work but are *not verified* as of v2.4.2.
+*expected* to work but are *not verified* as of v2.5.0.
 
 To add a row to this table: run
 `./run-verification-real.sh "" "" <runtime>` from
