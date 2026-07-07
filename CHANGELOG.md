@@ -32,7 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   destructive-git prohibition: "DO NOT run
   `git reset --hard`, `git clean -fd`, `rm -rf
   <project>`, or any operation that discards user
-  work before the preflight returns 0."
+  work before the preflight returns 0." Skill
+  version 1.1.0 → 1.2.0 (minor: new script + new
+  Round 0 prose; no breaking change to the
+  harness contract).
 
 ### Motivation
 

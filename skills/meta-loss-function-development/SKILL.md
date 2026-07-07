@@ -38,7 +38,7 @@ description: |
   that the loss-function-design skill describes. It does not
   run the loop itself. The output is consumed by a new
   session that runs the loop.
-version: 1.1.0
+version: 1.2.0
 author: open source
 license: MIT
 platforms: [linux, macos, windows]

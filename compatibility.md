@@ -16,7 +16,7 @@ which works with which." When you upgrade, read this first.
 | `hermes-agent-orchestration` | 1.0.0 | agent adapter (Hermes Agent v2) | optional — substitute for non-Hermes agents |
 | `opencode-orchestration` | 1.0.0 | agent adapter (OpenCode v1) | optional — substitute for non-OpenCode agents |
 | `fake-agent-orchestration` | 1.0.0 | agent adapter (deterministic stub) | optional — dogfood testing only |
-| `meta-loss-function-development` | 1.1.0 | meta-skill (emits /goal prompt) | yes |
+| `meta-loss-function-development` | 1.2.0 | meta-skill (emits /goal prompt) | yes |
 | `harness-scaffold` | 1.1.0 | build-tool (scaffolds project tree) | yes |
 | `lfd-thinking-protocols` | 0.4.2 | gate (10 thinking protocols the meta-skill invokes between Rounds 0-7; ships `references/frameworks.md` so the skill is self-contained without the LFD repo) | optional — meta-session helper, not loaded by the loop session |
 | `loop-driver` | 1.1.0 | runtime (runs the outer loop) | yes |
