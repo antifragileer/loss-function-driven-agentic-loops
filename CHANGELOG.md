@@ -4,6 +4,24 @@ All notable changes to this bundle are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.2] - 2026-07-06
+
+### Changed
+
+- Stripped remaining dead citations from
+  `skills/lfd-thinking-protocols/references/frameworks.md`:
+  - header "inlined for self-containment" subtitle
+    removed (the file is just the canonical version)
+  - 8 part-heading attributions to
+    `WHAT-YOU-WANT.md` / `BUILDING-A-GREAT-HARNESS.md`
+    removed (just the part titles now)
+  - trailing "## See also (if you have the LFD repo
+    available)" section removed
+  - "## Companion Frameworks (inlined for
+    self-containment)" → "## Companion Frameworks"
+- `frameworks.md` is now fully self-contained: every
+  reader sees the full text, no external pointers.
+
 ## [2.4.1] - 2026-07-06
 
 ### Changed
@@ -362,6 +380,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `harness-scaffold` (v1.0.0) — project tree builder
 - `loop-driver` (v1.0.0) — outer loop runtime
 
+[2.4.2]: #242-2026-07-06
 [2.4.1]: #241-2026-07-06
 [2.4.0]: #240-2026-07-06
 [2.3.2]: #232-2026-07-06

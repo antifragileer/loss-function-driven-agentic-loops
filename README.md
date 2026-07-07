@@ -27,7 +27,7 @@ the loop session.
 
 - **Repository:** https://github.com/antifragileer/loss-function-driven-agentic-loops
 - **License:** MIT
-- **Bundle version:** 2.4.1
+- **Bundle version:** 2.4.2
 - **Install (Hermes, per-profile):** `./install.sh ~/.hermes/profiles/<name>`
 - **Install (universal / non-Hermes agents):** `npx skills add antifragileer/loss-function-driven-agentic-loops`
 
@@ -70,7 +70,7 @@ is to turn fuzzy goals into a scoreboard the agent can keep trying to beat.
 | [`fake-agent-orchestration`](./skills/fake-agent-orchestration) | 1.0.0 | **Agent adapter** — deterministic stub for dogfood testing | optional |
 | [`meta-loss-function-development`](./skills/meta-loss-function-development) | 1.1.0 | The meta-skill — builds the harness with you, then emits the `/goal` prompt | yes |
 | [`harness-scaffold`](./skills/harness-scaffold) | 1.1.0 | Build tool — scaffolds the directory tree (used by the meta-skill, not the loop) | yes |
-| [`lfd-thinking-protocols`](./skills/lfd-thinking-protocols) | 0.4.1 | Gate — 10 thinking protocols the meta-skill invokes between Rounds 0-7 (meta-session helper, not loaded by the loop) | optional |
+| [`lfd-thinking-protocols`](./skills/lfd-thinking-protocols) | 0.4.2 | Gate — 10 thinking protocols the meta-skill invokes between Rounds 0-7 (meta-session helper, not loaded by the loop) | optional |
 | [`loop-driver`](./skills/loop-driver) | 1.1.0 | Runtime — runs the outer loop against a finished harness until a stop condition fires | yes |
 
 The 6 required skills (3 core: `loss-function-design`,

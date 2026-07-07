@@ -1,17 +1,13 @@
-# Companion Frameworks (inlined for self-containment)
+# Companion Frameworks
 
-This file inlines the framework content the LFD thinking
-gates reference. The canonical source-of-truth lives in
-`WHAT-YOU-WANT.md` and `BUILDING-A-GREAT-HARNESS.md` in the
-LFD repo (https://github.com/antifragileer/loss-function-driven-agentic-loops).
-If you have access to those files, treat them as authoritative.
-If you don't (e.g. installed via `npx skills add` without
-the repo), this file is the canonical version of the
-frameworks the gates use.
+This file is the canonical, self-contained copy of
+the framework content the LFD thinking gates
+reference. Every section below is the full text —
+no external files are required to use it.
 
 ---
 
-## Part 1: The 2x2 of preferences (`WHAT-YOU-WANT.md` §2)
+## Part 1: The 2x2 of preferences
 
 Two questions put every rule in the harness into one of
 four boxes.
@@ -37,7 +33,7 @@ four boxes.
 
 ---
 
-## Part 2: The 20/80 taste rule (`WHAT-YOU-WANT.md` §3)
+## Part 2: The 20/80 taste rule
 
 Good agentic engineering is knowing how strict each rule
 should be. **20% of the harness is imperative, 80% is
@@ -58,7 +54,7 @@ Y" is imperative.
 
 ---
 
-## Part 3: The 5-question Socratic discovery (`WHAT-YOU-WANT.md` §4)
+## Part 3: The 5-question Socratic discovery
 
 For each design task in `test-tasks/design/<id>/`, ask:
 
@@ -85,7 +81,7 @@ For each design task in `test-tasks/design/<id>/`, ask:
 
 ---
 
-## Part 4: Wiggle room (`WHAT-YOU-WANT.md` §5.1)
+## Part 4: Wiggle room
 
 The pattern: state the imperative preference, then add a
 declarative addendum that surfaces better designs the
@@ -113,7 +109,7 @@ clause" itself belongs in `AGENTS.md` as a hard rule.
 
 ---
 
-## Part 5: Right generalization (`WHAT-YOU-WANT.md` §5.2)
+## Part 5: Right generalization
 
 When you would otherwise leak context about a future
 project, write the general shape of the connection
@@ -139,7 +135,7 @@ choice of how to produce that shape is the agent's.
 
 ---
 
-## Part 6: The 4-piece loss anatomy (`BUILDING-A-GREAT-HARNESS.md` §"The four parts of every harness")
+## Part 6: The 4-piece loss anatomy
 
 1. **Target.** What the agent is descending toward.
    Specific and measurable ("function takes channel
@@ -170,7 +166,7 @@ choice of how to produce that shape is the agent's.
 
 ---
 
-## Part 7: The 4-layer anti-cheat defense (`BUILDING-A-GREAT-HARNESS.md` §"The 4 layers of anti-cheat defense")
+## Part 7: The 4-layer anti-cheat defense
 
 | Layer | Mechanism | Runs when | Catches |
 |---|---|---|---|
@@ -202,7 +198,7 @@ The 4 default integrity guards:
 
 ---
 
-## Part 8: The 3 stuck-loop patterns (`BUILDING-A-GREAT-HARNESS.md` §"The 'the loop is stuck' playbook")
+## Part 8: The 3 stuck-loop patterns
 
 When the loop has been running for more than 2 hours with
 less than 10% improvement, read the last 5-10 entries
@@ -251,13 +247,3 @@ verifiers/private/grader.sh; or the agent edits a
 grade.sh to make a design task pass.
 ```
 
----
-
-## See also (if you have the LFD repo available)
-
-- `WHAT-YOU-WANT.md` — the canonical preference vocabulary.
-  Part 1 (2x2), Part 2 (20/80), Part 3 (Socratic 5-Q),
-  Part 4 (wiggle room), Part 5 (right generalization).
-- `BUILDING-A-GREAT-HARNESS.md` — the canonical harness
-  manual. Part 6 (4-piece anatomy), Part 7 (4-layer
-  defense), Part 8 (stuck patterns), Part 9 (DONE/NOT DONE).
