@@ -19,14 +19,20 @@ description: |
   "this loop isn't converging" and the failure is in the goal
   spec rather than in the harness.
 
-  **First action on load: load `lfd-thinking-protocols` and
-  run Gate 1 (`clarify-target`).** The user fills the
-  template, the skill writes `handoffs/01-target.md`, and
-  the user explicitly says "Gate 1 complete" before this
-  skill scaffolds anything. There is no fast path; "the
-  user gave me enough context" is not a valid reason to
-  skip the gate. See the Round 0 section below for the
-  full prohibition.
+  **First action on load: run this skill's preflight
+  script as a real shell command** —
+  `bash <skill_dir>/scripts/preflight.sh --check
+  --project-root <project_root>`. The script exits 0
+  if Gate 1 (clarify-target) and Gate 2 (shape-loss)
+  have been satisfied — i.e. `handoffs/01-target.md`
+  and `handoffs/02-loss-shape.md` exist and are
+  non-empty under the project root. If the script
+  exits 1, the gate is incomplete; load
+  `lfd-thinking-protocols` and run the missing
+  gate(s) to satisfy it. The script is a real exit
+  code, not a paragraph — it cannot be reasoned
+  around. See the Round 0 section below for the full
+  prohibition.
 
   This skill is the *meta-loop*: it produces the artifacts
   that the loss-function-design skill describes. It does not
@@ -135,9 +141,23 @@ dependency, with the user reviewing each piece:
 
 ### Round 0: project root + scaffold
 
+- **MUST: as the first mutating action, run this skill's
+  preflight script:**
+  `bash <skill_dir>/scripts/preflight.sh --check
+  --project-root <project_root>`.
+  - The script is a real exit code. Exit 0 means the
+    gate is satisfied. Exit 1 means the gate is
+    incomplete and the script prints a clear error.
+  - If the preflight returns 1, the assistant MUST
+    NOT scaffold. The next action is to load
+    `lfd-thinking-protocols` and run the missing
+    Gate(s) to satisfy the preflight.
+  - The preflight is not a paragraph the assistant
+    can re-interpret; it is a tool error. There is
+    no fast path.
 - **MUST: load `lfd-thinking-protocols` and run Gate 1
   (`clarify-target`) BEFORE doing anything else in Round 0.**
-  This is a hard precondition, not a recommendation:
+  The preflight enforces this; the prose explains it:
   - DO NOT confirm the project root until Gate 1 is done.
   - DO NOT run `harness-scaffold` until Gate 1 is done.
   - DO NOT read templates/goal-prompt.md until Gate 1 is done.
@@ -165,6 +185,19 @@ dependency, with the user reviewing each piece:
     is what makes the loss function measurable; the user
     can then choose to fill the template or to abort.
     DO NOT abort on the user's behalf.
+- **MUST NOT run destructive git operations on the user's
+  project tree before the preflight returns 0.** This
+  includes `git reset --hard`, `git clean -fd`,
+  `git checkout -- <path>`, `rm -rf <project>`, and any
+  other operation that discards user work. The user
+  can recover from a wrong prompt; they cannot recover
+  from a wrong `git reset --hard` after the fact. If
+  the assistant encounters a state in the project tree
+  (e.g. files deleted, files added, files modified)
+  that it wants to undo, the assistant MUST stop and
+  ask the user how to proceed. The preflight script's
+  failure to find the handoff files is *not* a license
+  to run destructive git operations.
 - Confirm the absolute project root path. (Refuse to
   proceed without it.)
 - Create the directory tree (`verifiers/`, `test-tasks/`,
